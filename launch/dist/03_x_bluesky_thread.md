@@ -6,7 +6,7 @@
 • Repeating failed repairs in loops
 • Broken local JSON tool calls
 
-Meet mojo-cortex 🧠⚡ (Mojo 1.1.0 + Python MCP):
+Meet mojo-cortex (Mojo 1.1.0 + Python MCP):
 https://github.com/Buzburg/mojo-cortex
 
 ---
@@ -15,7 +15,7 @@ https://github.com/Buzburg/mojo-cortex
 
 Because greedy top-K context retrieval drops failed-attempt warnings when budgets tighten.
 
-mojo-cortex uses a native Mojo 1.1.0 0/1 Knapsack solver that reserves failed-attempt warnings FIRST—running in 0.170983ms (25.61x faster than Python).
+mojo-cortex uses a native Mojo 1.1.0 0/1 Knapsack solver that reserves failed-attempt warnings FIRST—running in 0.171ms (25.61x faster than Python).
 
 ---
 

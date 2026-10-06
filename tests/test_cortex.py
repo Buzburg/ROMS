@@ -243,6 +243,27 @@ class TestMojoCortex(unittest.TestCase):
             content = f.read()
         self.assertIn("mojo-cortex Telemetry", content)
 
+    def test_launch_autopilot_and_html_escaping(self):
+        root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sys.path.insert(0, os.path.join(root_dir, "launch"))
+        import autopilot
+        import submit_directory_prs
+
+        payloads = autopilot.build_campaign_payloads("https://github.com/Buzburg/mojo-cortex")
+        html_path = autopilot.generate_control_center_html(payloads, "https://github.com/Buzburg/mojo-cortex")
+        with open(html_path, "r", encoding="utf-8") as f:
+            html_doc = f.read()
+
+        # Verify <think> and <50 µs are properly HTML-escaped inside <pre> blocks
+        self.assertIn("&lt;think&gt;", html_doc)
+        self.assertIn("&lt;50", html_doc)
+        self.assertIn("https://www.reddit.com/r/LocalLLaMA/submit?selftext=true", html_doc)
+
+        # Verify smart README section insertion places entry inside ### Memory before ## License
+        sample_readme = "# Awesome MCP\n\n### Memory\n- [existing](https://example.com)\n\n## License\nMIT\n"
+        updated = submit_directory_prs.insert_entry_into_readme(sample_readme, "- [mojo-cortex](https://github.com/Buzburg/mojo-cortex)")
+        self.assertLess(updated.index("mojo-cortex"), updated.index("## License"))
+
 
 if __name__ == "__main__":
     unittest.main()

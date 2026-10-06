@@ -12,9 +12,9 @@ Hi HN! I built `mojo-cortex` (https://github.com/Buzburg/mojo-cortex) after hitt
 ### How `mojo-cortex` solves this (Zero external dependencies, 10-second MCP stdio server + Mojo 1.1.0 kernels):
 
 - **Hybrid Neural Memory (Google's *Titans* `2501.00663` + *Gated DeltaNet-2* `2605.22791`):** Online gradient descent with surprise momentum ($S_t$) combined with decoupled erase/write gates ($\alpha_t, \beta_t$) for **1.0000 cosine key overwrite** and surgical key deletion in `835 µs`.
-- **ROMS 0/1 Knapsack Context Packer (`Mojo 1.1.0`):** Dynamic programming context selector that **reserves the highest-ranked failed-attempt warning first** before packing remaining context budget. Across 400 randomized Python-vs-Mojo parity tests via `PythonModuleBuilder`, native Mojo runs in `0.170983 ms` vs `4.379378 ms` in Python (**`25.61x` speedup**).
+- **ROMS 0/1 Knapsack Context Packer (`Mojo 1.1.0`):** Dynamic programming context selector that **reserves the highest-ranked failed-attempt warning first** before packing remaining context budget. Across 400 randomized Python-vs-Mojo parity tests via `PythonModuleBuilder`, native Mojo runs in `0.171 ms` vs `4.379 ms` in Python (**`25.61x` speedup**).
 - **SnapKV Context Sieve (`2404.14469`):** 1D max-pooled observation clustering that compacts 2,504-line build logs by **98.8%** (`26,386` tokens saved in `4.25 ms`) while keeping 100% of stack traces and `file:line` pointers.
-- **BitNet b1.58 Ternary Tool Router (`2402.17764`):** Multiplier-free 2-bit packed(`{-1, 0, +1}`) router that prunes 80-95% of irrelevant MCP tools in `887 µs` + deterministic JSON tool-call repair.
+- **BitNet b1.58 Ternary Tool Router (`2402.17764`):** Multiplier-free 2-bit packed (`{-1, 0, +1}`) router that prunes 80-95% of irrelevant MCP tools in `887 µs` + deterministic JSON tool-call repair.
 - **Git-Safe Copy-on-Write Time Machine:** Content-addressable SHA-256 snapshots and `<5 ms` atomic workspace rollback without touching `.git`.
 
 Works out-of-the-box with pure Python 3.9+ (`claude mcp add cortex -- python cortex.py mcp`) and includes the full Mojo 1.1.0 kernel suite (`kernels/*.mojo`). Happy to answer any questions about the Mojo 1.1.0 `PythonModuleBuilder` FFI bridge or the DeltaNet-2/Titans math!
