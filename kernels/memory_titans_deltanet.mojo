@@ -95,4 +95,4 @@ def fused_titans_deltanet_step(
 
 
 def main():
-    print("mojo-cortex Kernel 1 (Titans + Gated DeltaNet-2) initialized.")
+    print("cortex Kernel 1 (Titans + Gated DeltaNet-2) initialized.")

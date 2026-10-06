@@ -168,7 +168,7 @@ class TestMojoCortex(unittest.TestCase):
 
         # 1. initialize
         init_resp = server.handle_request({"jsonrpc": "2.0", "id": 1, "method": "initialize"})
-        self.assertEqual(init_resp["result"]["serverInfo"]["name"], "mojo-cortex")
+        self.assertEqual(init_resp["result"]["serverInfo"]["name"], "cortex")
 
         # 2. tools/list
         list_resp = server.handle_request({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
@@ -241,7 +241,7 @@ class TestMojoCortex(unittest.TestCase):
         self.assertTrue(os.path.exists(out))
         with open(out, "r", encoding="utf-8") as f:
             content = f.read()
-        self.assertIn("mojo-cortex Telemetry", content)
+        self.assertIn("cortex Telemetry", content)
 
     def test_launch_autopilot_and_html_escaping(self):
         root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -249,8 +249,8 @@ class TestMojoCortex(unittest.TestCase):
         import autopilot
         import submit_directory_prs
 
-        payloads = autopilot.build_campaign_payloads("https://github.com/Buzburg/mojo-cortex")
-        html_path = autopilot.generate_control_center_html(payloads, "https://github.com/Buzburg/mojo-cortex")
+        payloads = autopilot.build_campaign_payloads("https://github.com/Buzburg/cortex")
+        html_path = autopilot.generate_control_center_html(payloads, "https://github.com/Buzburg/cortex")
         with open(html_path, "r", encoding="utf-8") as f:
             html_doc = f.read()
 
@@ -261,8 +261,8 @@ class TestMojoCortex(unittest.TestCase):
 
         # Verify smart README section insertion places entry inside ### Memory before ## License
         sample_readme = "# Awesome MCP\n\n### Memory\n- [existing](https://example.com)\n\n## License\nMIT\n"
-        updated = submit_directory_prs.insert_entry_into_readme(sample_readme, "- [mojo-cortex](https://github.com/Buzburg/mojo-cortex)")
-        self.assertLess(updated.index("mojo-cortex"), updated.index("## License"))
+        updated = submit_directory_prs.insert_entry_into_readme(sample_readme, "- [cortex](https://github.com/Buzburg/cortex)")
+        self.assertLess(updated.index("cortex"), updated.index("## License"))
 
 
 if __name__ == "__main__":

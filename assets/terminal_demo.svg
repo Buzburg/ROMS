@@ -33,7 +33,7 @@
   <circle cx="24" cy="20" r="6" fill="#ef4444"/>
   <circle cx="44" cy="20" r="6" fill="#f59e0b"/>
   <circle cx="64" cy="20" r="6" fill="#10b981"/>
-  <text x="430" y="25" text-anchor="middle" class="txt dim">mojo-cortex — Universal Prefrontal Cortex &amp; MCP Harness (Mojo 1.1.0 + Python)</text>
+  <text x="430" y="25" text-anchor="middle" class="txt dim">cortex — Universal Prefrontal Cortex &amp; MCP Harness (Mojo 1.1.0 + Python)</text>
 
   <!-- Step 1: MCP Setup & Titans + DeltaNet-2 Memory -->
   <g class="l1">

@@ -1,5 +1,5 @@
 """
-Standards-Compliant Model Context Protocol (MCP) JSON-RPC 2.0 Server for mojo-cortex.
+Standards-Compliant Model Context Protocol (MCP) JSON-RPC 2.0 Server for cortex.
 Plugs directly into Claude Code, Cursor, Windsurf, Cline, Goose, and Claude Desktop over stdio.
 """
 
@@ -155,7 +155,7 @@ class CortexMCPServer:
                 "id": req_id,
                 "result": {
                     "protocolVersion": "2024-11-05",
-                    "serverInfo": {"name": "mojo-cortex", "version": "1.1.0"},
+                    "serverInfo": {"name": "cortex", "version": "1.1.0"},
                     "capabilities": {"tools": {}}
                 }
             }

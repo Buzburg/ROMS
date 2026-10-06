@@ -32,4 +32,4 @@ def score_tool_multiplier_free(
 
 
 def main():
-    print("mojo-cortex Kernel 2 (BitNet b1.58 Ternary Router) initialized.")
+    print("cortex Kernel 2 (BitNet b1.58 Ternary Router) initialized.")

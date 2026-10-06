@@ -1,5 +1,5 @@
 """
-Unified Command-Line Interface for mojo-cortex.
+Unified Command-Line Interface for cortex.
 """
 
 import os
@@ -26,7 +26,7 @@ def run_cli():
 
     parser = argparse.ArgumentParser(
         prog="cortex",
-        description="mojo-cortex: Universal Prefrontal Cortex, Associative Memory, & Safety Harness for AI Agents"
+        description="cortex: Universal Prefrontal Cortex, Associative Memory, & Safety Harness for AI Agents"
     )
     subparsers = parser.add_subparsers(dest="command")
 
@@ -199,7 +199,7 @@ def run_cli():
         snaps = WorkspaceTimeMachine().list_snapshots()
         shd = ExecutionShield().stats()
         print("=" * 65)
-        print("               mojo-cortex System Telemetry")
+        print("               cortex System Telemetry")
         print("=" * 65)
         print(f"  Neural Memory Entries: {len(mem.get('entries', {}))} (||M||_F = {mem.get('frobenius_norm', 0.0):.3f})")
         print(f"  Tokens Saved by Sieve: {siv.get('saved_tokens', 0):,} tokens across {siv.get('compactions', 0)} compactions")

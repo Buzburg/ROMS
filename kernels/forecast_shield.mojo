@@ -69,4 +69,4 @@ def evaluate_shield_kernel(
 
 
 def main():
-    print("mojo-cortex Kernel 4 (Pre-Simulation Forecaster & Loop Breaker) initialized.")
+    print("cortex Kernel 4 (Pre-Simulation Forecaster & Loop Breaker) initialized.")

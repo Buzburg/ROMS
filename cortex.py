@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-mojo-cortex entrypoint
+cortex entrypoint
 Run any Cortex CLI command or start the Model Context Protocol (MCP) server:
   python cortex.py mcp
   python cortex.py status

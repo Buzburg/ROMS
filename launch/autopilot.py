@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-mojo-cortex Autonomous Launch & Growth Autopilot (launch/autopilot.py)
+cortex Autonomous Launch & Growth Autopilot (launch/autopilot.py)
 ======================================================================
 Automates 95-100% of the GitHub launch, social distribution, directory submission,
-and visual asset pipeline for `mojo-cortex`:
+and visual asset pipeline for `cortex`:
 
 1. Reads live empirical numbers from `benchmarks/native_benchmark_results.json`
    and `benchmarks/benchmark_results.json`.
@@ -97,7 +97,7 @@ def generate_animated_svg() -> str:
   <circle cx="24" cy="20" r="6" fill="#ef4444"/>
   <circle cx="44" cy="20" r="6" fill="#f59e0b"/>
   <circle cx="64" cy="20" r="6" fill="#10b981"/>
-  <text x="430" y="25" text-anchor="middle" class="txt dim">mojo-cortex — Universal Prefrontal Cortex &amp; MCP Harness (Mojo 1.1.0 + Python)</text>
+  <text x="430" y="25" text-anchor="middle" class="txt dim">cortex — Universal Prefrontal Cortex &amp; MCP Harness (Mojo 1.1.0 + Python)</text>
 
   <!-- Step 1: MCP Setup & Titans + DeltaNet-2 Memory -->
   <g class="l1">
@@ -170,7 +170,7 @@ startCommand:
     glama_json = {
         "$schema": "https://glama.ai/mcp/schemas/server.json",
         "maintainers": ["Buzburg"],
-        "name": "mojo-cortex",
+        "name": "cortex",
         "description": "Universal Prefrontal Cortex, Associative Memory (Titans + Gated DeltaNet-2), 98.8% SnapKV Log Sieve, 25.61x Mojo 1.1.0 Knapsack Context Packer, CoW Time Machine & Safety Shield for AI Coding Agents.",
         "categories": ["memory", "developer-tools", "context-optimization", "security"]
     }
@@ -205,15 +205,15 @@ def build_campaign_payloads(repo_url: str) -> dict:
             "channel": "Hacker News (Show HN)",
             "best_window": "Tuesday–Thursday, 8:30 AM – 10:00 AM EST",
             "submit_url": "https://news.ycombinator.com/submit",
-            "title": f"Show HN: Mojo-Cortex – Prefrontal Cortex, Associative Memory and Safety MCP for AI Agents ({speedup_std}x Mojo speedup)",
-            "first_comment": f"""Hi HN! I built `mojo-cortex` ({repo_url}) after hitting the same four failure modes across Claude Code, Cursor, and local 7B-32B models (Ollama / RWKV-7):
+            "title": f"Show HN: Cortex – Prefrontal Cortex, Associative Memory and Safety MCP for AI Agents ({speedup_std}x Mojo speedup)",
+            "first_comment": f"""Hi HN! I built `cortex` ({repo_url}) after hitting the same four failure modes across Claude Code, Cursor, and local 7B-32B models (Ollama / RWKV-7):
 
 1. **Token & VRAM Burn:** Agents ingest 2,500 lines of noisy `pytest`/`cargo` output or 50+ MCP tool schemas, burning API credits and blowing out 16GB-32GB local KV caches.
 2. **Stale Cross-Session Memory:** RAG appends conflicting notes when project architectures change instead of cleanly overwriting obsolete key-value bindings.
 3. **Repeated Failed Repairs & Destructive Loops:** Under tight context budgets, greedy top-K retrieval drops failed-attempt warnings, causing agents to repeat broken fixes 5 times in a row—or corrupt working files with no way to undo just the agent's edits without wrecking `.git` history.
 4. **Local LLM Tool-Call Breakage:** Smaller local models choke on 50+ tool schemas or emit broken JSON tool calls with trailing commas and markdown fences.
 
-### How `mojo-cortex` solves this (Zero external dependencies, 10-second MCP stdio server + Mojo 1.1.0 kernels):
+### How `cortex` solves this (Zero external dependencies, 10-second MCP stdio server + Mojo 1.1.0 kernels):
 
 - **Hybrid Neural Memory (Google's *Titans* `2501.00663` + *Gated DeltaNet-2* `2605.22791`):** Online gradient descent with surprise momentum ($S_t$) combined with decoupled erase/write gates ($\\alpha_t, \\beta_t$) for **1.0000 cosine key overwrite** and surgical key deletion in `835 µs`.
 - **ROMS 0/1 Knapsack Context Packer (`Mojo 1.1.0`):** Dynamic programming context selector that **reserves the highest-ranked failed-attempt warning first** before packing remaining context budget. Across 400 randomized Python-vs-Mojo parity tests via `PythonModuleBuilder`, native Mojo runs in `{mojo_std_ms} ms` vs `{py_std_ms} ms` in Python (**`{speedup_std}x` speedup**).
@@ -228,13 +228,13 @@ Works out-of-the-box with pure Python 3.9+ (`claude mcp add cortex -- python cor
             "subreddit": "LocalLLaMA",
             "best_window": "Monday–Thursday, 9:00 AM – 11:00 AM EST",
             "submit_url": "https://www.reddit.com/r/LocalLLaMA/submit",
-            "title": f"[Release] mojo-cortex: Give local 7B-32B models (Ollama/vLLM/RWKV-7) Titans+DeltaNet-2 memory, 98.8% SnapKV log compaction, BitNet b1.58 tool routing & broken JSON repair",
+            "title": f"[Release] cortex: Give local 7B-32B models (Ollama/vLLM/RWKV-7) Titans+DeltaNet-2 memory, 98.8% SnapKV log compaction, BitNet b1.58 tool routing & broken JSON repair",
             "body": f"""If you run local coding/tool agents on **16GB–32GB VRAM**, you know the pain:
 - A single `pytest` or `npm build` dump eats 25,000 tokens of KV cache.
 - Passing 40+ MCP tool schemas makes 7B–14B models hallucinate argument types or emit broken JSON (`'single_quotes'`, trailing commas, unclosed markdown blocks).
 - When a fix fails and context gets truncated, the model forgets what it just tried and loops on the exact same broken command.
 
-I built **`mojo-cortex`** ({repo_url})—a zero-dependency prefrontal cortex & MCP harness written in **Mojo 1.1.0 + Python** specifically designed to make local models punch way above their weight on long-horizon coding and automation:
+I built **`cortex`** ({repo_url})—a zero-dependency prefrontal cortex & MCP harness written in **Mojo 1.1.0 + Python** specifically designed to make local models punch way above their weight on long-horizon coding and automation:
 
 ### Empirical Benchmarks (Verified across 600 Python/Mojo 1.1.0 parity tests):
 1. **ROMS 0/1 Knapsack Context Packer (`{speedup_std}x` faster in Mojo 1.1.0 — `{mojo_std_ms} ms`):** Instead of greedy top-K truncation, it runs a 0/1 dynamic-programming knapsack solver that **reserves failed-attempt warnings first**, guaranteeing your local model never repeats a failed repair.
@@ -247,7 +247,7 @@ I built **`mojo-cortex`** ({repo_url})—a zero-dependency prefrontal cortex & M
 ### 10-Second Quickstart:
 ```bash
 git clone {repo_url}
-cd mojo-cortex
+cd cortex
 python tests/test_cortex.py -v
 ```
 Repo link: {repo_url}"""
@@ -257,10 +257,10 @@ Repo link: {repo_url}"""
             "subreddit": "ClaudeAI",
             "best_window": "Tuesday–Friday, 10:00 AM – 1:00 PM EST",
             "submit_url": "https://www.reddit.com/r/ClaudeAI/submit",
-            "title": "I built an open-source MCP server (mojo-cortex) that cuts Claude Code / Cursor token usage by 90%+, adds persistent DeltaNet-2 memory, and gives you Git-safe atomic undo",
+            "title": "I built an open-source MCP server (cortex) that cuts Claude Code / Cursor token usage by 90%+, adds persistent DeltaNet-2 memory, and gives you Git-safe atomic undo",
             "body": f"""One command to add to Claude Code:
 ```bash
-claude mcp add cortex -- python /path/to/mojo-cortex/cortex.py mcp
+claude mcp add cortex -- python /path/to/cortex/cortex.py mcp
 ```
 
 ### What it adds to Claude Code, Cursor, and Windsurf (`{repo_url}`):
@@ -277,8 +277,8 @@ claude mcp add cortex -- python /path/to/mojo-cortex/cortex.py mcp
             "subreddit": "MojoLang",
             "best_window": "Any weekday morning EST",
             "submit_url": "https://www.reddit.com/r/MojoLang/submit",
-            "title": f"mojo-cortex: Native Mojo 1.1.0 Kernels + PythonModuleBuilder Bridge for AI Agent Memory, BitNet b1.58 Routing & {speedup_std}x Faster 0/1 Knapsack Context Packing",
-            "body": f"""Built **`mojo-cortex`** ({repo_url})—an AI agent memory, context optimization, and safety MCP harness powered by **Mojo 1.1.0 (`8189361e`)** kernels with an in-process `std.python.bindings.PythonModuleBuilder` bridge.
+            "title": f"cortex: Native Mojo 1.1.0 Kernels + PythonModuleBuilder Bridge for AI Agent Memory, BitNet b1.58 Routing & {speedup_std}x Faster 0/1 Knapsack Context Packing",
+            "body": f"""Built **`cortex`** ({repo_url})—an AI agent memory, context optimization, and safety MCP harness powered by **Mojo 1.1.0 (`8189361e`)** kernels with an in-process `std.python.bindings.PythonModuleBuilder` bridge.
 
 ### Native Mojo 1.1.0 Kernels Included (`kernels/*.mojo`):
 1. `kernels/runtime_mojond_roms.mojo` + `kernels/cortex_bindings.mojo`:
@@ -297,13 +297,13 @@ All 6 Mojo kernel suites compile with **zero warnings** on Mojo 1.1.0 (`bash scr
             "best_window": "Tuesday–Thursday, 9:15 AM EST",
             "submit_url": "https://x.com/compose/post",
             "tweets": [
-                f"1/ Every AI coding agent (Claude Code, Cursor, Windsurf) & local LLM (Ollama, RWKV-7) hits the same 4 walls:\n• 25k token log burn\n• Stale cross-session memory\n• Repeating failed repairs in loops\n• Broken local JSON tool calls\n\nMeet mojo-cortex (Mojo 1.1.0 + Python MCP):\n{repo_url}",
-                f"2/ Why do agents repeat the exact same failed fix 5 times in a row?\n\nBecause greedy top-K context retrieval drops failed-attempt warnings when budgets tighten.\n\nmojo-cortex uses a native Mojo 1.1.0 0/1 Knapsack solver that reserves failed-attempt warnings FIRST—running in {mojo_std_ms}ms ({speedup_std}x faster than Python).",
-                "3/ What about cross-session memory when your codebase changes?\n\nStandard RAG appends conflicting notes.\n\nmojo-cortex fuses Google's Titans (2501.00663) surprise momentum with Gated DeltaNet-2 (2605.22791) decoupled erase/write gates—giving 1.0000 cosine key overwrite & surgical erasure in 835 µs.",
+                f"1/ Every AI coding agent (Claude Code, Cursor, Windsurf) & local LLM (Ollama, RWKV-7) hits the same 4 walls:\n• 25k token log burn\n• Stale cross-session memory\n• Repeating failed repairs in loops\n• Broken local JSON tool calls\n\nMeet cortex (Mojo 1.1.0 + Python MCP):\n{repo_url}",
+                f"2/ Why do agents repeat the exact same failed fix 5 times in a row?\n\nBecause greedy top-K context retrieval drops failed-attempt warnings when budgets tighten.\n\ncortex uses a native Mojo 1.1.0 0/1 Knapsack solver that reserves failed-attempt warnings FIRST—running in {mojo_std_ms}ms ({speedup_std}x faster than Python).",
+                "3/ What about cross-session memory when your codebase changes?\n\nStandard RAG appends conflicting notes.\n\ncortex fuses Google's Titans (2501.00663) surprise momentum with Gated DeltaNet-2 (2605.22791) decoupled erase/write gates—giving 1.0000 cosine key overwrite & surgical erasure in 835 µs.",
                 "4/ Stop feeding 2,500 lines of noisy `pytest` / `cargo` output into your context window.\n\nOur SnapKV (2404.14469) Context Sieve uses 1D max-pooled observation clustering to compact logs by 98.8% (26,386 tokens saved in 4.25 ms) while keeping 100% of tracebacks & file:line pointers.",
                 "5/ Running local 7B–32B models on 16GB–32GB VRAM?\n\n• BitNet b1.58 (2402.17764) 2-bit ternary router prunes 80-95% of irrelevant MCP tools in 887 µs using zero multiplications.\n• Deterministic JSON repair fixes trailing commas, single quotes & stringified ints in <50 µs.",
-                "6/ Worried about an agent corrupting working files during a multi-file refactor?\n\nmojo-cortex includes a Content-Addressable SHA-256 Copy-on-Write Time Machine (`cortex_snapshot_create` / `rewind`) that atomically restores your workspace in <5 ms WITHOUT touching `.git` history.",
-                f"7/ Connect `mojo-cortex` to Claude Code, Cursor, or Windsurf in 10 seconds:\n\n`claude mcp add cortex -- python cortex.py mcp`\n\n• Zero external pip dependencies\n• 6 native Mojo 1.1.0 kernel suites\n• 600/600 Python-Mojo parity checks passing\n\nStar & try it here: {repo_url}"
+                "6/ Worried about an agent corrupting working files during a multi-file refactor?\n\ncortex includes a Content-Addressable SHA-256 Copy-on-Write Time Machine (`cortex_snapshot_create` / `rewind`) that atomically restores your workspace in <5 ms WITHOUT touching `.git` history.",
+                f"7/ Connect `cortex` to Claude Code, Cursor, or Windsurf in 10 seconds:\n\n`claude mcp add cortex -- python cortex.py mcp`\n\n• Zero external pip dependencies\n• 6 native Mojo 1.1.0 kernel suites\n• 600/600 Python-Mojo parity checks passing\n\nStar & try it here: {repo_url}"
             ]
         },
         "directory_submissions": {
@@ -318,7 +318,7 @@ All 6 Mojo kernel suites compile with **zero warnings** on Mojo 1.1.0 (`bash scr
                 {"name": "PulseMCP", "url": "https://www.pulsemcp.com/submit", "category": "Agent Harness"},
                 {"name": "MCP.so", "url": "https://mcp.so/submit", "category": "Developer Tools"}
             ],
-            "markdown_snippet": f"- **[mojo-cortex]({repo_url})** - Universal Prefrontal Cortex, Associative Memory (Titans + Gated DeltaNet-2), 98.8% SnapKV Log Sieve, {speedup_std}x Mojo 1.1.0 Knapsack Context Packer, CoW Time Machine & Safety Harness for AI Coding Agents."
+            "markdown_snippet": f"- **[cortex]({repo_url})** - Universal Prefrontal Cortex, Associative Memory (Titans + Gated DeltaNet-2), 98.8% SnapKV Log Sieve, {speedup_std}x Mojo 1.1.0 Knapsack Context Packer, CoW Time Machine & Safety Harness for AI Coding Agents."
         }
     }
 
@@ -371,7 +371,7 @@ def generate_control_center_html(payloads: dict, repo_url: str) -> str:
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>mojo-cortex — Autonomous Launch Control Center</title>
+<title>cortex — Autonomous Launch Control Center</title>
 <style>
   :root {{ --bg: #0b0f19; --card: #111827; --border: #1e293b; --accent: #38bdf8; --green: #4ade80; --purple: #c084fc; --text: #e2e8f0; --muted: #94a3b8; }}
   * {{ box-sizing: border-box; }}
@@ -395,7 +395,7 @@ def generate_control_center_html(payloads: dict, repo_url: str) -> str:
 <div class="header">
   <div>
     <span class="badge">AUTONOMOUS GROWTH ENGINE READY</span>
-    <h1>mojo-cortex Launch Control Center</h1>
+    <h1>cortex Launch Control Center</h1>
     <div style="color: var(--muted); font-size: 14px;">All copy dynamically populated from verified Mojo 1.1.0 (8189361e) &amp; Python 3.14 benchmarks.</div>
   </div>
   <div>
@@ -514,7 +514,7 @@ def publish_automated_channels(payloads: dict, repo_url: str, dry_run: bool = Fa
                 "Authorization": f"Bearer {gh_token}",
                 "Accept": "application/vnd.github+json",
                 "Content-Type": "application/json",
-                "User-Agent": "mojo-cortex-autopilot/1.1"
+                "User-Agent": "cortex-autopilot/1.1"
             }
         )
         try:
@@ -543,7 +543,7 @@ def publish_automated_channels(payloads: dict, repo_url: str, dry_run: bool = Fa
                 data=token_data,
                 headers={
                     "Authorization": f"Basic {auth_bytes}",
-                    "User-Agent": f"mojo-cortex-autopilot/1.1 by {r_user}"
+                    "User-Agent": f"cortex-autopilot/1.1 by {r_user}"
                 }
             )
             with urllib.request.urlopen(tok_req, timeout=10) as tr:
@@ -565,7 +565,7 @@ def publish_automated_channels(payloads: dict, repo_url: str, dry_run: bool = Fa
                     data=sub_data,
                     headers={
                         "Authorization": f"Bearer {access_token}",
-                        "User-Agent": f"mojo-cortex-autopilot/1.1 by {r_user}"
+                        "User-Agent": f"cortex-autopilot/1.1 by {r_user}"
                     }
                 )
                 with urllib.request.urlopen(sub_req, timeout=10) as sr:
@@ -638,7 +638,7 @@ def publish_automated_channels(payloads: dict, repo_url: str, dry_run: bool = Fa
         req = urllib.request.Request(
             "https://dev.to/api/articles",
             data=data,
-            headers={"Content-Type": "application/json", "api-key": devto_key, "User-Agent": "mojo-cortex-autopilot/1.1"}
+            headers={"Content-Type": "application/json", "api-key": devto_key, "User-Agent": "cortex-autopilot/1.1"}
         )
         try:
             with urllib.request.urlopen(req, timeout=10) as resp:
@@ -658,7 +658,7 @@ def publish_automated_channels(payloads: dict, repo_url: str, dry_run: bool = Fa
         req = urllib.request.Request(
             webhook_url,
             data=data,
-            headers={"Content-Type": "application/json", "User-Agent": "mojo-cortex-autopilot/1.1"}
+            headers={"Content-Type": "application/json", "User-Agent": "cortex-autopilot/1.1"}
         )
         try:
             with urllib.request.urlopen(req, timeout=10) as resp:
@@ -677,8 +677,8 @@ def main():
             sys.stdout.reconfigure(encoding="utf-8")
         except Exception:
             pass
-    parser = argparse.ArgumentParser(description="mojo-cortex Autonomous Launch & Marketing Autopilot")
-    parser.add_argument("--repo-url", default="https://github.com/Buzburg/mojo-cortex", help="Public GitHub repository URL")
+    parser = argparse.ArgumentParser(description="cortex Autonomous Launch & Marketing Autopilot")
+    parser.add_argument("--repo-url", default="https://github.com/Buzburg/cortex", help="Public GitHub repository URL")
     parser.add_argument("--publish", action="store_true", help="Execute live API publishing for configured credentials")
     args = parser.parse_args()
 
@@ -689,7 +689,7 @@ def main():
     pub_status = publish_automated_channels(payloads, args.repo_url, dry_run=not args.publish)
 
     print("=" * 72)
-    print("  [LAUNCH] mojo-cortex Autonomous Launch & Growth Autopilot Complete")
+    print("  [LAUNCH] cortex Autonomous Launch & Growth Autopilot Complete")
     print("=" * 72)
     print(f"  [+] Animated GitHub README SVG: {svg_path}")
     print(f"  [+] MCP Registry Manifests:     {', '.join(os.path.basename(m) for m in manifests)}")

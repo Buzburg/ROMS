@@ -1,4 +1,4 @@
-# Verification & Benchmark Report (`mojo-cortex` v1.1.0)
+# Verification & Benchmark Report (`cortex` v1.1.0)
 
 ## 1. Local Toolchain &Cross-Repo Integration Summary
 
@@ -17,7 +17,7 @@ Inspected and integrated native Mojo 1.1.0 (`8189361e`) mechanisms from:
 
 Command:
 ```bash
-wsl --exec bash "/mnt/d/Buzburg Files/Github/mojo-cortex/scripts/run_native_checks.sh"
+wsl --exec bash "/mnt/d/Buzburg Files/Github/cortex/scripts/run_native_checks.sh"
 ```
 
 Result:

@@ -1,5 +1,5 @@
 """
-Empirical Benchmark Suite for mojo-cortex
+Empirical Benchmark Suite for cortex
 Measures latency, throughput, compression ratio, and accuracy across all 6 Cortex engines.
 """
 
@@ -78,7 +78,7 @@ def main():
         avg_rt_us = ((time.perf_counter() - start) / rt_iters) * 1_000_000
 
         print("=" * 72)
-        print("                 mojo-cortex Empirical Benchmark Suite")
+        print("                 cortex Empirical Benchmark Suite")
         print("=" * 72)
         print(f"1. Titans + DeltaNet-2 Memory Recall: {avg_recall_us:.2f} us | Overwrite Cosine: {mem_res['post_write_cosine']:.4f}")
         print(f"2. SnapKV Context Sieve (2500 lines): {sieve_res['latency_ms']:.2f} ms | Saved: {sieve_res['compression_pct']}% ({sieve_res['tokens_saved']:,} tokens)")

@@ -1,5 +1,5 @@
 """
-mojond & ROMS Runtime Primitives for mojo-cortex:
+mojond & ROMS Runtime Primitives for cortex:
 - select_context: Bounded 0/1 knapsack context packing with failed-attempt warning reservation (ROMS)
 - PrefixIndex & prompt_lookup: Token-prefix trie & greedy speculative n-gram drafting (mojond)
 - TokenBudget & kv_bytes: Live token reservation & overflow-checked KV byte sizing (mojond)

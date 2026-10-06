@@ -1,5 +1,5 @@
 """
-mojo-cortex: The Universal Prefrontal Cortex, Associative Memory, & Safety Harness for AI Agents.
+cortex: The Universal Prefrontal Cortex, Associative Memory, & Safety Harness for AI Agents.
 """
 
 __version__ = "1.0.0"

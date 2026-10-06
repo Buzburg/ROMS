@@ -1,10 +1,10 @@
-# mojo-cortex 🧠⚡🛡️
+# cortex 🧠⚡🛡️
 
 > **The Universal Prefrontal Cortex, Associative Memory, & Safety Harness for AI Coding Agents & Local LLMs.**  
 > *Zero external dependencies • Native Model Context Protocol (MCP) Server • Bare-Metal Mojo 1.1.0 SIMD Kernels + Python SDK*
 
 <p align="center">
-  <img src="assets/terminal_demo.svg" alt="mojo-cortex animated terminal demo" width="100%"/>
+  <img src="assets/terminal_demo.svg" alt="cortex animated terminal demo" width="100%"/>
 </p>
 
 ---
@@ -16,11 +16,11 @@
 > 3. **Infinite Loops & Broken Workspaces:** Agents repeat failing commands 5 times in a row or corrupt working code with no way to undo just the agent's edits without wrecking `.git` history.
 > 4. **Local LLM Tool Failures:** 7B–32B local models choke when given 50+ MCP tools or emit broken JSON tool calls.
 >
-> **`mojo-cortex`** solves all four in a single zero-dependency package. Drop it into any MCP client or local agent loop in 10 seconds.
+> **`cortex`** solves all four in a single zero-dependency package. Drop it into any MCP client or local agent loop in 10 seconds.
 
 ---
 
-## ⚡ What `mojo-cortex` Gives Your Agent
+## ⚡ What `cortex` Gives Your Agent
 
 | Subsystem | Powered By (arXiv Breakthrough) | What It Does | Empirical Speed |
 | :--- | :--- | :--- | :--- |
@@ -44,7 +44,7 @@
                                           │ JSON-RPC 2.0 (MCP stdio) / CLI / SDK
                                           ▼
    ┌──────────────────────────────────────────────────────────────────────────────┐
-   │                                 mojo-cortex                                  │
+   │                                 cortex                                  │
    │                                                                              │
    │  ┌─────────────────────────┐  ┌─────────────────────────┐  ┌──────────────┐  │
    │  │ Titans + DeltaNet-2 Mem │  │  SnapKV Context Sieve   │  │ BitNet b1.58 │  │
@@ -85,16 +85,16 @@ Across **600 randomized Python-vs-Mojo parity tests** (`400` 0/1 knapsack + `200
 
 ### Claude Code
 ```bash
-claude mcp add cortex -- python /path/to/mojo-cortex/cortex.py mcp
+claude mcp add cortex -- python /path/to/cortex/cortex.py mcp
 ```
 
 ### Cursor / Windsurf / Claude Desktop (`mcp.json`)
 ```json
 {
   "mcpServers": {
-    "mojo-cortex": {
+    "cortex": {
       "command": "python",
-      "args": ["/path/to/mojo-cortex/cortex.py", "mcp"]
+      "args": ["/path/to/cortex/cortex.py", "mcp"]
     }
   }
 }

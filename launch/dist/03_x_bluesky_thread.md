@@ -6,8 +6,8 @@
 • Repeating failed repairs in loops
 • Broken local JSON tool calls
 
-Meet mojo-cortex (Mojo 1.1.0 + Python MCP):
-https://github.com/Buzburg/mojo-cortex
+Meet cortex (Mojo 1.1.0 + Python MCP):
+https://github.com/Buzburg/cortex
 
 ---
 
@@ -15,7 +15,7 @@ https://github.com/Buzburg/mojo-cortex
 
 Because greedy top-K context retrieval drops failed-attempt warnings when budgets tighten.
 
-mojo-cortex uses a native Mojo 1.1.0 0/1 Knapsack solver that reserves failed-attempt warnings FIRST—running in 0.171ms (25.61x faster than Python).
+cortex uses a native Mojo 1.1.0 0/1 Knapsack solver that reserves failed-attempt warnings FIRST—running in 0.171ms (25.61x faster than Python).
 
 ---
 
@@ -23,7 +23,7 @@ mojo-cortex uses a native Mojo 1.1.0 0/1 Knapsack solver that reserves failed-at
 
 Standard RAG appends conflicting notes.
 
-mojo-cortex fuses Google's Titans (2501.00663) surprise momentum with Gated DeltaNet-2 (2605.22791) decoupled erase/write gates—giving 1.0000 cosine key overwrite & surgical erasure in 835 µs.
+cortex fuses Google's Titans (2501.00663) surprise momentum with Gated DeltaNet-2 (2605.22791) decoupled erase/write gates—giving 1.0000 cosine key overwrite & surgical erasure in 835 µs.
 
 ---
 
@@ -42,11 +42,11 @@ Our SnapKV (2404.14469) Context Sieve uses 1D max-pooled observation clustering 
 
 6/ Worried about an agent corrupting working files during a multi-file refactor?
 
-mojo-cortex includes a Content-Addressable SHA-256 Copy-on-Write Time Machine (`cortex_snapshot_create` / `rewind`) that atomically restores your workspace in <5 ms WITHOUT touching `.git` history.
+cortex includes a Content-Addressable SHA-256 Copy-on-Write Time Machine (`cortex_snapshot_create` / `rewind`) that atomically restores your workspace in <5 ms WITHOUT touching `.git` history.
 
 ---
 
-7/ Connect `mojo-cortex` to Claude Code, Cursor, or Windsurf in 10 seconds:
+7/ Connect `cortex` to Claude Code, Cursor, or Windsurf in 10 seconds:
 
 `claude mcp add cortex -- python cortex.py mcp`
 
@@ -54,4 +54,4 @@ mojo-cortex includes a Content-Addressable SHA-256 Copy-on-Write Time Machine (`
 • 6 native Mojo 1.1.0 kernel suites
 • 600/600 Python-Mojo parity checks passing
 
-Star & try it here: https://github.com/Buzburg/mojo-cortex
+Star & try it here: https://github.com/Buzburg/cortex

@@ -50,4 +50,4 @@ def snapkv_score_positions(
 
 
 def main():
-    print("mojo-cortex Kernel 3 (SnapKV Observation-Window Sieve) initialized.")
+    print("cortex Kernel 3 (SnapKV Observation-Window Sieve) initialized.")

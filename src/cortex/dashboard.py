@@ -1,5 +1,5 @@
 """
-Interactive Dark-Mode HTML Telemetry & Neural Memory Dashboard Generator for mojo-cortex.
+Interactive Dark-Mode HTML Telemetry & Neural Memory Dashboard Generator for cortex.
 """
 
 import os
@@ -50,7 +50,7 @@ def generate_dashboard(cortex_dir: str = ".cortex", output_path: str = "cortex_d
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>mojo-cortex | Agent Prefrontal Cortex & Telemetry</title>
+  <title>cortex | Agent Prefrontal Cortex & Telemetry</title>
   <style>
     :root {{
       --bg: #0b0f19;
@@ -123,7 +123,7 @@ def generate_dashboard(cortex_dir: str = ".cortex", output_path: str = "cortex_d
 <body>
   <header>
     <div>
-      <h1>🧠 mojo-cortex Telemetry & Neural Memory Explorer</h1>
+      <h1>🧠 cortex Telemetry & Neural Memory Explorer</h1>
       <p class="subtitle">Titans Test-Time Memory • Gated DeltaNet-2 • BitNet b1.58 Router • SnapKV Sieve • Pre-Simulation Shield</p>
     </div>
     <span class="badge">v1.0.0 Active</span>

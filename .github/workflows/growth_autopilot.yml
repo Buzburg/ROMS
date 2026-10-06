@@ -41,7 +41,7 @@ jobs:
       - name: Upload Launch Control Center & Campaign Bundle
         uses: actions/upload-artifact@v4
         with:
-          name: mojo-cortex-launch-bundle
+          name: cortex-launch-bundle
           path: |
             launch/control_center.html
             launch/dist/

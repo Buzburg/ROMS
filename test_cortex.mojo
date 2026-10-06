@@ -1,4 +1,4 @@
-"""Native Mojo 1.1.0 verification suite for all five mojo-cortex kernel modules."""
+"""Native Mojo 1.1.0 verification suite for all five cortex kernel modules."""
 
 from std.collections import List
 from std.testing import assert_equal, assert_true
