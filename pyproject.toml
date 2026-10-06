@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=65.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mojo-cortex"
+version = "1.0.0"
+description = "The Universal Prefrontal Cortex, Associative Memory, & Safety Harness for AI Agents & Local LLMs"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [{name = "Buzburg AI", email = "dev@buzburg.ai"}]
+dependencies = []
+
+[project.scripts]
+cortex = "cortex.cli:run_cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,191 @@
+import os
+import sys
+import json
+import shutil
+import tempfile
+import unittest
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
+
+from cortex.memory import HybridNeuralMemory
+from cortex.sieve import ContextSieve
+from cortex.symdex import PolyglotSymdex
+from cortex.rewind import WorkspaceTimeMachine
+from cortex.shield import ExecutionShield
+from cortex.router import TernaryToolRouter
+from cortex.mcp_server import CortexMCPServer, MCP_TOOLS_SCHEMA
+from cortex.dashboard import generate_dashboard
+
+
+class TestMojoCortex(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.mkdtemp(prefix="cortex_test_")
+        self.cortex_dir = os.path.join(self.temp_dir, ".cortex")
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
+
+    def test_memory_titans_surprise_and_recall(self):
+        mem = HybridNeuralMemory(self.cortex_dir)
+        r1 = mem.remember("auth_provider", "oauth2_pkce_flow", category="security")
+        self.assertGreater(r1["surprise"], 0.1)
+        self.assertAlmostEqual(r1["post_write_cosine"], 1.0, places=4)
+
+        # Second write of same fact has near-zero surprise
+        r2 = mem.remember("auth_provider", "oauth2_pkce_flow", category="security")
+        self.assertLess(r2["surprise"], 1e-5)
+
+        rec = mem.recall("auth_provider")
+        self.assertTrue(rec["found"])
+        self.assertEqual(rec["value"], "oauth2_pkce_flow")
+        self.assertGreater(rec["confidence"], 0.95)
+
+    def test_memory_deltanet_overwrite_and_pure_erase(self):
+        mem = HybridNeuralMemory(self.cortex_dir)
+        mem.remember("db_host", "localhost_5432")
+        r_over = mem.remember("db_host", "prod_rds_cluster_01")
+        self.assertAlmostEqual(r_over["post_write_cosine"], 1.0, places=4)
+
+        rec = mem.recall("db_host")
+        self.assertEqual(rec["value"], "prod_rds_cluster_01")
+
+        # Pure Erase Gate
+        er = mem.erase("db_host")
+        self.assertTrue(er["erased"])
+        self.assertAlmostEqual(er["residual_magnitude"], 0.0, places=5)
+
+    def test_sieve_snapkv_log_compaction(self):
+        sieve = ContextSieve(self.cortex_dir)
+        lines = [f"Downloading package_dep_{i % 5} ... 100%" for i in range(300)]
+        lines[149] = '  File "src/auth/jwt.py", line 88, in verify_token'
+        lines[150] = "    raise ValueError('Invalid token signature')"
+        lines[151] = "ValueError: Invalid token signature at src/auth/jwt.py:88"
+        lines.append("Build failed with exit code 1.")
+        raw_log = "\n".join(lines)
+
+        res = sieve.compact(raw_log, max_lines=20)
+        self.assertGreater(res["compression_pct"], 80.0)
+        self.assertIn("src/auth/jwt.py", res["compacted_text"])
+        self.assertIn("Invalid token signature", res["compacted_text"])
+        self.assertIn("Build failed with exit code 1.", res["compacted_text"])
+
+    def test_symdex_polyglot_indexing_and_lookup(self):
+        py_file = os.path.join(self.temp_dir, "engine.py")
+        with open(py_file, "w", encoding="utf-8") as f:
+            f.write("class NeuralRouter:\n    pass\n\ndef dispatch_agent_task(task_id: int):\n    return True\n")
+
+        mojo_file = os.path.join(self.temp_dir, "kernel.mojo")
+        with open(mojo_file, "w", encoding="utf-8") as f:
+            f.write("struct SimdMatrix:\n    var dim: Int\n\ndef fast_dot_product():\n    pass\n")
+
+        sym = PolyglotSymdex(self.cortex_dir)
+        idx = sym.index_workspace(self.temp_dir)
+        self.assertEqual(idx["files_scanned"], 2)
+        self.assertEqual(idx["total_symbols"], 4)
+
+        lkp = sym.lookup("dispatch_agent_task")
+        self.assertGreaterEqual(lkp["matches_found"], 1)
+        self.assertEqual(lkp["matches"][0]["name"], "dispatch_agent_task")
+        self.assertEqual(lkp["matches"][0]["line"], 4)
+
+    def test_rewind_cow_snapshot_and_atomic_rollback(self):
+        target_file = os.path.join(self.temp_dir, "config.json")
+        with open(target_file, "w", encoding="utf-8") as f:
+            f.write('{"version": 1, "safe": true}')
+
+        tm = WorkspaceTimeMachine(self.cortex_dir)
+        snap = tm.snapshot("Clean state", workspace_root=self.temp_dir)
+        self.assertEqual(snap["id"], "snap_001")
+
+        # Corrupt the file
+        with open(target_file, "w", encoding="utf-8") as f:
+            f.write("CORRUPTED_BY_AGENT")
+
+        rw = tm.rewind("snap_001", workspace_root=self.temp_dir)
+        self.assertTrue(rw["success"])
+
+        with open(target_file, "r", encoding="utf-8") as f:
+            restored = f.read()
+        self.assertEqual(restored, '{"version": 1, "safe": true}')
+
+    def test_shield_hazard_blocking_and_loop_detection(self):
+        shield = ExecutionShield(self.cortex_dir)
+
+        # 1. Block destructive command
+        hz = shield.forecast_action("sudo rm -rf /var/lib/data", goal="clean logs")
+        self.assertTrue(hz["blocked"])
+        self.assertIn("BLOCKED_HAZARD", hz["verdict"])
+
+        # 2. Detect repetitive 3-turn agent loop
+        shield.forecast_action("pytest tests/test_login.py", goal="run unit tests")
+        shield.forecast_action("pytest tests/test_login.py", goal="run unit tests")
+        loop_res = shield.forecast_action("pytest tests/test_login.py", goal="run unit tests")
+        self.assertTrue(loop_res["blocked"])
+        self.assertIn("BLOCKED_LOOP", loop_res["verdict"])
+
+    def test_shield_tool_call_json_repair(self):
+        shield = ExecutionShield(self.cortex_dir)
+        messy = """
+        Sure! I will call the search tool now:
+        ```json
+        {
+          'name': 'cortex_symdex_lookup',
+          'arguments': {
+            'query': 'NeuralRouter',
+            'top_k': '5',
+          }
+        ```
+        """
+        schema = {
+            "properties": {
+                "query": {"type": "string"},
+                "top_k": {"type": "integer"}
+            }
+        }
+        rep = shield.repair_tool_call(messy, schema=schema)
+        self.assertTrue(rep["valid"])
+        self.assertEqual(rep["tool_call"]["name"], "cortex_symdex_lookup")
+        self.assertEqual(rep["tool_call"]["arguments"]["top_k"], 5)
+        self.assertIsInstance(rep["tool_call"]["arguments"]["top_k"], int)
+
+    def test_router_bitnet_ternary_pruning(self):
+        router = TernaryToolRouter()
+        res = router.route("rewind workspace to previous snapshot", MCP_TOOLS_SCHEMA, top_k=2)
+        self.assertEqual(res["selected_count"], 2)
+        names = [t["name"] for t in res["selected_tools"]]
+        self.assertIn("cortex_snapshot_rewind", names)
+
+    def test_mcp_server_jsonrpc_protocol(self):
+        server = CortexMCPServer(self.cortex_dir, self.temp_dir)
+
+        # 1. initialize
+        init_resp = server.handle_request({"jsonrpc": "2.0", "id": 1, "method": "initialize"})
+        self.assertEqual(init_resp["result"]["serverInfo"]["name"], "mojo-cortex")
+
+        # 2. tools/list
+        list_resp = server.handle_request({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
+        self.assertEqual(len(list_resp["result"]["tools"]), 8)
+
+        # 3. tools/call -> cortex_memory_remember
+        call_resp = server.handle_request({
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "tools/call",
+            "params": {
+                "name": "cortex_memory_remember",
+                "arguments": {"key": "api_version", "value": "v2.4"}
+            }
+        })
+        self.assertFalse(call_resp["result"]["isError"])
+
+    def test_dashboard_html_generation(self):
+        dash_file = os.path.join(self.temp_dir, "dash.html")
+        out = generate_dashboard(self.cortex_dir, dash_file)
+        self.assertTrue(os.path.exists(out))
+        with open(out, "r", encoding="utf-8") as f:
+            content = f.read()
+        self.assertIn("mojo-cortex Telemetry", content)
+
+
+if __name__ == "__main__":
+    unittest.main()
