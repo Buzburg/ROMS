@@ -193,14 +193,15 @@ def submit_awesome_pr(target_repo: str, my_repo_url: str, dry_run: bool = False)
 
     tmp = tempfile.mkdtemp(prefix="awesome_pr_")
     try:
-        print(f"[*] Forking {target_repo}...")
-        run_cmd(["gh", "repo", "fork", target_repo, "--clone=false"], cwd=tmp)
+        target_owner, repo_name = target_repo.split("/")
+        fork_name = repo_name if target_owner == "punkpeye" else f"{target_owner}-{repo_name}"
+        print(f"[*] Forking {target_repo} as {fork_name}...")
+        run_cmd(["gh", "repo", "fork", target_repo, "--fork-name", fork_name, "--clone=false"], cwd=tmp)
         _, owner, _ = run_cmd(["gh", "api", "user", "--jq", ".login"], cwd=tmp)
-        repo_name = target_repo.split("/")[1]
-        fork_url = f"https://github.com/{owner}/{repo_name}.git"
+        fork_url = f"https://github.com/{owner}/{fork_name}.git"
         upstream_url = f"https://github.com/{target_repo}.git"
 
-        clone_dir = os.path.join(tmp, repo_name)
+        clone_dir = os.path.join(tmp, fork_name)
         c_clone, _, e_clone = git_with_gh_auth(tmp, "clone", "--depth", "1", upstream_url, clone_dir)
         if c_clone != 0 or not os.path.exists(clone_dir):
             print(f"[-] Clone failed for {target_repo}: {e_clone}")
@@ -219,7 +220,13 @@ def submit_awesome_pr(target_repo: str, my_repo_url: str, dry_run: bool = False)
                 with open(readme_path, "w", encoding="utf-8", newline="\n") as f:
                     f.write(updated)
                 run_cmd(["git", "add", "README.md"], cwd=clone_dir)
-                run_cmd(["git", "commit", "-m", pr_title], cwd=clone_dir)
+                c_c, o_c, e_c = run_cmd(
+                    ["git", "-c", "user.name=Buzburg AI", "-c", "user.email=dev@buzburg.ai", "commit", "-m", pr_title],
+                    cwd=clone_dir
+                )
+                if c_c != 0:
+                    print(f"[-] Commit failed in {target_repo}: {e_c or o_c}")
+                    return
                 c_p, o_p, e_p = git_with_gh_auth(clone_dir, "push", "-u", fork_url, "HEAD:refs/heads/add-cortex", "--force")
                 if c_p != 0:
                     print(f"[-] Push to fork {fork_url} failed: {e_p or o_p}")
@@ -235,7 +242,11 @@ def submit_awesome_pr(target_repo: str, my_repo_url: str, dry_run: bool = False)
                     ],
                     cwd=clone_dir
                 )
-                print(f"[+] Opened PR on {target_repo}: {out or err}")
+                compare_url = f"https://github.com/{target_repo}/compare/{default_branch}...{owner}:{fork_name}:add-cortex?expand=1"
+                if code == 0:
+                    print(f"[+] Opened PR on {target_repo}: {out}")
+                else:
+                    print(f"[+] Pushed fork branch {owner}/{fork_name}:add-cortex -> 1-Click PR Ready: {compare_url}")
             else:
                 print(f"[*] {my_repo_url} already present in {target_repo}")
     finally:
