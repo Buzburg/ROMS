@@ -2,8 +2,8 @@ __pycache__/
 *.pyc
 .cortex/
 *.egg-info/
-dist/
-build/
+/dist/
+/build/
 cortex_dashboard.html
 cortex_test_*/
 cortex_bench_*/
