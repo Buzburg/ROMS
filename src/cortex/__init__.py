@@ -10,6 +10,14 @@ from .symdex import PolyglotSymdex
 from .rewind import WorkspaceTimeMachine
 from .shield import ExecutionShield
 from .router import TernaryToolRouter
+from .runtime import (
+    select_context,
+    prompt_lookup,
+    PrefixIndex,
+    TokenBudget,
+    kv_bytes,
+    BinaryVector,
+)
 
 __all__ = [
     "HybridNeuralMemory",
@@ -18,4 +26,10 @@ __all__ = [
     "WorkspaceTimeMachine",
     "ExecutionShield",
     "TernaryToolRouter",
+    "select_context",
+    "prompt_lookup",
+    "PrefixIndex",
+    "TokenBudget",
+    "kv_bytes",
+    "BinaryVector",
 ]

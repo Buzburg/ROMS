@@ -26,6 +26,8 @@
 | **4. CoW Time Machine** | Content-Addressable SHA-256 Blob Store | Takes instant snapshots before risky edits and atomically rewinds broken workspaces without touching `.git` | **`< 5 ms`** rollback |
 | **5. Execution Shield** | Pre-Simulation Trajectory Forecaster | Blocks destructive commands (`rm -rf`, `DROP DATABASE`, `--force`), halts 3-turn agent loops, and repairs broken JSON tool calls | **`7.0 ms`** |
 | **6. Ternary Tool Router** | **BitNet b1.58** ([2402.17764](https://arxiv.org/abs/2402.17764)) Multiplier-Free GEMV | Prunes 100+ MCP tools down to the top-K relevant schemas using 2-bit packed ternary addition/subtraction | **`887 µs`** (75–95% pruned) |
+| **7. Knapsack Context Packer & 1-Bit Search** | **ROMS** Native Mojo 1.1.0 Engine | Bounded 0/1 dynamic-programming knapsack that **reserves failed-attempt warnings first** + 1-bit `BinaryVector` (`32x` compression, bitwise XOR + popcount) | **`0.171 ms`** (**`25.61x`** faster in Mojo) |
+| **8. Speculative Prompt Lookup & Prefix Trie** | **mojond** Native Mojo 1.1.0 Runtime | Parameter-free greedy n-gram speculative token drafting (`prompt_lookup`), `PrefixIndex` cache slot trie, and `TokenBudget` admission controller | **`0.029 ms`** (**`3.22x`** faster in Mojo) |
 
 ---
 
@@ -50,8 +52,28 @@
    │  │ • PY/MOJO/RS/TS/GO/CPP  │  │  • SHA-256 CAS Blobs    │  │ • Loop Break │  │
    │  │ • 227 µs Symbol Lookup  │  │  • Git-Safe Atomic Undo │  │ • JSON Fixer │  │
    │  └─────────────────────────┘  └─────────────────────────┘  └──────────────┘  │
+   │  ┌────────────────────────────────────┐  ┌────────────────────────────────┐  │
+   │  │ ROMS Knapsack & 1-Bit BinaryVector │  │ mojond PrefixIndex & Drafting  │  │
+   │  │ • 25.61x Native Mojo 1.1.0 Speedup │  │ • 3.22x Speculative N-Gram     │  │
+   │  │ • Failed-Attempt Warning Reserved  │  │ • Overflow-Checked KV Budget   │  │
+   │  └────────────────────────────────────┘  └────────────────────────────────┘  │
    └──────────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 🔥 Real Native Mojo 1.1.0 (`8189361e`) vs. Python Benchmarks
+
+All 6 Mojo kernel suites (`kernels/*.mojo`) compile with **zero warnings** on `Mojo 1.1.0 (8189361e)` and expose an in-process Python-to-Mojo bridge via `std.python.bindings.PythonModuleBuilder` (`kernels/cortex_bindings.mojo`).
+
+Across **600 randomized Python-vs-Mojo parity tests** (`400` 0/1 knapsack + `200` speculative prompt-lookup cases), native Mojo matches Python **100% bit-for-bit**:
+
+| Workload | Budget / Window | Python 3.14.7 Median (`ms`) | Native Mojo 1.1.0 Median (`ms`) | Measured Speedup |
+| :--- | :--- | ---: | ---: | ---: |
+| **0/1 Knapsack Context Packing (`tight-20`)** | `2,000` chars | `0.164 ms` | **`0.017 ms`** | **`9.66x`** |
+| **0/1 Knapsack Context Packing (`standard-20`)** | `6,000` chars | `4.379 ms` | **`0.171 ms`** | **`25.61x`** |
+| **0/1 Knapsack Context Packing (`large-20`)** | `18,000` chars | `20.849 ms` | **`0.925 ms`** | **`22.55x`** |
+| **Speculative Prompt Lookup (`prompt_lookup_512`)** | `512` tok (`w=4, k=4`) | `0.092 ms` | **`0.029 ms`** | **`3.22x`** |
 
 ---
 
@@ -74,7 +96,7 @@ claude mcp add cortex -- python /path/to/mojo-cortex/cortex.py mcp
 }
 ```
 
-Once connected, your agent automatically gains 8 native tools:
+Once connected, your agent automatically gains 10 native tools:
 - `cortex_memory_remember` — Store or cleanly overwrite project facts in Titans + DeltaNet-2 memory
 - `cortex_memory_recall` — Sub-millisecond associative memory recall
 - `cortex_memory_erase` — Surgically erase obsolete keys via DeltaNet-2 pure erase gate
@@ -83,6 +105,8 @@ Once connected, your agent automatically gains 8 native tools:
 - `cortex_snapshot_create` — Take a copy-on-write checkpoint before risky edits
 - `cortex_snapshot_rewind` — Atomically roll back workspace state without touching `.git`
 - `cortex_shield_forecast` — Pre-execution hazard firewall and cyclic loop detector
+- `cortex_context_pack` — Optimal 0/1 knapsack context packer reserving failed-attempt warnings first (`ROMS`)
+- `cortex_prompt_lookup` — Parameter-free greedy n-gram speculative token drafter (`mojond`)
 
 ---
 
@@ -109,7 +133,11 @@ python cortex.py repair --raw "```json {'name': 'lookup', 'arguments': {'query':
 # 5. Prune MCP tool schemas via BitNet b1.58 multiplier-free ternary router
 python cortex.py route --query "rewind broken workspace files to snapshot" --top-k 2
 
-# 6. View system telemetry & generate dark-mode HTML observability dashboard
+# 6. Optimal 0/1 Knapsack Context Packing (ROMS) & Speculative Prompt Lookup (mojond)
+python cortex.py pack --costs "50,40,30" --values "100,60,50" --budget 70 --required 2
+python cortex.py draft --tokens "1,2,3,4,5,2,3" --ngram 2 --budget 2
+
+# 7. View system telemetry & generate dark-mode HTML observability dashboard
 python cortex.py status
 python cortex.py dashboard --out cortex_dashboard.html
 ```
@@ -119,11 +147,14 @@ python cortex.py dashboard --out cortex_dashboard.html
 ## 🧪 Testing & Benchmarks
 
 ```bash
-# Run full 10-test unit & MCP protocol suite
-python tests/test_cortex.py
+# Run full 12-test Python unit & MCP protocol suite
+python tests/test_cortex.py -v
 
-# Run empirical benchmark suite across all 6 engines
+# Run empirical Python benchmark suite across all subsystems
 python benchmarks/run_benchmarks.py
+
+# Run native Mojo 1.1.0 kernel verification & 600-case Python/Mojo bridge benchmark
+bash scripts/run_native_checks.sh
 ```
 
 ---

@@ -10,6 +10,7 @@ from .sieve import ContextSieve
 from .symdex import PolyglotSymdex
 from .rewind import WorkspaceTimeMachine
 from .shield import ExecutionShield
+from .runtime import select_context, prompt_lookup
 
 MCP_TOOLS_SCHEMA = [
     {
@@ -103,6 +104,33 @@ MCP_TOOLS_SCHEMA = [
             },
             "required": ["action"]
         }
+    },
+    {
+        "name": "cortex_context_pack",
+        "description": "Optimal 0/1 dynamic-programming knapsack context selector (ROMS engine) that reserves the highest-ranked failed-attempt warning first.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "costs": {"type": "array", "items": {"type": "integer"}, "description": "Character/token costs of candidate chunks"},
+                "values": {"type": "array", "items": {"type": "integer"}, "description": "Relevance value scores of candidate chunks"},
+                "budget": {"type": "integer", "description": "Maximum character/token budget"},
+                "required_index": {"type": "integer", "default": -1, "description": "Mandatory failed-attempt warning index (-1 if none)"}
+            },
+            "required": ["costs", "values", "budget"]
+        }
+    },
+    {
+        "name": "cortex_prompt_lookup",
+        "description": "Parameter-free greedy prompt-lookup speculative token drafter (mojond engine) matching trailing n-gram windows.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "tokens": {"type": "array", "items": {"type": "integer"}, "description": "Prompt token sequence"},
+                "max_ngram": {"type": "integer", "default": 4},
+                "draft_budget": {"type": "integer", "default": 4}
+            },
+            "required": ["tokens"]
+        }
     }
 ]
 
@@ -127,7 +155,7 @@ class CortexMCPServer:
                 "id": req_id,
                 "result": {
                     "protocolVersion": "2024-11-05",
-                    "serverInfo": {"name": "mojo-cortex", "version": "1.0.0"},
+                    "serverInfo": {"name": "mojo-cortex", "version": "1.1.0"},
                     "capabilities": {"tools": {}}
                 }
             }
@@ -187,6 +215,25 @@ class CortexMCPServer:
             return self.rewind.rewind(args["snapshot_id"], self.workspace_root)
         elif name == "cortex_shield_forecast":
             return self.shield.forecast_action(args["action"], goal=args.get("goal"))
+        elif name == "cortex_context_pack":
+            selected = select_context(
+                [int(c) for c in args["costs"]],
+                [int(v) for v in args["values"]],
+                int(args["budget"]),
+                int(args.get("required_index", -1)),
+            )
+            return {
+                "selected_indices": selected,
+                "total_cost": sum(int(args["costs"][i]) for i in selected),
+                "total_value": sum(int(args["values"][i]) for i in selected),
+            }
+        elif name == "cortex_prompt_lookup":
+            drafted = prompt_lookup(
+                [int(t) for t in args["tokens"]],
+                int(args.get("max_ngram", 4)),
+                int(args.get("draft_budget", 4)),
+            )
+            return {"drafted_tokens": drafted, "count": len(drafted)}
         else:
             raise ValueError(f"Unknown MCP tool: {name}")
 

@@ -13,6 +13,14 @@ from cortex.symdex import PolyglotSymdex
 from cortex.rewind import WorkspaceTimeMachine
 from cortex.shield import ExecutionShield
 from cortex.router import TernaryToolRouter
+from cortex.runtime import (
+    select_context,
+    prompt_lookup,
+    PrefixIndex,
+    TokenBudget,
+    kv_bytes,
+    BinaryVector,
+)
 from cortex.mcp_server import CortexMCPServer, MCP_TOOLS_SCHEMA
 from cortex.dashboard import generate_dashboard
 
@@ -164,7 +172,7 @@ class TestMojoCortex(unittest.TestCase):
 
         # 2. tools/list
         list_resp = server.handle_request({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
-        self.assertEqual(len(list_resp["result"]["tools"]), 8)
+        self.assertEqual(len(list_resp["result"]["tools"]), 10)
 
         # 3. tools/call -> cortex_memory_remember
         call_resp = server.handle_request({
@@ -177,6 +185,55 @@ class TestMojoCortex(unittest.TestCase):
             }
         })
         self.assertFalse(call_resp["result"]["isError"])
+
+        # 4. tools/call -> cortex_context_pack (ROMS)
+        pack_resp = server.handle_request({
+            "jsonrpc": "2.0",
+            "id": 4,
+            "method": "tools/call",
+            "params": {
+                "name": "cortex_context_pack",
+                "arguments": {"costs": [50, 40, 30], "values": [100, 60, 50], "budget": 70, "required_index": 2}
+            }
+        })
+        self.assertFalse(pack_resp["result"]["isError"])
+        pack_data = json.loads(pack_resp["result"]["content"][0]["text"])
+        self.assertEqual(pack_data["selected_indices"], [1, 2])
+
+    def test_roms_knapsack_and_binary_vector(self):
+        # 1. 0/1 Knapsack Context Selector with failed-attempt warning reservation
+        sel = select_context([50, 40, 30], [100, 60, 50], 70, required=2)
+        self.assertEqual(sel, [1, 2])
+
+        # 2. 1-bit BinaryVector (32x compression, 48 bytes for 384 dims)
+        v1 = [1.0 if i % 2 == 0 else -1.0 for i in range(384)]
+        v2 = [-x for x in v1]
+        b1 = BinaryVector(v1)
+        b2 = BinaryVector(v2)
+        self.assertEqual(b1.hamming_distance(b1), 0)
+        self.assertEqual(b1.hamming_distance(b2), 384)
+        self.assertAlmostEqual(b1.similarity(b1), 1.0, places=5)
+        self.assertAlmostEqual(b1.similarity(b2), 0.0, places=5)
+
+    def test_mojond_prefix_index_prompt_lookup_and_budget(self):
+        # 1. PrefixIndex trie
+        trie = PrefixIndex()
+        trie.insert([10, 20, 30, 40], 4, 11)
+        trie.insert([10, 20, 99], 3, 22)
+        self.assertEqual(trie.match([10, 20, 30, 77]), (11, 3))
+
+        # 2. Speculative prompt_lookup
+        draft = prompt_lookup([1, 2, 3, 4, 5, 2, 3], window=2, limit=2)
+        self.assertEqual(draft, [4, 5])
+
+        # 3. TokenBudget & kv_bytes
+        self.assertEqual(kv_bytes(32, 8, 128, 512, 2), 67108864)
+        budget = TokenBudget(100)
+        self.assertTrue(budget.available(60))
+        budget.acquire(60)
+        self.assertFalse(budget.available(50))
+        budget.release(30)
+        self.assertTrue(budget.available(70))
 
     def test_dashboard_html_generation(self):
         dash_file = os.path.join(self.temp_dir, "dash.html")

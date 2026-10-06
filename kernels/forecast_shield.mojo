@@ -1,8 +1,4 @@
-"""
-mojo-cortex Kernel 4: Pre-Simulation Trajectory Forecaster & Loop Circuit Breaker
-Detects cyclic agent attractor loops, evaluates goal alignment before tool execution,
-and blocks destructive actions in <15 microseconds.
-"""
+"""Mojo-cortex Kernel 4: Pre-Simulation Trajectory Forecaster & Loop Circuit Breaker."""
 
 from std.collections import List
 from std.math import sqrt
@@ -26,10 +22,7 @@ def evaluate_shield_kernel(
     hazard_score: Float32,
     min_p_success: Float32 = 0.45
 ) -> ShieldVerdict:
-    """
-    Computes goal alignment, cyclic repetition similarity with previous turn,
-    and composite pre-execution safety verdict.
-    """
+    """Computes goal alignment, cyclic repetition similarity, and pre-execution safety verdict."""
     var dot_goal = Float32(0.0)
     var dot_prev = Float32(0.0)
     var norm_cand = Float32(0.0)

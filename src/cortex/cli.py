@@ -12,6 +12,7 @@ from .symdex import PolyglotSymdex
 from .rewind import WorkspaceTimeMachine
 from .shield import ExecutionShield
 from .router import TernaryToolRouter
+from .runtime import select_context, prompt_lookup
 from .mcp_server import CortexMCPServer, MCP_TOOLS_SCHEMA
 from .dashboard import generate_dashboard
 
@@ -79,14 +80,27 @@ def run_cli():
     rt_p.add_argument("--query", required=True)
     rt_p.add_argument("--top-k", type=int, default=3)
 
-    # 12. Dashboard
+    # 12. Pack (ROMS 0/1 Knapsack Context Selector)
+    pck_p = subparsers.add_parser("pack", help="Optimal 0/1 knapsack context packing with warning reservation (ROMS)")
+    pck_p.add_argument("--costs", required=True, help="Comma-separated chunk costs")
+    pck_p.add_argument("--values", required=True, help="Comma-separated chunk relevance values")
+    pck_p.add_argument("--budget", type=int, required=True, help="Token/character budget")
+    pck_p.add_argument("--required", type=int, default=-1, help="Mandatory failed-attempt warning index")
+
+    # 13. Draft (mojond Speculative Prompt Lookup)
+    drf_p = subparsers.add_parser("draft", help="Parameter-free prompt-lookup speculative token drafting (mojond)")
+    drf_p.add_argument("--tokens", required=True, help="Comma-separated token IDs")
+    drf_p.add_argument("--ngram", type=int, default=4)
+    drf_p.add_argument("--budget", type=int, default=4)
+
+    # 14. Dashboard
     dash_p = subparsers.add_parser("dashboard", help="Generate standalone dark-mode HTML observability dashboard")
     dash_p.add_argument("--out", default="cortex_dashboard.html")
 
-    # 13. MCP Server
+    # 15. MCP Server
     subparsers.add_parser("mcp", help="Start JSON-RPC 2.0 Model Context Protocol (MCP) server on stdio")
 
-    # 14. Status
+    # 16. Status
     subparsers.add_parser("status", help="Display complete Cortex telemetry & subsystem health")
 
     args = parser.parse_args()
@@ -159,6 +173,17 @@ def run_cli():
         print(f"[+] BitNet b1.58 Ternary Router selected {res['selected_count']}/{res['total_tools']} tools ({res['token_reduction_pct']}% schema pruned in {res['latency_us']:.1f} us):")
         for t in res["selected_tools"]:
             print(f"    - {t['name']}: {t['description']}")
+
+    elif args.command == "pack":
+        costs = [int(x.strip()) for x in args.costs.split(",") if x.strip()]
+        values = [int(x.strip()) for x in args.values.split(",") if x.strip()]
+        sel = select_context(costs, values, args.budget, args.required)
+        print(f"[+] ROMS 0/1 Knapsack Context Selector chose indices {sel} (cost={sum(costs[i] for i in sel)}/{args.budget}, value={sum(values[i] for i in sel)})")
+
+    elif args.command == "draft":
+        tokens = [int(x.strip()) for x in args.tokens.split(",") if x.strip()]
+        drafted = prompt_lookup(tokens, args.ngram, args.budget)
+        print(f"[+] mojond Speculative Prompt Lookup drafted {len(drafted)} tokens: {drafted}")
 
     elif args.command == "dashboard":
         out = generate_dashboard(output_path=args.out)

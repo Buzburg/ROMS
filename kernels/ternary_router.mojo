@@ -1,8 +1,4 @@
-"""
-mojo-cortex Kernel 2: BitNet b1.58 Multiplier-Free Ternary Tool Router
-Prunes 100+ MCP tools down to the top-K relevant tools using 2-bit packed ternary embeddings
-and pure integer addition/subtraction (arXiv:2402.17764 & arXiv:2410.16144).
-"""
+"""Mojo-cortex Kernel 2: BitNet b1.58 Multiplier-Free Ternary Tool Router."""
 
 from std.collections import List
 
@@ -20,10 +16,7 @@ def score_tool_multiplier_free(
     sig: TernaryToolSignature,
     query_int8: List[Int]
 ) -> Float32:
-    """
-    Computes dot product between 2-bit packed ternary tool embedding and Int8 query vector
-    using strictly integer additions and subtractions.
-    """
+    """Computes dot product between 2-bit packed ternary tool embedding and Int8 query vector."""
     var int_acc: Int = 0
     for c in range(ROUTER_DIM):
         var byte_idx = c // 4

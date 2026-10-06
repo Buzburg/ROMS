@@ -1,0 +1,48 @@
+{
+  "python": "3.14.7",
+  "machine": "x86_64",
+  "knapsack_parity_cases": 400,
+  "prompt_lookup_parity_cases": 200,
+  "invalid_inputs_rejected": 5,
+  "samples": 9,
+  "cases": [
+    {
+      "case": "tight-20",
+      "records": 20,
+      "budget_chars": 2000,
+      "python_ms": 0.16426,
+      "mojo_ms": 0.017012,
+      "speedup_x": 9.66,
+      "selected": 2
+    },
+    {
+      "case": "standard-20",
+      "records": 20,
+      "budget_chars": 6000,
+      "python_ms": 4.379378,
+      "mojo_ms": 0.170983,
+      "speedup_x": 25.61,
+      "selected": 7
+    },
+    {
+      "case": "large-20",
+      "records": 20,
+      "budget_chars": 18000,
+      "python_ms": 20.849233,
+      "mojo_ms": 0.924635,
+      "speedup_x": 22.55,
+      "selected": 9
+    }
+  ],
+  "prompt_lookup_512": {
+    "python_ms": 0.091843,
+    "mojo_ms": 0.028554,
+    "speedup_x": 3.22,
+    "drafted_tokens": [
+      99,
+      100,
+      101,
+      102
+    ]
+  }
+}

@@ -1,5 +1,5 @@
 """
-mojo-cortex Kernel 1: Hybrid Titans + Gated DeltaNet-2 Neural Memory
+Mojo-cortex Kernel 1: Hybrid Titans + Gated DeltaNet-2 Neural Memory.
 Combines Google's "Titans: Learning to Memorize at Test Time" (arXiv:2501.00663)
 with "Gated DeltaNet-2: Decoupling Erase and Write in Linear Attention" (arXiv:2605.22791).
 """
@@ -52,14 +52,7 @@ def fused_titans_deltanet_step(
     eta_momentum: Float32 = 0.25,
     gamma_decay: Float32 = 0.999
 ) -> MemoryStepResult:
-    """
-    Executes the hybrid Gated DeltaNet-2 + Titans memory update:
-      1. Recall existing projection: v_old = M_{t-1} * k_t
-      2. Compute surprise residual:  e_t = v_old - v_t
-      3. Compute DeltaNet-2 target:  delta_v = beta_write * v_t - (gamma_decay * alpha_erase) * v_old
-      4. Update surprise momentum:   S_t = eta * S_{t-1} + delta_v * k_t^T
-      5. Apply state update:         M_t = gamma_decay * M_{t-1} + delta_v * k_t^T + (1 - alpha_erase) * S_t
-    """
+    """Executes the hybrid Gated DeltaNet-2 + Titans memory update."""
     var v_old = recall_vector(state, key)
     var surprise = Float32(0.0)
     for i in range(HEAD_DIM):

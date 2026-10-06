@@ -1,8 +1,4 @@
-"""
-mojo-cortex Kernel 3: SnapKV Observation-Window Clustering & Log Sieve
-Compresses long context prompts and 5,000-line terminal logs by scoring observation-window
-attention alignment and information entropy (arXiv:2404.14469).
-"""
+"""Mojo-cortex Kernel 3: SnapKV Observation-Window Clustering & Log Sieve."""
 
 from std.collections import List
 from std.math import sqrt
@@ -16,11 +12,7 @@ def snapkv_score_positions(
     obs_window_size: Int = 8,
     pool_kernel: Int = 3
 ) -> List[Float32]:
-    """
-    Computes SnapKV importance scores for each prompt position based on attention
-    received from the trailing observation window, followed by 1D max-pooling
-    to preserve contiguous local semantic clusters.
-    """
+    """Computes SnapKV importance scores for each prompt position with 1D max-pooling."""
     var raw_scores = List[Float32](length=num_tokens, fill=0.0)
     var obs_start = num_tokens - obs_window_size
     if obs_start < 0:
