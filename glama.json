@@ -1,0 +1,14 @@
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": [
+    "Buzburg"
+  ],
+  "name": "mojo-cortex",
+  "description": "Universal Prefrontal Cortex, Associative Memory (Titans + Gated DeltaNet-2), 98.8% SnapKV Log Sieve, 25.61x Mojo 1.1.0 Knapsack Context Packer, CoW Time Machine & Safety Shield for AI Coding Agents.",
+  "categories": [
+    "memory",
+    "developer-tools",
+    "context-optimization",
+    "security"
+  ]
+}

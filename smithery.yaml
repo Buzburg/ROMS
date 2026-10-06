@@ -1,0 +1,17 @@
+# Smithery.ai MCP Registry Auto-Deployment Manifest
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      workspaceRoot:
+        type: string
+        description: Root path of the workspace to protect and index
+        default: "."
+  commandFunction:
+    |-
+    (config) => ({
+      command: 'python',
+      args: ['cortex.py', 'mcp'],
+      env: { CORTEX_WORKSPACE: config.workspaceRoot || '.' }
+    })

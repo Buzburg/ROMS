@@ -1,7 +1,11 @@
 # mojo-cortex 🧠⚡🛡️
 
 > **The Universal Prefrontal Cortex, Associative Memory, & Safety Harness for AI Coding Agents & Local LLMs.**  
-> *Zero external dependencies • Native Model Context Protocol (MCP) Server • Bare-Metal Mojo SIMD Kernels + Python SDK*
+> *Zero external dependencies • Native Model Context Protocol (MCP) Server • Bare-Metal Mojo 1.1.0 SIMD Kernels + Python SDK*
+
+<p align="center">
+  <img src="assets/terminal_demo.svg" alt="mojo-cortex animated terminal demo" width="100%"/>
+</p>
 
 ---
 

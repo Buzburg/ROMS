@@ -1,0 +1,50 @@
+name: Growth & Release Autopilot
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      publish_live:
+        description: "Publish live to configured APIs (Discord, Bluesky, Dev.to)"
+        required: false
+        default: "false"
+
+jobs:
+  launch-autopilot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run 12-Test Unit & MCP Protocol Verification
+        run: python tests/test_cortex.py -v
+
+      - name: Generate Animated SVG, Registry Manifests & Campaign Payloads
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+          BLUESKY_HANDLE: ${{ secrets.BLUESKY_HANDLE }}
+          BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
+        run: |
+          if [ "${{ github.event.inputs.publish_live }}" = "true" ] || [ "${{ github.event_name }}" = "release" ]; then
+            python launch/autopilot.py --repo-url "https://github.com/${{ github.repository }}" --publish
+          else
+            python launch/autopilot.py --repo-url "https://github.com/${{ github.repository }}"
+          fi
+
+      - name: Upload Launch Control Center & Campaign Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: mojo-cortex-launch-bundle
+          path: |
+            launch/control_center.html
+            launch/dist/
+            assets/terminal_demo.svg
+            smithery.yaml
+            glama.json
