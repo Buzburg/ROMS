@@ -1,5 +1,35 @@
 # ROMS 🕹️🧠⚡🛡️
 
+**Give your coding agent useful context and a way to recover a known working file.** ROMS brings local knowledge, project memory, log filtering, code lookup, and recovery tools into an agent's workflow.
+
+## Try one useful thing first
+
+From a downloaded or cloned checkout, run this with **Python 3.11+**. No installation, account, model, GPU, or network connection is needed:
+
+```bash
+python -I -S -B scripts/demo_first_run.py
+```
+
+The demo creates a temporary invoice example, introduces a known bad edit, and runs a real failing check. ROMS finds the exception in the noisy log, locates the invoice function, and restores the original file. The check runs again to confirm the recovery, then the temporary files are removed. It never takes a path to your own project.
+
+```text
+PASS  Original invoice check: 1550 cents.
+PASS  Known bad edit detected: 1500 cents instead of 1550.
+PASS  Log: 204 lines -> 12 selected source lines (13 including omission markers).
+      Kept the actual exception and invoice.py file pointer.
+PASS  Located invoice_total_cents at invoice.py:1.
+PASS  Restored original bytes; the invoice check passes again.
+PASS  Temporary files removed.
+```
+
+Use `python -I -S -B scripts/demo_first_run.py --json` to inspect the complete captured failure log, compacted log, and before/after source hashes. A failed check returns a nonzero exit code.
+
+This demonstrates three existing Python tools on a controlled fixture. It does not demonstrate autonomous repair, model quality, GPU performance, or safe rollback of arbitrary concurrent edits. [What the demo verifies](docs/first-run-demo.md) · [Connect an agent over MCP](#-10-second-mcp-setup-claude-code-cursor-windsurf) · [Advanced CLI and Omarchy setup](#-prefrontal-cli--omarchy-os-quickstart)
+
+## Architecture and research context
+
+The architecture and performance figures below describe the wider project and its separate experiments. They are not measured by the first-run demo.
+
 > **RAG • OKF • MCP • Skills — The Unified Prefrontal Cortex, Holographic Memory, & Local AI OS Harness.**  
 > *Native Model Context Protocol (MCP) Server • Bare-Metal Mojo 1.1.0 SIMD Kernels • Hybrid SQLite/VSA RAG • 280 Skill Cartridges • Custom Omarchy OS Daemon*
 
