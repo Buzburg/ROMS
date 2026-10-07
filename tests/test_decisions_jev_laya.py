@@ -1,7 +1,4 @@
-"""
-Automated tests for ROMS Tri-Layer System-1 Decision Engine
-(Jev / Laya + RWKV-7 Goose O(1) State + BERTopic c-TF-IDF + Mojo Calibration)
-"""
+"""Numerical and advisory behavior checks for the Python Decision Maker."""
 
 import json
 import math
@@ -23,7 +20,7 @@ from app.decisions import (
 from app.prefrontal_cortex import main as roms_cli_main
 
 
-def test_mojo_exact_decide_and_rank_options():
+def test_normalized_decide_and_rank_options():
     """Verifies temperature-scaled softmax, margin, Shannon concentration, and abstention gates."""
     d_confident = decide([4.2, 0.5, -1.0], temperature=0.8, threshold=0.60, min_margin=0.15)
     assert d_confident.index == 0
@@ -44,7 +41,7 @@ def test_mojo_exact_decide_and_rank_options():
 
 
 def test_sglang_openjev_logprob_distribution():
-    """Verifies single-token logprob extraction compatible with SGLang / OpenJev."""
+    """Verifies the standalone parser against a synthetic metadata fixture."""
     meta = {
         "completion_tokens": 1,
         "finish_reason": {"type": "length"},
@@ -56,23 +53,26 @@ def test_sglang_openjev_logprob_distribution():
     assert math.isclose(sum(probs), 1.0, rel_tol=1e-6)
 
 
-def test_rwkv7_goose_o1_state_forking():
-    """Verifies constant-size (~4.6KB) WKV-7 state folding and zero-copy forking."""
+def test_hashed_state_forking():
+    """Verifies fixed matrix shape and copied state, not model inference."""
     goose = GooseStateDecisionHead(state_dim=24)
-    meta = goose.ingest_context("RWKV-7 Goose folds 100k tokens into a constant O(1) recurrent state.")
+    meta = goose.ingest_context("A deterministic word feature sketch uses a fixed matrix shape.")
     assert meta["ingested_tokens"] > 5
     assert meta["state_bytes"] == 24 * 24 * 8  # 4,608 bytes (~4.5 KB)
 
     fork_a = goose.fork_state()
     fork_b = goose.fork_state()
     assert fork_a == fork_b
-    vec_a = goose.readout_vector(fork_a, "What state size does RWKV-7 use?")
+    assert fork_a is not fork_b and fork_a is not goose.state
+    fork_b[0] += 1.0
+    assert fork_a[0] == goose.state[0] and fork_a[0] != fork_b[0]
+    vec_a = goose.readout_vector(fork_a, "What state size does this sketch use?")
     assert len(vec_a) == 24
     assert math.isclose(sum(x * x for x in vec_a), 1.0, rel_tol=1e-5)
 
 
-def test_jev_laya_multi_question_batch_choice_noul_score():
-    """Verifies simultaneous `choice`, `noul`, and `score` System-1 evaluation in one pass."""
+def test_multi_question_batch_choice_noul_score():
+    """Verifies sequential choice, yes/no, and score evaluation in one call."""
     with tempfile.TemporaryDirectory() as tmp:
         engine = ROMSDecisionEngine(state_dir=tmp)
         state = {
@@ -125,8 +125,8 @@ def test_jev_laya_multi_question_batch_choice_noul_score():
         assert r_score["score_normalized"] > 0.60
 
 
-def test_bertopic_open_set_discovery_on_abstention():
-    """Verifies that abstained decisions automatically cluster into BERTopic c-TF-IDF topics."""
+def test_topic_discovery_on_abstention():
+    """Verifies heuristic candidate grouping after abstention."""
     with tempfile.TemporaryDirectory() as tmp:
         engine = ROMSDecisionEngine(state_dir=tmp, threshold=0.95, min_margin=0.50)
         res1 = engine.decide_choice(
@@ -149,8 +149,10 @@ def test_bertopic_open_set_discovery_on_abstention():
         assert any(w in top_keywords for w in ("quantum", "photonic", "waveguide", "cryogenic"))
 
 
-def test_roms_cli_decide_noul_score_topics(capsys):
+def test_roms_cli_decide_noul_score_topics(capsys, tmp_path, monkeypatch):
     """Verifies the CLI subcommands `decide`, `noul`, `score`, and `topics`."""
+    from app import decisions
+    monkeypatch.setattr(decisions, "DEFAULT_STATE_DIR", str(tmp_path / "decisions"))
     rc = roms_cli_main([
         "decide",
         "--state", "User asked to rollback workspace files using SHA-256 Copy-on-Write snapshot",

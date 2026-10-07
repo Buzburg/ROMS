@@ -537,11 +537,13 @@ def test_autokarpathy_pipeline(temp_db, temp_knowledge_dir, tmp_path):
     )
     assert "optimized_prompt" in opt_res
     assert "OPERATIONAL CONSTRAINTS:" in opt_res["optimized_prompt"]
-    assert opt_res["token_reduction_est_pct"] > 0
+    assert opt_res["token_reduction_est_pct"] is None
+    assert opt_res["evaluation_status"] == "not_evaluated"
 
     # 3. Test cartridge evaluation
     eval_res = autokarpathy_eval_cartridge(db_path=temp_db)
-    assert eval_res["overall_cartridge_health_score"] > 0
+    assert eval_res["overall_cartridge_health_score"] is None
+    assert eval_res["evaluation_status"] == "not_evaluated"
     assert eval_res["indexed_knowledge_chunks"] > 0
     assert eval_res["total_trajectories"] >= 1
     assert eval_res["trajectory_success_rate_pct"] == 100.0

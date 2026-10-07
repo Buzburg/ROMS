@@ -1,15 +1,13 @@
-"""AutoKarpathy: Autonomous Self-Distillation, Synthetic Curriculum & Prompt Optimization.
+"""Dataset export, prompt templates and local database inventory.
 
-Inspired by Andrej Karpathy's LLM OS and NanoGPT design philosophy:
-- Autonomous Synthetic Dataset Generation: Converts RAG knowledge and agent trajectories into high-signal instruction-tuning JSONL (Alpaca / ShareGPT format)
-- Iterative Test-Time Prompt Optimizer: Automatically refines system prompts to minimize tokens and maximize grounding
-- Factuality & Perplexity Evaluation: Benchmarks local model responses against ground-truth facts in SQLite
+Legacy function names are retained for callers. These helpers do not train a
+model, measure prompt quality or run factuality and perplexity benchmarks.
 """
 
 import json
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from app.db import get_connection
 
 
@@ -18,9 +16,10 @@ def autokarpathy_generate_synthetic_dataset(
     min_tokens: int = 15,
     db_path: Path | str | None = None,
 ) -> Dict[str, Any]:
-    """Extracts ground-truth knowledge chunks and successful trajectories into instruction-tuning JSONL.
+    """Export indexed text and trajectories marked successful as JSONL examples.
 
-    Ready for direct fine-tuning with Unsloth, Axolotl, or Llama-Factory.
+    Source labels and recorded success flags are not independent verification;
+    exported examples need review before any training use.
     """
     target_file = Path(output_path) if output_path else Path("data/karpathy_synthetic_dataset.jsonl")
     target_file.parent.mkdir(parents=True, exist_ok=True)
@@ -40,7 +39,7 @@ def autokarpathy_generate_synthetic_dataset(
             continue
 
         first_line = clean_content.splitlines()[0].replace("#", "").strip()
-        instruction = f"Explain the specifications and policies regarding '{first_line}' based on verified documentation."
+        instruction = f"Explain the specifications and policies regarding '{first_line}' based on supplied documentation."
 
         entry = {
             "id": f"rag_{chunk_id}",
@@ -50,6 +49,8 @@ def autokarpathy_generate_synthetic_dataset(
             "source_type": "grounded_knowledge",
         }
         dataset_entries.append(entry)
+
+    knowledge_examples = len(dataset_entries)
 
     # 2. Synthesize Action Pairs from Successful Agent Trajectories
     cur.execute("SELECT session_id, goal, steps_json, final_result FROM agent_trajectories WHERE success = 1")
@@ -86,8 +87,8 @@ def autokarpathy_generate_synthetic_dataset(
         "status": "success",
         "output_file": str(target_file.resolve()),
         "total_examples": len(dataset_entries),
-        "knowledge_examples": len(chunks),
-        "trajectory_examples": len(trajs),
+        "knowledge_examples": knowledge_examples,
+        "trajectory_examples": len(dataset_entries) - knowledge_examples,
     }
 
 
@@ -96,13 +97,10 @@ def autokarpathy_optimize_prompt(
     base_prompt: str = "",
     db_path: Path | str | None = None,
 ) -> Dict[str, Any]:
-    """Applies Karpathy-style iterative prompt compression and anti-hallucination guardrail sharpening."""
+    """Prepare and record a prompt template without evaluating improvement."""
     eval_id = str(uuid.uuid4())[:8]
 
-    # Iterative refinement principles:
-    # 1. Eliminate verbose filler ("You are an AI assistant that...")
-    # 2. Enforce strict JSON or XML schema formatting
-    # 3. Add explicit citation / refusal guardrails
+    # These are instructions for a caller, not measured or enforced guarantees.
     refined_lines = [
         "ROLE: Deterministic System Operator.",
         f"OBJECTIVE: {task_description.strip()}",
@@ -117,7 +115,7 @@ def autokarpathy_optimize_prompt(
 
     optimized_prompt = "\n".join(refined_lines)
 
-    # Log optimization into karpathy_evals
+    # Retain the existing history table without inventing an evaluation score.
     conn = get_connection(db_path)
     cur = conn.cursor()
     cur.execute(
@@ -125,7 +123,8 @@ def autokarpathy_optimize_prompt(
         INSERT INTO karpathy_evals (eval_id, task_name, prompt, score, feedback)
         VALUES (?, ?, ?, ?, ?)
         """,
-        (eval_id, task_description[:50], optimized_prompt, 0.95, "Prompt compressed and grounded"),
+        (eval_id, task_description[:50], optimized_prompt, None,
+         "Prompt template prepared; token reduction and quality improvement were not measured."),
     )
     conn.commit()
 
@@ -133,12 +132,16 @@ def autokarpathy_optimize_prompt(
         "eval_id": eval_id,
         "task": task_description,
         "optimized_prompt": optimized_prompt,
-        "token_reduction_est_pct": 35.0,
+        "token_reduction_est_pct": None,
+        "evaluation_status": "not_evaluated",
+        "base_prompt_characters": len(base_prompt),
+        "prepared_prompt_characters": len(optimized_prompt),
+        "measurement_scope": "Character counts only; no tokenizer, model or quality evaluation was run.",
     }
 
 
 def autokarpathy_eval_cartridge(db_path: Path | str | None = None) -> Dict[str, Any]:
-    """Runs automated benchmark evaluation scoring knowledge density and trajectory success rate."""
+    """Report stored counts and recorded success flags, without a quality score."""
     conn = get_connection(db_path)
     cur = conn.cursor()
 
@@ -157,16 +160,16 @@ def autokarpathy_eval_cartridge(db_path: Path | str | None = None) -> Dict[str, 
     cur.execute("SELECT count(*) FROM tool_stats WHERE call_count > 0")
     active_tools = cur.fetchone()[0]
 
-    trajectory_success_rate = (succ_trajs / total_trajs * 100.0) if total_trajs > 0 else 100.0
-
-    eval_score = 0.5 * (min(100.0, total_chunks * 10.0) / 100.0) + 0.5 * (trajectory_success_rate / 100.0)
+    trajectory_success_rate = round(succ_trajs / total_trajs * 100.0, 1) if total_trajs else None
 
     return {
-        "overall_cartridge_health_score": round(eval_score * 100.0, 1),
+        "overall_cartridge_health_score": None,
         "indexed_knowledge_chunks": total_chunks,
         "hierarchical_topics": total_topics,
         "active_mcp_tools": active_tools,
         "total_trajectories": total_trajs,
-        "trajectory_success_rate_pct": round(trajectory_success_rate, 1),
-        "benchmark_engine": "AutoKarpathy Evaluator v1.0",
+        "trajectory_success_rate_pct": trajectory_success_rate,
+        "benchmark_engine": None,
+        "evaluation_status": "not_evaluated",
+        "measurement_scope": "Database inventory and caller-recorded success flags only; no outcomes were independently verified.",
     }

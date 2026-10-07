@@ -1,0 +1,10 @@
+{
+  "goal": "Which response matches the observed failed invoice check?",
+  "options": {
+    "review": "Review the failed invoice check and inspect the delivery charge calculation.",
+    "publish": "Publish the website announcement."
+  },
+  "evidence": "The invoice check failed: expected 1550 cents, got 1500 cents. The delivery charge is missing from the calculation.",
+  "skills": [],
+  "max_context_chars": 6000
+}

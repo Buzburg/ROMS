@@ -1,76 +1,33 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 440" width="100%" height="440">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0b0f19"/>
-      <stop offset="100%" stop-color="#111827"/>
-    </linearGradient>
-    <style>
-      .win { fill: url(#bg); stroke: #334155; stroke-width: 1.5; rx: 12; }
-      .bar { fill: #1e293b; }
-      .txt { font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace; font-size: 13px; fill: #e2e8f0; }
-      .cmd { fill: #38bdf8; font-weight: bold; }
-      .ok  { fill: #4ade80; font-weight: bold; }
-      .hi  { fill: #c084fc; font-weight: bold; }
-      .warn { fill: #facc15; }
-      .dim { fill: #94a3b8; }
-      .l1 { opacity: 0; animation: fade 12s infinite 0.3s; }
-      .l2 { opacity: 0; animation: fade 12s infinite 1.2s; }
-      .l3 { opacity: 0; animation: fade 12s infinite 2.4s; }
-      .l4 { opacity: 0; animation: fade 12s infinite 3.3s; }
-      .l5 { opacity: 0; animation: fade 12s infinite 4.5s; }
-      .l6 { opacity: 0; animation: fade 12s infinite 5.4s; }
-      .l7 { opacity: 0; animation: fade 12s infinite 6.6s; }
-      .l8 { opacity: 0; animation: fade 12s infinite 7.5s; }
-      @keyframes fade {
-        0%, 5% { opacity: 0; transform: translateY(3px); }
-        10%, 92% { opacity: 1; transform: translateY(0); }
-        98%, 100% { opacity: 0; }
-      }
-    </style>
-  </defs>
-  <rect class="win" x="2" y="2" width="856" height="436" rx="12"/>
-  <path d="M 2 14 Q 2 2 14 2 L 844 2 Q 856 2 856 14 L 856 38 L 2 38 Z" class="bar"/>
-  <circle cx="24" cy="20" r="6" fill="#ef4444"/>
-  <circle cx="44" cy="20" r="6" fill="#f59e0b"/>
-  <circle cx="64" cy="20" r="6" fill="#10b981"/>
-  <text x="430" y="25" text-anchor="middle" class="txt dim">ROMS — RAG • OKF • MCP • Skills &amp; Prefrontal Harness (Mojo 1.1.0 + Python)</text>
-
-  <!-- Step 1: MCP Setup & Titans + DeltaNet-2 Memory -->
-  <g class="l1">
-    <text x="24" y="70" class="txt cmd">$ claude mcp add roms -- python -m app.server</text>
-    <text x="24" y="92" class="txt cmd">$ python -m app.prefrontal_cortex remember --key "auth_flow" --value "oauth2_pkce_strict"</text>
-  </g>
-  <g class="l2">
-    <text x="24" y="114" class="txt ok">[+] Memorized 'auth_flow' -&gt; 'oauth2_pkce_strict' in 835.1 us</text>
-    <text x="24" y="134" class="txt dim">    Titans Surprise: 1.9762 | DeltaNet-2 Post-Write Cosine: 1.0000 | GF(256) ECC Protected</text>
-  </g>
-
-  <!-- Step 2: SnapKV Context Sieve & Holographic VSA Indexer -->
-  <g class="l3">
-    <text x="24" y="168" class="txt cmd">$ pytest | python -m app.prefrontal_cortex sieve --max-lines 25</text>
-  </g>
-  <g class="l4">
-    <text x="24" y="190" class="txt ok">[+] SnapKV Sieve: Compacted 2,504 -&gt; 30 lines (98.8% reduction, 26,386 tokens saved in 4.25 ms)</text>
-    <text x="24" y="210" class="txt warn">    Retained 100% of stack traces &amp; file:line pointers + 16,384-bit VSA PageRank Graph</text>
-  </g>
-
-  <!-- Step 3: ROMS 0/1 Knapsack Context Packer & BitNet b1.58 Router -->
-  <g class="l5">
-    <text x="24" y="244" class="txt cmd">$ python -m app.prefrontal_cortex pack --costs "500,646,792" --values "10000,5000,3333" --budget 1200 --required 2</text>
-  </g>
-  <g class="l6">
-    <text x="24" y="266" class="txt hi">[+] ROMS 0/1 Knapsack (Mojo 1.1.0: 0.171 ms, 25.61x speedup): Reserved failed-attempt warning #2</text>
-    <text x="24" y="286" class="txt ok">[+] BitNet b1.58 Ternary Router + Dual-Brain RWKV-7/MSGL: Pruned 85% of MCP tool schemas in 887 us</text>
-  </g>
-
-  <!-- Step 4: Shield Forecast & CoW Time Machine -->
-  <g class="l7">
-    <text x="24" y="320" class="txt cmd">$ python -m app.prefrontal_cortex forecast --action "rm -rf /var/lib/pgdata" --goal "clean temp logs"</text>
-  </g>
-  <g class="l8">
-    <text x="24" y="342" class="txt" fill="#f87171" font-weight="bold">[!] SHIELD INTERCEPT: BLOCKED_HAZARD (Hazard=0.9500, Goal Alignment=0.0410)</text>
-    <text x="24" y="366" class="txt cmd">$ python -m app.prefrontal_cortex rewind --id "snap_001"</text>
-    <text x="24" y="388" class="txt ok">[+] CoW Time Machine: Atomically restored workspace in 1.8 ms without touching .git history</text>
-    <text x="24" y="414" class="txt hi">PASS: Native Mojo 1.1.0 SIMD Kernels + Hybrid SQLite/VSA RAG + 280 Skill Cartridges Active</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 390" role="img" aria-labelledby="title description">
+  <title id="title">ROMS: prepare work for review</title>
+  <desc id="description">A goal and evidence pass through indexed knowledge and selected skills to the Decision Maker. The result is a proposal or abstention. Operator approval and execution are separate.</desc>
+  <rect width="960" height="390" rx="20" fill="#0d1726"/>
+  <g font-family="system-ui, sans-serif" fill="#eef4fc">
+    <text x="40" y="60" font-size="30" font-weight="700">ROMS</text>
+    <text x="40" y="95" font-size="18" fill="#b9c9dc">Decisions, knowledge and reusable workflows</text>
+    <g fill="#192b42" stroke="#42617f">
+      <rect x="40" y="133" width="190" height="98" rx="12"/>
+      <rect x="270" y="133" width="190" height="98" rx="12"/>
+      <rect x="500" y="133" width="190" height="98" rx="12"/>
+      <rect x="730" y="133" width="190" height="98" rx="12"/>
+    </g>
+    <g text-anchor="middle" font-size="17">
+      <text x="135" y="170">Goal + evidence</text>
+      <text x="365" y="170">RAG + OKF + Skills</text>
+      <text x="595" y="170">Decision Maker</text>
+      <text x="825" y="170">Reviewable result</text>
+    </g>
+    <g text-anchor="middle" font-size="14" fill="#b9c9dc">
+      <text x="135" y="201">Supplied options</text>
+      <text x="365" y="201">Bounded context</text>
+      <text x="595" y="201">Heuristic advice</text>
+      <text x="825" y="201">Proposal or abstention</text>
+    </g>
+    <g fill="none" stroke="#63d5bd" stroke-width="2">
+      <path d="M238 181h24m-7-6 7 6-7 6M468 181h24m-7-6 7 6-7 6M698 181h24m-7-6 7 6-7 6"/>
+    </g>
+    <text x="40" y="285" font-size="17" fill="#63d5bd">One preparation API through Python, CLI and MCP</text>
+    <text x="40" y="322" font-size="16" fill="#b9c9dc">Approval and execution stay with the operator or configured workshop.</text>
+    <text x="40" y="350" font-size="14" fill="#b9c9dc">Portable Python preparation. Optional Linux / Omarchy integration.</text>
   </g>
 </svg>

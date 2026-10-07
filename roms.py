@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-ROMS Unified CLI & MCP Entrypoint
+ROMS agent harness, local tools and MCP entry point.
 Usage:
-  python roms.py mcp                  # Launch full ROMS + Prefrontal FastMCP server
-  python roms.py remember --key K ... # Run Prefrontal Cortex CLI subcommands
+  python roms.py harness --request examples/harness-request.json
+  python roms.py mcp                  # Launch the configured MCP server
+  python roms.py remember --key K ... # Run a local tool
 """
 
 import sys
@@ -11,7 +12,10 @@ from app.prefrontal_cortex import main as prefrontal_main
 
 
 def run_entry():
-    if len(sys.argv) > 1 and sys.argv[1] == "mcp":
+    if len(sys.argv) > 1 and sys.argv[1] == "harness":
+        from app.harness_cli import main
+        raise SystemExit(main(sys.argv[2:]))
+    elif len(sys.argv) > 1 and sys.argv[1] == "mcp":
         from app.server import start_server
         start_server()
     else:

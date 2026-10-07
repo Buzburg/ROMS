@@ -1,13 +1,11 @@
 """
-ROMS Prefrontal Engine (Integrated from Buzburg/cortex):
-1. HybridNeuralMemory: Titans Surprise Momentum (arXiv:2501.00663) + Gated DeltaNet-2 Erase/Write (arXiv:2605.22791)
-2. ContextSieve: SnapKV Observation-Window Clustering & High-Entropy Diagnostic Sieve (arXiv:2404.14469)
-3. PolyglotSymdex: Sub-millisecond Zero-DB Symbol & Signature Indexer across 6 languages
-4. WorkspaceTimeMachine: Copy-on-Write SHA-256 Content-Addressable Snapshot & Git-Safe Rewind
-5. ExecutionShield: Pre-Simulation Trajectory Forecaster, Cyclic Loop Breaker & Local LLM JSON Tool-Call Repair
-6. TernaryToolRouter: BitNet b1.58 Multiplier-Free Ternary MCP Tool Router (arXiv:2402.17764)
-7. Native Runtime Primitives: 0/1 Knapsack `select_context`, `prompt_lookup`, `PrefixIndex`, `TokenBudget`, `BinaryVector`
-8. Interactive Dark-Mode HTML Telemetry & Neural Memory Explorer (`generate_roms_dashboard`)
+ROMS local context, memory and recovery tools.
+
+Includes associative key memory, bounded diagnostic filtering, symbol lookup,
+content-addressed file snapshots, heuristic action advice, text-based tool
+ranking, context packing and a local telemetry report. These Python tools do
+not load trained language-model weights or establish permission to execute.
+Research influences and implementation boundaries are documented in docs/components.md.
 """
 
 import os
@@ -1156,7 +1154,7 @@ def generate_roms_dashboard(state_dir: str = None, output_path: str = "roms_dash
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ROMS | Prefrontal Cortex &amp; Omarchy AI OS Telemetry</title>
+  <title>ROMS | Local harness telemetry</title>
   <style>
     :root {{
       --bg: #0b0f19;
@@ -1229,19 +1227,19 @@ def generate_roms_dashboard(state_dir: str = None, output_path: str = "roms_dash
 <body>
   <header>
     <div>
-      <h1>🕹️🧠 ROMS Prefrontal Cortex &amp; Omarchy AI OS Telemetry</h1>
-      <p class="subtitle">RAG • OKF • MCP • Skills • Titans + DeltaNet-2 Memory • SnapKV Sieve • 16k-Bit VSA • CoW Time Machine</p>
+      <h1>ROMS harness telemetry</h1>
+      <p class="subtitle">Decision Maker • RAG • OKF • MCP • Skills</p>
     </div>
-    <span class="badge">ROMS v2.0 Active</span>
+    <span class="subtitle">Local statistics, not a readiness certificate</span>
   </header>
 
   <div class="grid">
     <div class="card">
-      <div class="kpi-label">Context Tokens Saved</div>
+      <div class="kpi-label">Estimated Context Tokens Saved</div>
       <div class="kpi-val">{sieve_stats.get('saved_tokens', 0):,}</div>
     </div>
     <div class="card">
-      <div class="kpi-label">Neural Memory Entries</div>
+      <div class="kpi-label">Memory Entries</div>
       <div class="kpi-val accent">{len(entries)}</div>
     </div>
     <div class="card">
@@ -1253,17 +1251,17 @@ def generate_roms_dashboard(state_dir: str = None, output_path: str = "roms_dash
       <div class="kpi-val accent">{sym_stats.get('total_symbols', 0):,}</div>
     </div>
     <div class="card">
-      <div class="kpi-label">CoW Snapshots</div>
+      <div class="kpi-label">File Snapshots</div>
       <div class="kpi-val">{len(snaps)}</div>
     </div>
     <div class="card">
-      <div class="kpi-label">Hazards Intercepted</div>
+      <div class="kpi-label">Heuristic Hazard Flags</div>
       <div class="kpi-val rose">{shield_stats.get('intercepts', 0)}</div>
     </div>
   </div>
 
   <div class="section">
-    <h2>⚡ Titans + DeltaNet-2 Associative Memory Catalog</h2>
+    <h2>Associative Memory Catalog</h2>
     <table>
       <thead>
         <tr><th>Key</th><th>Value</th><th>Category</th><th>Surprise Residual</th></tr>
@@ -1273,7 +1271,7 @@ def generate_roms_dashboard(state_dir: str = None, output_path: str = "roms_dash
   </div>
 
   <div class="section">
-    <h2>🔍 Polyglot Codebase Symbol Graph (Top 25)</h2>
+    <h2>Codebase Symbols (Top 25)</h2>
     <table>
       <thead>
         <tr><th>Symbol</th><th>Kind</th><th>Location</th><th>Language</th></tr>
@@ -1295,7 +1293,7 @@ def generate_roms_dashboard(state_dir: str = None, output_path: str = "roms_dash
 # ============================================================================
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description="ROMS Prefrontal Cortex CLI")
+    parser = argparse.ArgumentParser(description="ROMS local tools. Use 'python roms.py harness --help' for the preparation harness.")
     sub = parser.add_subparsers(dest="cmd")
 
     p_rem = sub.add_parser("remember")
@@ -1369,7 +1367,7 @@ def main(argv=None) -> int:
     p_score.add_argument("--margin", type=float, default=0.05)
 
     p_top = sub.add_parser("topics")
-    p_top.add_argument("--add", default="", help="Optional document to cluster into BERTopic")
+    p_top.add_argument("--add", default="", help="Optional document for local topic suggestions")
 
     args = parser.parse_args(argv)
     if args.cmd == "remember":

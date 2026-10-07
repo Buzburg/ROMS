@@ -7,7 +7,7 @@ from pathlib import Path
 from app.safe_paths import markdown_path
 from fastmcp import FastMCP
 
-from app.config import SKILLS_DIR, KNOWLEDGE_DIR, BASE_DIR
+from app.config import SKILLS_DIR, KNOWLEDGE_DIR, BASE_DIR, DB_PATH
 from app.db import init_database
 from app.okf_loader import ingest_okf_directory
 from app.rag_engine import (
@@ -31,8 +31,18 @@ from app.tools import (
 
 from app.memory_tools import register_memory_tools
 
-mcp = FastMCP("ROMS-Engine")
+mcp = FastMCP("ROMS")
 register_memory_tools(mcp)
+
+
+@mcp.tool()
+def roms_prepare_harness(request_json: str) -> str:
+    """Prepare bounded knowledge, selected skills and a heuristic decision for review. Never executes or approves an action."""
+    import json
+    from app.harness import decode_request, prepare_request
+
+    report = prepare_request(decode_request(request_json), db_path=DB_PATH, skills_dir=SKILLS_DIR)
+    return json.dumps(report, indent=2, ensure_ascii=True, allow_nan=False)
 
 
 # ============================================================================
@@ -48,7 +58,7 @@ def search_knowledge_base(query: str, limit: int = 3) -> str:
 
 @mcp.tool()
 def search_grounded_context(query: str, limit: int = 3, max_tokens: int = 512) -> str:
-    """Retrieves high-precision knowledge context formatted in clean XML tags specifically for local LLMs."""
+    """Retrieve bounded knowledge context with source references, formatted as XML text."""
     return _search_grounded_context(query=query, limit=limit, max_tokens=max_tokens)
 
 
@@ -66,7 +76,7 @@ def reload_knowledge() -> str:
 
 @mcp.tool()
 def list_knowledge_documents() -> str:
-    """Lists all registered OKF documents, titles, and SHA-256 checksums."""
+    """List registered OKF document IDs, titles, types and indexing times."""
     docs = _list_docs()
     if not docs:
         return "No documents found in knowledge base."
@@ -228,13 +238,13 @@ from app.tools import (
 
 @mcp.tool()
 def zg_search(query: str, doc_type: str = "", fuzzy: bool = True, limit: int = 5) -> str:
-    """Zero-Gravity Typo-Tolerant Hybrid Search: handles misspellings and facet filtering."""
+    """Search with optional fuzzy query expansion and document-type filtering."""
     return _zg_search_engine(query=query, doc_type=doc_type, fuzzy=fuzzy, limit=limit)
 
 
 @mcp.tool()
 def get_zg_facets() -> str:
-    """Returns document type counts and knowledge facet distribution for zero-latency UI filters."""
+    """Return document-type counts and knowledge facets for filters."""
     import json
     return json.dumps(_get_zg_search_facets(), indent=2)
 
@@ -253,7 +263,7 @@ def list_topics() -> str:
 
 @mcp.tool()
 def search_by_topic(topic: str, query: str, limit: int = 3) -> str:
-    """Topic-routed semantic search: pre-filters candidates to a topic subgraph to stop hallucination."""
+    """Search indexed knowledge within a topic; relevance and correctness still need review."""
     return _search_knowledge_by_topic(topic=topic, query=query, limit=limit)
 
 
@@ -264,21 +274,21 @@ def search_by_topic(topic: str, query: str, limit: int = 3) -> str:
 
 @mcp.tool()
 def autokarpathy_generate_dataset(output_path: str = "") -> str:
-    """AutoKarpathy: Synthesizes instruction-tuning training pairs from knowledge and successful trajectories."""
+    """Export synthetic training-pair candidates from knowledge and recorded trajectories. Does not train a model."""
     import json
     return json.dumps(_generate_synthetic_dataset(output_path=output_path), indent=2)
 
 
 @mcp.tool()
 def autokarpathy_optimize_prompt(task_description: str, base_prompt: str = "") -> str:
-    """AutoKarpathy: Iteratively compresses and grounds system prompts for local LLMs."""
+    """Prepare a prompt draft with context and constraints. Does not measure improvement or run iterative optimization."""
     import json
     return json.dumps(_optimize_agent_prompt(task_description=task_description, base_prompt=base_prompt), indent=2)
 
 
 @mcp.tool()
 def autokarpathy_eval_cartridge() -> str:
-    """AutoKarpathy: Computes benchmark health and factuality score across ROMS."""
+    """Summarize local document and trajectory counts. These are inventory statistics, not factuality measurements."""
     import json
     return json.dumps(_evaluate_cartridge_health(), indent=2)
 
@@ -292,7 +302,7 @@ from app.tools import run_autoresearch as _run_autoresearch
 
 @mcp.tool()
 def autoresearch(topic: str, depth: int = 2, max_sources: int = 6, save_to_knowledge: bool = True) -> str:
-    """AutoResearch: Deconstructs research queries, aggregates evidence across topics/vectors, synthesizes a verified dossier, and optionally compounds into knowledge/."""
+    """Gather indexed context for a research topic and optionally save a draft to knowledge. Sources and conclusions need review."""
     res = _run_autoresearch(topic=topic, depth=depth, max_sources=max_sources, save_to_knowledge=save_to_knowledge)
     if res.get("status") == "error":
         return f"AutoResearch Error: {res.get('message', 'Unknown failure')}"
@@ -346,7 +356,7 @@ def get_skill_playbook(skill_name: str) -> str:
 
 
 # ============================================================================
-# [P] PREFRONTAL CORTEX SUBSYSTEMS (Titans/DeltaNet-2, SnapKV, CoW, Shield)
+# LOCAL CONTEXT, MEMORY AND RECOVERY TOOLS
 # ============================================================================
 
 from app.prefrontal_cortex import (
@@ -362,56 +372,56 @@ from app.prefrontal_cortex import (
 
 @mcp.tool()
 def roms_titans_remember(key: str, value: str, category: str = "architecture") -> str:
-    """Store or cleanly overwrite project facts in Titans + Gated DeltaNet-2 associative neural memory."""
+    """Store or overwrite a keyed value in local associative memory. Legacy tool ID retained for compatibility."""
     import json
     return json.dumps(_HybridNeuralMemory().remember(key=key, value=value, category=category), indent=2)
 
 
 @mcp.tool()
 def roms_titans_recall(query: str) -> str:
-    """Sub-millisecond associative memory recall from Titans + Gated DeltaNet-2 matrix."""
+    """Retrieve a value from local associative memory. Legacy tool ID retained for compatibility."""
     import json
     return json.dumps(_HybridNeuralMemory().recall(query=query), indent=2)
 
 
 @mcp.tool()
 def roms_titans_erase(key: str) -> str:
-    """Surgically erase obsolete keys via Gated DeltaNet-2 pure erase gate without disturbing orthogonal keys."""
+    """Erase a keyed local memory entry. Legacy tool ID retained for compatibility."""
     import json
     return json.dumps(_HybridNeuralMemory().erase(key=key), indent=2)
 
 
 @mcp.tool()
 def roms_sieve_compact(raw_text: str, max_lines: int = 35) -> str:
-    """SnapKV Observation-Window Log Sieve: Compacts verbose build/test logs by 90-98% while keeping 100% of tracebacks and file:line pointers."""
+    """Select diagnostic lines within a source-line budget. Omission markers add display lines; retain the original log separately."""
     import json
     return json.dumps(_ContextSieve().compact(raw_text=raw_text, max_lines=max_lines), indent=2)
 
 
 @mcp.tool()
 def roms_symdex_lookup(query: str, top_k: int = 10, workspace_root: str = ".") -> str:
-    """Sub-millisecond zero-DB symbol & signature lookup across Python, Mojo, Rust, TS/JS, Go, and C/C++."""
+    """Look up names and signatures in the local symbol index. Results depend on index coverage and freshness."""
     import json
     return json.dumps(_PolyglotSymdex().lookup(query=query, top_k=top_k, workspace_root=workspace_root), indent=2)
 
 
 @mcp.tool()
 def roms_snapshot_create(label: str = "Pre-tool checkpoint", workspace_root: str = ".") -> str:
-    """Copy-on-Write Time Machine: Takes a content-addressable SHA-256 checkpoint before risky edits."""
+    """Save a content-addressed snapshot of selected workspace files."""
     import json
     return json.dumps(_WorkspaceTimeMachine().snapshot(label=label, workspace_root=workspace_root), indent=2)
 
 
 @mcp.tool()
 def roms_snapshot_rewind(snapshot_id: str, workspace_root: str = ".") -> str:
-    """Copy-on-Write Time Machine: Atomically rolls back workspace state without touching .git history."""
+    """Restore tracked file bytes from a snapshot. This writes files and is not a transaction over concurrent edits."""
     import json
     return json.dumps(_WorkspaceTimeMachine().rewind(snapshot_id=snapshot_id, workspace_root=workspace_root), indent=2)
 
 
 @mcp.tool()
 def roms_shield_forecast(action: str, goal: str = "General coding task") -> str:
-    """Pre-Simulation Execution Shield: Blocks destructive commands (rm -rf, DROP TABLE, --force) and halts 3-turn cyclic agent loops."""
+    """Flag heuristic action hazards and repeated patterns. This advice does not execute, authorize or sandbox a command."""
     import json
     return json.dumps(_ExecutionShield().forecast_action(action=action, goal=goal), indent=2)
 
@@ -425,7 +435,7 @@ def roms_shield_repair_json(raw_llm_output: str) -> str:
 
 @mcp.tool()
 def roms_prompt_lookup(history_csv: str, window: int = 2, limit: int = 4) -> str:
-    """Parameter-free greedy n-gram speculative token drafting (mojond/ROMS runtime)."""
+    """Suggest token continuations from repeated n-grams in supplied history."""
     import json
     tokens = [int(x.strip()) for x in history_csv.split(",") if x.strip().lstrip("-").isdigit()]
     drafted = _prompt_lookup(tokens, window=window, limit=limit)
@@ -433,7 +443,7 @@ def roms_prompt_lookup(history_csv: str, window: int = 2, limit: int = 4) -> str
 
 
 # ============================================================================
-# [J] SYSTEM-1 DECISION ENGINE (Jev / Laya + RWKV-7 Goose O(1) + BERTopic)
+# DECISION MAKER — HEURISTIC ADVICE, NOT EXECUTION AUTHORITY
 # ============================================================================
 
 from app.decisions import ROMSDecisionEngine as _ROMSDecisionEngine
@@ -441,7 +451,7 @@ from app.decisions import ROMSDecisionEngine as _ROMSDecisionEngine
 
 @mcp.tool()
 def roms_decide(state: str, question: str, options_json: str, threshold: float = 0.45, min_margin: float = 0.08) -> str:
-    """Jev/Laya System-1 Decision Engine: Single-pass calibrated `choice` over 2..26 options with RWKV-7 O(1) state forking, forward/reverse position debiasing, Shannon concentration, and BERTopic open-set abstention discovery."""
+    """Rank 2–26 options using local heuristic text scores, with abstention. Scores are not calibrated factual confidence or permission to act."""
     import json
     try:
         opts = json.loads(options_json)
@@ -455,7 +465,7 @@ def roms_decide(state: str, question: str, options_json: str, threshold: float =
 
 @mcp.tool()
 def roms_noul(state: str, question: str, threshold: float = 0.45, min_margin: float = 0.08) -> str:
-    """Jev/Laya System-1 Binary Verification Gate (`noul`): Single-pass `yes`/`no` judgment against supplied evidence with calibrated probability and abstention."""
+    """Return heuristic yes/no advice or abstain on supplied text. Not a factual verifier, test runner or approval gate."""
     import json
     res = _ROMSDecisionEngine(threshold=threshold, min_margin=min_margin).decide_noul(
         state=state, question=question
@@ -465,7 +475,7 @@ def roms_noul(state: str, question: str, threshold: float = 0.45, min_margin: fl
 
 @mcp.tool()
 def roms_score(state: str, question: str, rubric_csv: str = "Poor,Fair,Good,Excellent", threshold: float = 0.35, min_margin: float = 0.05) -> str:
-    """Jev/Laya System-1 Rubric Scorer (`score`): Single-pass ordered rubric evaluation (2..10 levels) returning expected value E[S] and normalized [0,1] score."""
+    """Score 2–10 ordered rubric levels using local text heuristics. The result is advisory and not model-calibrated."""
     import json
     rubric = [x.strip() for x in rubric_csv.split(",") if x.strip()]
     res = _ROMSDecisionEngine(threshold=threshold, min_margin=min_margin).decide_score(
@@ -476,7 +486,7 @@ def roms_score(state: str, question: str, rubric_csv: str = "Poor,Fair,Good,Exce
 
 @mcp.tool()
 def roms_bertopic_discover(document: str = "") -> str:
-    """BERTopic (`c-TF-IDF` + Semantic Centroids) Open-Set Topic Discovery: Clusters unseen/abstained queries and synthesizes new decision options on the fly."""
+    """Group supplied text into local topic suggestions. Legacy tool ID retained; this does not run the BERTopic package or authorize new options."""
     import json
     engine = _ROMSDecisionEngine()
     if document.strip():

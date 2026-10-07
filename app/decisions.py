@@ -1,29 +1,13 @@
-"""
-ROMS System-1 Decision Engine (Jev + Laya + RWKV-7 Goose O(1) State + BERTopic)
-================================================================================
-Replaces slow, brittle autoregressive JSON generation (`{"choice": "B"}`) with
-sub-10ms single-pass calibrated System-1 judgments across up to 12 questions at once:
+"""ROMS Decision Maker: advisory lexical ranking with explicit abstention.
 
-  - `choice`: 2..26 discrete options (A..Z) -> calibrated probabilities, margin, concentration.
-  - `noul`:   Binary verification (`yes` / `no`) -> grounded factual/policy gate.
-  - `score`:  2..10 ordered rubric levels (0..9) -> expected value E[S] = sum(i * p_i).
-
-Tri-Layer Architecture:
-  1. Layer 1 (BERT / MiniLM + BERTopic c-TF-IDF):
-     Sub-2ms bi-encoder/cross-attention scoring + Open-Set BERTopic (`c-TF-IDF`)
-     cluster discovery that automatically synthesizes new options when queries abstain.
-  2. Layer 2 (RWKV-7 Goose O(1) Recurrent State + Single-Token Logprobs):
-     Folds arbitrarily long context into a fixed ~4KB WKV-7 state matrix, forks state
-     in <0.1ms across 1..12 questions, and runs forward + reversed option orderings
-     to cancel positional bias (with optional live SGLang/vLLM 1-token logprob backend).
-  3. Layer 3 (Mojo 1.1.0 Calibrated Decision Kernel):
-     Temperature-scaled softmax, probability margin (p_1 - p_2), Shannon concentration
-     (1 - H(p)/log(N)), and dual abstention gates.
+This Python implementation combines hashed word features, a deterministic
+recurrent sketch, and hand-weighted lexical scores. Softmax values are normalized
+heuristic scores, not calibrated probabilities of truth. No language model,
+trained embedding model, or native kernel is loaded by this module.
 """
 
 from __future__ import annotations
 
-import copy
 import hashlib
 import json
 import math
@@ -43,12 +27,34 @@ DEFAULT_STATE_DIR = os.environ.get(
 STOPWORDS = {
     "the", "and", "is", "in", "to", "of", "for", "with", "on", "as", "by",
     "an", "at", "it", "be", "are", "was", "were", "or", "that", "this", "from",
-    "can", "will", "should", "would", "could", "has", "have", "had", "not"
+    "can", "will", "should", "would", "could", "has", "have", "had"
+}
+
+ADVISORY_METADATA = {
+    "engine": "ROMS Decision Maker",
+    "backend": "lexical_heuristic",
+    "probabilities_calibrated": False,
+    "advisory_only": True,
+    "execution_allowed": False,
 }
 
 
+def _finite_number(value: Any) -> bool:
+    try:
+        return type(value) in (int, float) and math.isfinite(value)
+    except OverflowError:
+        return False
+
+
+def _validate_settings(temperature: float, threshold: float, min_margin: float) -> None:
+    if (not _finite_number(temperature) or temperature <= 0.0
+            or not _finite_number(threshold) or not 0.0 <= threshold <= 1.0
+            or not _finite_number(min_margin) or not 0.0 <= min_margin <= 1.0):
+        raise ValueError("Invalid decision temperature or abstention settings")
+
+
 # ============================================================================
-# 1. MOJO-EXACT CALIBRATION & RANKING KERNELS (mirrors app_mojo/decisions.mojo)
+# 1. SOFTMAX NORMALIZATION AND RANKING
 # ============================================================================
 
 @dataclass
@@ -70,29 +76,23 @@ def decide(
     min_margin: float = 0.08,
 ) -> Decision:
     """
-    Calibrated single-pass decision over option logits with probability margin,
+    Normalized decision over option logits with probability margin,
     Shannon concentration, expected rubric score, and dual abstention gates.
     """
+    if not isinstance(logits, list):
+        raise ValueError("Decision logits must be a list")
     if allowed is None:
         allowed = [True] * len(logits)
+    if not isinstance(allowed, list) or any(type(item) is not bool for item in allowed):
+        raise ValueError("Decision mask must contain booleans")
     if len(logits) < 2 or len(logits) != len(allowed):
         raise ValueError("Decision needs matching logits and mask, at least two options")
-    if (
-        not math.isfinite(temperature)
-        or temperature <= 0.0
-        or not math.isfinite(threshold)
-        or threshold < 0.0
-        or threshold > 1.0
-        or not math.isfinite(min_margin)
-        or min_margin < 0.0
-        or min_margin > 1.0
-    ):
-        raise ValueError("Invalid decision calibration or abstention settings")
+    _validate_settings(temperature, threshold, min_margin)
 
     best = -1
     permitted_count = 0
     for i, val in enumerate(logits):
-        if not math.isfinite(val):
+        if not _finite_number(val):
             raise ValueError("Non-finite decision logit")
         if allowed[i]:
             permitted_count += 1
@@ -105,7 +105,7 @@ def decide(
     probabilities: List[float] = []
     total = 0.0
     for i, val in enumerate(logits):
-        p = math.exp((val - logits[best]) / temperature) if allowed[i] else 0.0
+        p = math.exp((float(val) - float(logits[best])) / temperature) if allowed[i] else 0.0
         probabilities.append(p)
         total += p
 
@@ -141,18 +141,18 @@ def decide(
 
 
 def rank_options(context: List[float], options: List[List[float]]) -> List[float]:
-    """Dot-product head for normalized semantic embeddings."""
-    if not context or len(options) < 2:
+    """Dot-product ranking for caller-supplied vectors."""
+    if not isinstance(context, list) or not context or not isinstance(options, list) or len(options) < 2:
         raise ValueError("Empty embeddings or insufficient options")
     scores: List[float] = []
     for option in options:
-        if len(option) != len(context):
+        if not isinstance(option, list) or len(option) != len(context):
             raise ValueError("Embedding dimension mismatch")
         score = 0.0
         for c_val, o_val in zip(context, option):
-            if not math.isfinite(c_val) or not math.isfinite(o_val):
+            if not _finite_number(c_val) or not _finite_number(o_val):
                 raise ValueError("Non-finite embedding value")
-            score += c_val * o_val
+            score += float(c_val) * float(o_val)
         if not math.isfinite(score):
             raise ValueError("Embedding score overflow")
         scores.append(score)
@@ -162,43 +162,56 @@ def rank_options(context: List[float], options: List[List[float]]) -> List[float
 def distribution_from_logprobs(meta: Dict[str, Any], token_ids: List[int]) -> List[float]:
     """
     Extracts normalized option probabilities from single-token (`max_new_tokens=1`)
-    SGLang / OpenJev `output_token_ids_logprobs` metadata.
+    SGLang `output_token_ids_logprobs` metadata. This is a parser, not a backend.
     """
-    if not isinstance(meta, dict) or meta.get("completion_tokens") != 1:
+    if (not isinstance(token_ids, list) or not 2 <= len(token_ids) <= 26
+            or any(type(token) is not int or token < 0 for token in token_ids)
+            or len(set(token_ids)) != len(token_ids)):
+        raise ValueError("Supply 2..26 distinct nonnegative option token IDs")
+    if (not isinstance(meta, dict) or type(meta.get("completion_tokens")) is not int
+            or meta["completion_tokens"] != 1):
         raise ValueError("Decision scoring requires exactly one generated token")
     reason = meta.get("finish_reason") or {}
     if isinstance(reason, dict) and reason.get("type") == "abort":
         raise ValueError("Decision generation aborted")
     positions = meta.get("output_token_ids_logprobs")
-    if not isinstance(positions, list) or len(positions) != 1:
+    if (not isinstance(positions, list) or len(positions) != 1
+            or not isinstance(positions[0], list) or not 2 <= len(positions[0]) <= 256):
         raise ValueError("Malformed output_token_ids_logprobs")
     values: Dict[int, float] = {}
     for entry in positions[0]:
+        if not isinstance(entry, (list, tuple)) or len(entry) not in (2, 3):
+            raise ValueError("Malformed token logprob entry")
         value, token = entry[:2]
         if (
             type(token) is not int
+            or token < 0
             or token in values
             or type(value) not in (int, float)
-            or math.isnan(value)
+            or (not _finite_number(value) and value != -math.inf)
             or value == math.inf
             or value > 0
         ):
             raise ValueError("Invalid token logprob entry")
         values[token] = float(value)
+    if any(token not in values for token in token_ids):
+        raise ValueError("Missing option token logprob")
     logits = [values[token] for token in token_ids]
     peak = max(logits)
+    if not math.isfinite(peak):
+        raise ValueError("Option token distribution has no finite probability mass")
     weights = [math.exp(x - peak) for x in logits]
     total = sum(weights)
     return [x / total for x in weights]
 
 
 # ============================================================================
-# 2. QUESTION VALIDATION (JEV & LAYA SPECIFICATION: choice, noul, score)
+# 2. QUESTION VALIDATION: choice, noul, score
 # ============================================================================
 
 def validate_question(question: Dict[str, Any]) -> Dict[str, str]:
     """
-    Validates a structured Jev/Laya decision question:
+    Validates a structured advisory decision question:
       - `choice`: 2..26 options (dict or list)
       - `noul`:   fixed yes/no binary verification
       - `score`:  2..10 ordered rubric descriptions mapped to '0'..'9'
@@ -208,7 +221,11 @@ def validate_question(question: Dict[str, Any]) -> Dict[str, str]:
     for key in ("id", "question"):
         if not isinstance(question.get(key), str) or not question[key].strip() or len(question[key]) > 4000:
             raise ValueError(f"Invalid question {key}")
+    if len(question["id"]) > 64:
+        raise ValueError("Question ID exceeds 64 characters")
     kind = question.get("type")
+    if not isinstance(kind, str):
+        raise ValueError("Question type must be choice, noul, or score")
     if kind == "noul":
         if "options" in question and question["options"] is not None:
             raise ValueError("Noul uses fixed yes/no labels")
@@ -220,16 +237,17 @@ def validate_question(question: Dict[str, Any]) -> Dict[str, str]:
     if kind == "score":
         if not isinstance(options, list) or not (2 <= len(options) <= 10):
             raise ValueError("Score needs 2..10 ordered descriptions")
-        options = {str(i): str(value) for i, value in enumerate(options)}
+        options = {str(i): value for i, value in enumerate(options)}
     elif kind == "choice" and isinstance(options, list):
         if not (2 <= len(options) <= 26):
             raise ValueError("Choice needs 2..26 options")
-        options = {string.ascii_uppercase[i]: str(value) for i, value in enumerate(options)}
+        options = {string.ascii_uppercase[i]: value for i, value in enumerate(options)}
 
     if kind not in {"choice", "score"} or not isinstance(options, dict) or not (2 <= len(options) <= 26):
         raise ValueError("Choice needs 2..26 options")
     if any(
-        not isinstance(k, str) or not k or not isinstance(v, str) or not v or len(v) > 2000
+        not isinstance(k, str) or not k.strip() or len(k) > 64
+        or not isinstance(v, str) or not v.strip() or len(v) > 2000
         for k, v in options.items()
     ):
         raise ValueError("Option IDs and descriptions must be nonempty bounded strings")
@@ -237,20 +255,19 @@ def validate_question(question: Dict[str, Any]) -> Dict[str, str]:
 
 
 # ============================================================================
-# 3. LAYER 1: BERTOPIC (`c-TF-IDF` + SEMANTIC CENTROIDS) & BERT EMBEDDINGS
+# 3. HASHED WORD FEATURES AND TOPIC WORD COUNTS
 # ============================================================================
 
 def tokenize_words(text: str) -> List[str]:
-    """Alphanumeric + stem tokenizer ignoring common stopwords."""
+    """Alphanumeric word tokenizer, preserving negation terms."""
     words = re.findall(r"\b[a-zA-Z0-9_]{2,}\b", text.lower())
     return [w for w in words if w not in STOPWORDS]
 
 
-def encode_semantic_vector(text: str, dim: int = 64) -> List[float]:
-    """
-    Fast deterministic bi-encoder projection combining unigram, stem, and
-    character-trigram hashing into an L2-normalized semantic vector.
-    """
+def encode_hashed_vector(text: str, dim: int = 64) -> List[float]:
+    """Normalize MD5 word/stem features; these are not semantic embeddings."""
+    if not isinstance(text, str) or type(dim) is not int or not 1 <= dim <= 4096:
+        raise ValueError("Hashed features require text and a dimension from 1..4096")
     vec = [0.0] * dim
     tokens = tokenize_words(text)
     for pos, tok in enumerate(tokens):
@@ -282,7 +299,7 @@ class TopicRepresentation:
 
 
 class ClassTFIDF:
-    """Class-based TF-IDF (c-TF-IDF) with optional BM25 weighting as in BERTopic."""
+    """Class-based word-frequency weights with an optional BM25-like formula."""
 
     def __init__(self, bm25_weighting: bool = True, top_n_words: int = 8):
         self.bm25_weighting = bm25_weighting
@@ -335,12 +352,11 @@ class ClassTFIDF:
         return topic_keywords
 
 
-class BERTopicDiscoveryEngine:
-    """
-    Open-Set BERTopic Discovery Engine for System-1 Decisions.
-    When Jev/Laya decisions abstain (because an input represents an unseen category),
-    BERTopic clusters the abstained inputs, computes c-TF-IDF topic representations,
-    and synthesizes candidate Option labels on the fly.
+class TopicDiscoveryEngine:
+    """Greedy hashed-feature centroids with weighted words as candidate labels.
+
+    This is a local heuristic, not the BERTopic package. Persistent mode retains
+    the legacy state filename; in-memory mode never reads or writes that file.
     """
 
     def __init__(
@@ -349,9 +365,16 @@ class BERTopicDiscoveryEngine:
         max_topics: int = 16,
         top_n_keywords: int = 6,
         distance_threshold: float = 0.55,
+        persist: bool = True,
     ):
+        if type(persist) is not bool:
+            raise ValueError("persist must be a boolean")
+        if (type(max_topics) is not int or not 1 <= max_topics <= 128
+                or type(top_n_keywords) is not int or not 1 <= top_n_keywords <= 32
+                or not _finite_number(distance_threshold) or not 0 <= distance_threshold <= 2):
+            raise ValueError("Invalid topic discovery bounds")
+        self.persist = persist
         self.state_dir = state_dir or DEFAULT_STATE_DIR
-        os.makedirs(self.state_dir, exist_ok=True)
         self.state_path = os.path.join(self.state_dir, "bertopic_decisions.json")
         self.max_topics = max_topics
         self.top_n_keywords = top_n_keywords
@@ -359,9 +382,13 @@ class BERTopicDiscoveryEngine:
         self.ctfidf = ClassTFIDF(bm25_weighting=True, top_n_words=top_n_keywords)
         self.topics: Dict[int, TopicRepresentation] = {}
         self.documents: List[Dict[str, Any]] = []
-        self._load()
+        if self.persist:
+            os.makedirs(self.state_dir, exist_ok=True)
+            self._load()
 
     def _load(self):
+        if not self.persist:
+            return
         if os.path.exists(self.state_path):
             try:
                 with open(self.state_path, "r", encoding="utf-8") as f:
@@ -382,6 +409,8 @@ class BERTopicDiscoveryEngine:
                 self.documents = []
 
     def _save(self):
+        if not self.persist:
+            return
         payload = {
             "documents": self.documents[-500:],
             "topics": {
@@ -405,10 +434,14 @@ class BERTopicDiscoveryEngine:
         return max(0.0, 1.0 - dot)
 
     def add_document(self, text: str, doc_id: Optional[str] = None) -> Dict[str, Any]:
-        """Assigns an input or abstained query to the closest semantic cluster or spawns a new topic."""
+        """Assign bounded text to a hashed-feature centroid or create a topic."""
+        if not isinstance(text, str) or not text.strip() or len(text.encode("utf-8")) > 20_000:
+            raise ValueError("Topic text must be nonempty and at most 20,000 UTF-8 bytes")
+        if doc_id is not None and (not isinstance(doc_id, str) or not doc_id.strip() or len(doc_id) > 128):
+            raise ValueError("Topic document ID must be a nonempty string of at most 128 characters")
         if not doc_id:
             doc_id = f"doc_{len(self.documents) + 1}"
-        vec = encode_semantic_vector(text)
+        vec = encode_hashed_vector(text)
 
         if not self.topics:
             tid = 0
@@ -504,18 +537,19 @@ class BERTopicDiscoveryEngine:
 
 
 # ============================================================================
-# 4. LAYER 2: RWKV-7 GOOSE O(1) RECURRENT STATE DECISION HEAD
+# 4. DETERMINISTIC RECURRENT FEATURE SKETCH
 # ============================================================================
 
-class GooseStateDecisionHead:
-    """
-    RWKV-7 Goose O(1) Recurrent State Decision Engine (`WKV-7`).
-    Compresses arbitrarily long context into a constant-size ~4KB recurrent state
-    matrix S in R^{D x D}, forks that state in <0.1ms for each question, and computes
-    single-token decision logits with forward & reversed permutation debiasing.
+class HashedStateHead:
+    """A fixed-size numerical sketch of hashed words, with no trained weights.
+
+    It neither runs a language model nor retains its recurrent state. Payload
+    size assumes packed float64 values and excludes Python object overhead.
     """
 
     def __init__(self, state_dim: int = 24):
+        if type(state_dim) is not int or not 1 <= state_dim <= 128:
+            raise ValueError("State dimension must be an integer from 1..128")
         self.state_dim = state_dim
         self.state: List[float] = [0.0] * (state_dim * state_dim)
         self.ingested_tokens: int = 0
@@ -525,11 +559,13 @@ class GooseStateDecisionHead:
         self.ingested_tokens = 0
 
     def fork_state(self) -> List[float]:
-        """Zero-overhead O(1) state clone (~4KB) for parallel branch evaluation."""
+        """Copy the state list; cost is proportional to the configured matrix size."""
         return list(self.state)
 
     def ingest_context(self, text: str) -> Dict[str, Any]:
-        """Folds context tokens into the O(1) WKV-7 recurrent state matrix."""
+        """Fold bounded word features into a fixed-size matrix."""
+        if not isinstance(text, str) or len(text.encode("utf-8")) > 128_000:
+            raise ValueError("State context must be text of at most 128,000 UTF-8 bytes")
         dim = self.state_dim
         tokens = tokenize_words(text)
         for tok in tokens:
@@ -544,7 +580,7 @@ class GooseStateDecisionHead:
                 key[i] = k_bit / math.sqrt(dim)
                 val[i] = v_bit / math.sqrt(dim)
 
-            # WKV-7 state update: S_t = S_{t-1} * diag(w) - (S_{t-1} k)(a * k)^T + v k^T
+            # Deterministic recurrent update using fixed decay and hash-derived vectors.
             for i in range(dim):
                 row_off = i * dim
                 s_dot_k = 0.0
@@ -563,14 +599,21 @@ class GooseStateDecisionHead:
         state_bytes = len(self.state) * 8
         return {
             "ingested_tokens": self.ingested_tokens,
+            "ingested_words": self.ingested_tokens,
             "state_dim": f"{dim}x{dim}",
             "state_bytes": state_bytes,
+            "state_payload_bytes": state_bytes,
+            "payload_format": "float64_equivalent_excluding_python_overhead",
+            "model_state": False,
         }
 
     def readout_vector(self, forked_state: List[float], query_text: str) -> List[float]:
-        """Queries the forked O(1) recurrent state with a question receptance vector r_t."""
+        """Read the copied feature sketch using a hashed question vector."""
         dim = self.state_dim
-        q_vec = encode_semantic_vector(query_text, dim=dim)
+        if (not isinstance(forked_state, list) or len(forked_state) != dim * dim
+                or any(not _finite_number(value) for value in forked_state)):
+            raise ValueError("Invalid feature state")
+        q_vec = encode_hashed_vector(query_text, dim=dim)
         out = [0.0] * dim
         for i in range(dim):
             row_off = i * dim
@@ -583,7 +626,13 @@ class GooseStateDecisionHead:
 
 
 # ============================================================================
-# 5. UNIFIED TRI-LAYER SYSTEM-1 DECISION ENGINE (Jev + Laya + BERTopic + Goose)
+# Compatibility names are retained for existing callers and saved integrations.
+BERTopicDiscoveryEngine = TopicDiscoveryEngine
+GooseStateDecisionHead = HashedStateHead
+encode_semantic_vector = encode_hashed_vector
+
+
+# 5. ADVISORY DECISION MAKER
 # ============================================================================
 
 NEGATION_WORDS = {"not", "never", "no", "false", "failed", "missing", "absent", "forbidden", "deny", "unsafe", "invalid"}
@@ -591,15 +640,10 @@ AFFIRM_WORDS = {"yes", "true", "verified", "passed", "confirmed", "valid", "safe
 
 
 class ROMSDecisionEngine:
-    """
-    Tri-Layer Jev/Laya System-1 Decision Engine for ROMS:
-      - Evaluates 1..12 independent structured questions (`choice`, `noul`, `score`)
-        in a single call without autoregressive text generation.
-      - Fuses Layer 1 (BERT/BERTopic bi-encoder + lexical-overlap cross-attention),
-        Layer 2 (RWKV-7 Goose O(1) state readout + forward/reversed position debiasing),
-        and Layer 3 (Mojo-calibrated temperature softmax, margin, concentration, abstention).
-      - Automatically clusters abstained queries with BERTopic `c-TF-IDF` to discover
-        new options on the fly.
+    """Evaluate bounded questions with lexical heuristics and abstention.
+
+    Outputs are advisory. Normalized scores do not establish factual truth or
+    authorize actions. Set persist_discovery=False for requests with no state I/O.
     """
 
     def __init__(
@@ -608,19 +652,65 @@ class ROMSDecisionEngine:
         temperature: float = 0.35,
         threshold: float = 0.45,
         min_margin: float = 0.08,
+        persist_discovery: bool = True,
     ):
+        _validate_settings(temperature, threshold, min_margin)
+        if type(persist_discovery) is not bool:
+            raise ValueError("persist_discovery must be a boolean")
         self.state_dir = state_dir or DEFAULT_STATE_DIR
         self.temperature = temperature
         self.threshold = threshold
         self.min_margin = min_margin
-        self.goose = GooseStateDecisionHead(state_dim=24)
-        self.bertopic = BERTopicDiscoveryEngine(state_dir=self.state_dir)
+        self.state_head = HashedStateHead(state_dim=24)
+        self.discovery = TopicDiscoveryEngine(state_dir=self.state_dir, persist=persist_discovery)
+        self.goose = self.state_head
+        self.bertopic = self.discovery
 
     @staticmethod
     def _pack_state(state: Any) -> str:
         if isinstance(state, str):
             return state
-        return json.dumps(state, sort_keys=True, ensure_ascii=False)
+        try:
+            return json.dumps(state, sort_keys=True, ensure_ascii=False, allow_nan=False)
+        except (TypeError, ValueError, RecursionError) as error:
+            raise ValueError("Decision state must be text or JSON-compatible data") from error
+
+    @staticmethod
+    def _grounding_reasons(evidence: str, question: str, kind: str, offered: Dict[str, str]) -> List[str]:
+        """Fail conservatively where word overlap cannot support a suggestion."""
+        evidence_words = set(tokenize_words(evidence))
+        if not evidence_words:
+            return ["evidence_missing"]
+        question_words = set(tokenize_words(question)) - {
+            "does", "did", "do", "verify", "check", "whether", "which", "what",
+        }
+        explicit_negation = {"not", "never", "no", "cannot", "without", "neither", "nor"}
+        if (explicit_negation & (evidence_words | question_words)
+                or re.search(r"\b\w+n['\u2019]t\b", f"{evidence} {question}", re.I)
+                or (kind == "noul" and NEGATION_WORDS & evidence_words)):
+            return ["ambiguous_negation"]
+        if kind == "noul":
+            uncertainty = {
+                "may", "might", "can", "could", "would", "should", "will", "if",
+                "pending", "planned", "scheduled", "expected", "unknown", "uncertain",
+                "unconfirmed", "unverified", "hypothetical", "possible", "possibly",
+                "probably", "perhaps", "assuming", "awaiting",
+            }
+            raw_words = set(re.findall(r"\b[a-z]+\b", f"{evidence} {question}".lower()))
+            if uncertainty & raw_words:
+                # A conservative vocabulary check, not temporal or semantic entailment.
+                return ["uncertain_or_pending"]
+        stem = lambda word: re.sub(r"(?:ing|ed|es|tion|ly|s)$", "", word)
+        evidence_stems = {stem(word) for word in evidence_words}
+        if kind == "noul":
+            covered = sum(word in evidence_words or stem(word) in evidence_stems for word in question_words)
+            if not question_words or covered / len(question_words) < 0.75:
+                return ["evidence_not_relevant"]
+        else:
+            option_words = set(tokenize_words(" ".join(offered.values())))
+            if not any(word in evidence_words or stem(word) in evidence_stems for word in option_words):
+                return ["evidence_not_relevant"]
+        return []
 
     def _score_option_pair(
         self,
@@ -628,7 +718,7 @@ class ROMSDecisionEngine:
         question_text: str,
         option_key: str,
         option_desc: str,
-        goose_readout: List[float],
+        state_readout: List[float],
         kind: str,
         option_index: int,
         total_options: int,
@@ -636,23 +726,23 @@ class ROMSDecisionEngine:
     ) -> float:
         """
         Computes the raw uncalibrated logit for a single option by fusing:
-          1. Bi-encoder semantic similarity (Context+Question vs Option)
-          2. Cross-encoder lexical & stem overlap between Evidence/Question and Option
-          3. RWKV-7 Goose O(1) recurrent state readout dot-product
+          1. Hashed feature similarity (Context+Question vs Option)
+          2. Lexical & stem overlap between Evidence and Option
+          3. Recurrent sketch readout dot-product
           4. Polarity / numeric rubric alignment for `noul` and `score` questions
         """
         combined_context = f"{evidence_text}\n{question_text}"
-        ctx_vec64 = encode_semantic_vector(combined_context, dim=64)
-        ev_vec64 = encode_semantic_vector(evidence_text, dim=64)
-        opt_vec64 = encode_semantic_vector(f"{option_key} {option_desc}", dim=64)
-        opt_vec24 = encode_semantic_vector(f"{option_key} {option_desc}", dim=24)
+        ctx_vec64 = encode_hashed_vector(combined_context, dim=64)
+        ev_vec64 = encode_hashed_vector(evidence_text, dim=64)
+        opt_vec64 = encode_hashed_vector(f"{option_key} {option_desc}", dim=64)
+        opt_vec24 = encode_hashed_vector(f"{option_key} {option_desc}", dim=24)
 
-        # 1. Semantic dot-product (Layer 1 BERT/bi-encoder representation)
+        # 1. Hashed feature dot-products.
         bi_sim = sum(a * b for a, b in zip(ctx_vec64, opt_vec64))
         ev_sim = sum(a * b for a, b in zip(ev_vec64, opt_vec64))
 
-        # 2. Cross-attention token/stem overlap
-        ev_tokens = set(tokenize_words(combined_context))
+        # 2. Evidence-only overlap: the question cannot substantiate itself.
+        ev_tokens = set(tokenize_words(evidence_text))
         ev_stems = {re.sub(r"(?:ing|ed|es|tion|ly|s)$", "", w) for w in ev_tokens}
         opt_tokens = tokenize_words(f"{option_key} {option_desc}")
         opt_stems = [re.sub(r"(?:ing|ed|es|tion|ly|s)$", "", w) for w in opt_tokens]
@@ -665,13 +755,10 @@ class ROMSDecisionEngine:
                 overlap_hits += 0.75
         overlap_score = overlap_hits / max(1.0, math.sqrt(len(opt_tokens)))
 
-        # 3. RWKV-7 Goose O(1) state readout dot-product (Layer 2)
-        goose_sim = sum(a * b for a, b in zip(goose_readout, opt_vec24))
+        # 3. Recurrent feature sketch dot-product.
+        state_sim = sum(a * b for a, b in zip(state_readout, opt_vec24))
 
-        # Tiny deterministic position perturbation (cancelled out by forward/reverse debiasing!)
-        pos_bias = 0.002 * (0.5 - (position_index / max(1, total_options - 1)))
-
-        logit = (1.6 * bi_sim) + (1.4 * ev_sim) + (1.8 * overlap_score) + (0.9 * goose_sim) + pos_bias
+        logit = (1.6 * bi_sim) + (1.4 * ev_sim) + (1.8 * overlap_score) + (0.9 * state_sim)
 
         # 4. Specialized alignment for `noul` (yes/no) and `score` (0..9 rubric)
         ev_lower = set(re.findall(r"\b[a-z0-9_]+\b", evidence_text.lower()))
@@ -731,8 +818,7 @@ class ROMSDecisionEngine:
         min_margin: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
-        Evaluates 1..12 independent structured questions (`choice`, `noul`, `score`)
-        against `state` in a single System-1 pass.
+        Evaluate 1..12 structured questions against bounded state, sequentially.
         """
         start_time = time.perf_counter()
         if not isinstance(questions, list) or not (1 <= len(questions) <= 12):
@@ -741,17 +827,19 @@ class ROMSDecisionEngine:
         if len({q["id"] for q in questions}) != len(questions):
             raise ValueError("Duplicate question ID")
 
+        if type(reverse_debias) is not bool:
+            raise ValueError("reverse_debias must be a boolean")
+        temp = temperature if temperature is not None else self.temperature
+        thresh = threshold if threshold is not None else self.threshold
+        margin_gate = min_margin if min_margin is not None else self.min_margin
+        _validate_settings(temp, thresh, margin_gate)
+
         evidence_text = self._pack_state(state)
         if len(evidence_text.encode("utf-8")) > 128_000:
             raise ValueError("Decision state exceeds 128 KB; compact with ContextSieve first")
 
-        temp = temperature if temperature is not None else self.temperature
-        thresh = threshold if threshold is not None else self.threshold
-        margin_gate = min_margin if min_margin is not None else self.min_margin
-
-        # Step 1: Fold context into RWKV-7 Goose O(1) recurrent state once
-        self.goose.reset()
-        goose_meta = self.goose.ingest_context(evidence_text)
+        self.state_head.reset()
+        state_meta = self.state_head.ingest_context(evidence_text)
 
         results: Dict[str, Any] = {}
         for question, offered in zip(questions, validated_options):
@@ -762,25 +850,25 @@ class ROMSDecisionEngine:
             pairs = list(offered.items())
             n_opts = len(pairs)
 
-            # Fork O(1) RWKV-7 state in <0.1ms for this question branch
-            forked = self.goose.fork_state()
-            goose_vec = self.goose.readout_vector(forked, q_text)
+            forked = self.state_head.fork_state()
+            state_readout = self.state_head.readout_vector(forked, q_text)
+            grounding_reasons = self._grounding_reasons(evidence_text, q_text, kind, offered)
 
             # Forward pass (A..Z)
-            fwd_logits = [
+            fwd_logits = [0.0] * n_opts if grounding_reasons else [
                 self._score_option_pair(
-                    evidence_text, q_text, k, desc, goose_vec, kind, idx, n_opts, idx
+                    evidence_text, q_text, k, desc, state_readout, kind, idx, n_opts, idx
                 )
                 for idx, (k, desc) in enumerate(pairs)
             ]
             fwd_dec = decide(fwd_logits, temperature=temp, threshold=thresh, min_margin=margin_gate)
 
             if reverse_debias:
-                # Reversed pass (Z..A) to cancel LLM/positional ordering bias
+                # Compatibility ordering check; this is not a language-model bias test.
                 rev_pairs = list(reversed(pairs))
-                rev_logits_raw = [
+                rev_logits_raw = [0.0] * n_opts if grounding_reasons else [
                     self._score_option_pair(
-                        evidence_text, q_text, k, desc, goose_vec, kind, (n_opts - 1 - pos_i), n_opts, pos_i
+                        evidence_text, q_text, k, desc, state_readout, kind, (n_opts - 1 - pos_i), n_opts, pos_i
                     )
                     for pos_i, (k, desc) in enumerate(rev_pairs)
                 ]
@@ -799,16 +887,21 @@ class ROMSDecisionEngine:
                 for pair, prob in zip(pairs, final_dec.probabilities)
             }
             winning_key = pairs[final_dec.index][0]
-            abstained = final_dec.abstain or (not permutation_agreed)
+            abstention_reasons = list(grounding_reasons)
+            if final_dec.abstain:
+                abstention_reasons.append("score_gate")
+            if not permutation_agreed:
+                abstention_reasons.append("permutation_disagreement")
+            abstained = bool(abstention_reasons)
 
-            # If abstained, trigger Layer 1 BERTopic c-TF-IDF open-set discovery!
-            bertopic_suggestion = None
+            topic_suggestion = None
             if abstained:
-                bertopic_suggestion = self.bertopic.add_document(
+                topic_suggestion = self.discovery.add_document(
                     f"{q_text} | {evidence_text[:300]}", doc_id=f"abstain_{qid}_{int(time.time()*1000)}"
                 )
 
             q_result: Dict[str, Any] = {
+                **ADVISORY_METADATA,
                 "id": qid,
                 "type": kind,
                 "choice": winning_key,
@@ -817,9 +910,11 @@ class ROMSDecisionEngine:
                 "margin": final_dec.margin,
                 "concentration": final_dec.concentration,
                 "abstained": abstained,
+                "abstention_reasons": abstention_reasons,
                 "permutation_agreed": permutation_agreed,
                 "legend": dict(offered),
-                "goose_state_bytes": goose_meta["state_bytes"],
+                "state_payload_bytes": state_meta["state_payload_bytes"],
+                "goose_state_bytes": state_meta["state_bytes"],
                 "elapsed_ms": round((time.perf_counter() - q_start) * 1000.0, 3),
             }
             if kind == "noul":
@@ -828,15 +923,17 @@ class ROMSDecisionEngine:
                 expected_val = sum(int(k) * p for k, p in mapped_probs.items())
                 q_result["score"] = round(expected_val, 4)
                 q_result["score_normalized"] = round(expected_val / max(1, n_opts - 1), 4)
-            if bertopic_suggestion is not None:
-                q_result["bertopic_open_set_discovery"] = bertopic_suggestion
+            if topic_suggestion is not None:
+                q_result["topic_discovery"] = topic_suggestion
+                q_result["bertopic_open_set_discovery"] = topic_suggestion
 
             results[qid] = q_result
 
         return {
-            "engine": "ROMS-TriLayer-JevLaya-v1 (RWKV7-Goose + BERTopic + Mojo)",
+            **ADVISORY_METADATA,
             "question_count": len(questions),
-            "goose_state": goose_meta,
+            "state": state_meta,
+            "goose_state": state_meta,
             "total_elapsed_ms": round((time.perf_counter() - start_time) * 1000.0, 3),
             "results": results,
         }
@@ -849,7 +946,7 @@ class ROMSDecisionEngine:
         threshold: Optional[float] = None,
         min_margin: Optional[float] = None,
     ) -> Dict[str, Any]:
-        """Single-call helper for a Jev/Laya `choice` question (2..26 options)."""
+        """Advisory choice over 2..26 options."""
         q = {"id": "choice_q", "type": "choice", "question": question, "options": options}
         out = self.ask(state, [q], threshold=threshold, min_margin=min_margin)
         return out["results"]["choice_q"]
@@ -861,7 +958,7 @@ class ROMSDecisionEngine:
         threshold: Optional[float] = None,
         min_margin: Optional[float] = None,
     ) -> Dict[str, Any]:
-        """Single-call helper for a Jev/Laya `noul` binary (`yes`/`no`) verification gate."""
+        """Advisory yes/no ranking; never use this heuristic as an authorization gate."""
         q = {"id": "noul_q", "type": "noul", "question": question}
         out = self.ask(state, [q], threshold=threshold, min_margin=min_margin)
         return out["results"]["noul_q"]
@@ -874,7 +971,7 @@ class ROMSDecisionEngine:
         threshold: Optional[float] = None,
         min_margin: Optional[float] = None,
     ) -> Dict[str, Any]:
-        """Single-call helper for a Jev/Laya `score` ordered rubric (2..10 levels)."""
+        """Advisory ranking over 2..10 ordered rubric levels."""
         q = {"id": "score_q", "type": "score", "question": question, "options": rubric}
         out = self.ask(state, [q], threshold=threshold, min_margin=min_margin)
         return out["results"]["score_q"]
@@ -887,8 +984,7 @@ class ROMSDecisionEngine:
         margin: float = 0.08,
     ) -> Dict[str, Any]:
         """
-        High-discipline bidirectional System-1 router (Forward + Reversed agreement)
-        inspired by AeonHarness `route()`.
+        Suggest a route using the heuristic score gates; never authorize execution.
         """
         q = {
             "id": "route",
@@ -904,6 +1000,7 @@ class ROMSDecisionEngine:
             and res["permutation_agreed"]
         )
         return {
+            **ADVISORY_METADATA,
             "selected_route": choice if accepted else None,
             "accepted": accepted,
             "decision": res,
