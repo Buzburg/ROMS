@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import sqlite3
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -157,6 +158,35 @@ class HarnessTests(unittest.TestCase):
             harness.prepare_request(request(skills=['escape']), skills_dir=self.skills)
         with self.assertRaises(ValueError):
             harness.prepare_request(request(skills=['escape']), skills_dir=self.root / 'linked')
+
+    def test_benign_directory_spelling_normalization_is_accepted(self):
+        canonical = self.skills / 'canonical'; canonical.mkdir()
+        (canonical / 'review.md').write_text('Review the invoice', encoding='utf-8')
+        original_resolve = Path.resolve
+
+        def normalized(path, *args, **kwargs):
+            # Represents a real ordinary directory whose alias expands during
+            # resolution, as an 8.3 Windows TEMP path does on hosted runners.
+            if path == self.skills:
+                return original_resolve(canonical, *args, **kwargs)
+            return original_resolve(path, *args, **kwargs)
+
+        with patch.object(Path, 'resolve', normalized):
+            result = harness.prepare_request(request(skills=['review']), skills_dir=self.skills)
+        self.assertEqual(result['context']['skills'][0]['content'], 'Review the invoice')
+
+    def test_directory_and_ancestor_reparse_points_are_rejected(self):
+        (self.skills / 'review.md').write_text('Review the invoice', encoding='utf-8')
+        original_lstat = Path.lstat
+        for linked in [self.skills, self.root]:
+            def reparse_info(path, *args, **kwargs):
+                info = original_lstat(path, *args, **kwargs)
+                if path == linked:
+                    return SimpleNamespace(st_mode=info.st_mode, st_file_attributes=0x400)
+                return info
+
+            with self.subTest(linked=linked), patch.object(Path, 'lstat', reparse_info), self.assertRaisesRegex(ValueError, 'linked components'):
+                harness.prepare_request(request(skills=['review']), skills_dir=self.skills)
 
 
 if __name__ == '__main__':

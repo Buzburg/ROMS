@@ -138,8 +138,17 @@ def _skills(names: list[str], directory: Path) -> list[dict]:
     if not names:
         return []
     root = directory.expanduser().absolute()
-    if not root.is_dir() or root.is_symlink() or root.resolve() != root:
-        raise ValueError('Skills directory must be an existing directory without symlink components')
+    try:
+        for component in (root, *root.parents):
+            info = component.lstat()
+            if (not stat.S_ISDIR(info.st_mode)
+                    or getattr(info, 'st_file_attributes', 0) & getattr(stat, 'FILE_ATTRIBUTE_REPARSE_POINT', 0x400)):
+                raise ValueError('Skills directory must be an existing directory without linked components')
+        # Windows may expand an ordinary 8.3 path spelling here. Inspect links
+        # above using filesystem metadata rather than comparing path strings.
+        root = root.resolve(strict=True)
+    except OSError as error:
+        raise ValueError('Skills directory could not be read as an existing unlinked directory') from error
     output, seen = [], set()
     for name in names:
         path = markdown_path(root, name)
@@ -149,7 +158,8 @@ def _skills(names: list[str], directory: Path) -> list[dict]:
         seen.add(identity)
         try:
             before = path.lstat()
-            if not stat.S_ISREG(before.st_mode):
+            if (not stat.S_ISREG(before.st_mode)
+                    or getattr(before, 'st_file_attributes', 0) & getattr(stat, 'FILE_ATTRIBUTE_REPARSE_POINT', 0x400)):
                 raise ValueError('Skill must be a regular Markdown file')
             descriptor = os.open(path, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_BINARY', 0))
             with os.fdopen(descriptor, 'rb') as stream:
