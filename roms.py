@@ -15,6 +15,9 @@ def run_entry():
     if len(sys.argv) > 1 and sys.argv[1] == "harness":
         from app.harness_cli import main
         raise SystemExit(main(sys.argv[2:]))
+    elif len(sys.argv) > 1 and sys.argv[1] == "knowledge":
+        from app.knowledge_web import main
+        main(sys.argv[2:])
     elif len(sys.argv) > 1 and sys.argv[1] == "mcp":
         from app.server import start_server
         start_server()

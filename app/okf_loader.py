@@ -40,7 +40,7 @@ SUPPORTED_EXTENSIONS = {
 SUPPORTED_EXTENSIONS |= BINARY_EXTENSIONS
 
 
-def ingest_document_file(filepath: Path | str, db_path: Path | str | None = None, *, doc_id: str | None = None) -> bool:
+def ingest_document_file(filepath: Path | str, db_path: Path | str | None = None, *, doc_id: str | None = None, display_name: str | None = None) -> bool:
     """Ingests any supported file (.md, .csv, .json, .txt, code) into both vector and FTS5 indexes.
 
     Returns True if ingested/updated, False if unchanged.
@@ -82,6 +82,8 @@ def ingest_document_file(filepath: Path | str, db_path: Path | str | None = None
     title, doc_type, raw_content, chunks = parsed.title, parsed.kind, parsed.text, parsed.chunks
     if parsed.raw != raw:
         raise ValueError("Document changed during extraction; retry after writing completes")
+    if display_name:
+        title = title.replace(path.name, display_name)
     if not raw_content or not chunks:
         raise ValueError("No searchable text recovered; previous index was retained")
 
@@ -155,6 +157,8 @@ def ingest_document_file(filepath: Path | str, db_path: Path | str | None = None
             [(chunk_id, filename, chunk_text)
              for chunk_id, chunk_text in zip(chunk_ids, chunks)],
         )
+        from app.knowledge_catalog import replace_navigation
+        replace_navigation(conn, filename, list(zip(chunk_ids, chunks)))
         tag_chunks_with_topics(
             list(zip(chunk_ids, chunks)), conn, doc_type=doc_type,
             refresh_topic_ids=old_topic_ids,

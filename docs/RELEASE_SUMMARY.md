@@ -35,3 +35,15 @@ separate prerequisites.
 
 [Download the source](https://github.com/Buzburg/ROMS/archive/refs/heads/main.zip)
 or follow the [README quick start](../README.md#try-one-useful-thing-first).
+
+## Local knowledge workspace
+
+`python roms.py knowledge` opens one local interface for file/folder uploads,
+pasted text, progress, retries and search. SQLite preserves import jobs across
+restarts. Originals are retained, and section headings plus explicit definitions
+become source-linked navigation alongside the existing Mojo search index.
+No new runtime dependency or external queue service is needed.
+
+Verified locally with 125 native search/intake tests and a real-model Chromium
+flow from pasted text through search and glossary source display. See
+[the intake guide](knowledge-intake.md) for format, storage and extraction limits.

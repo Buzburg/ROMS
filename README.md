@@ -102,6 +102,20 @@ Standalone Decision Maker utilities can also persist topic discovery under `ROMS
 
 <a id="-10-second-mcp-setup-claude-code-cursor-windsurf"></a>
 
+## Add knowledge in your browser
+
+After installing the native search environment below, run:
+
+```sh
+python roms.py knowledge
+```
+
+Open the private local link printed in the terminal. Drop files, select a folder,
+or paste text. Imports run in the background with visible progress and retry
+buttons. Restarting the command resumes interrupted imports from their retained
+originals. Search, document headings and a source-linked glossary share the same
+local index. [Import guide and limits](docs/knowledge-intake.md).
+
 ## Connect an MCP client
 
 The full server needs the runtime packages in `requirements.txt`, a local embedding model, and the required compiled Mojo search module. On Linux/WSL, use `pixi install` and `pixi run build-search`, or install into an environment with Mojo 1.1.0:

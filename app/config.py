@@ -4,6 +4,7 @@ Optimized for local LLM inference co-location (zero GPU VRAM interference, CPU t
 """
 
 import os
+import threading
 from pathlib import Path
 from typing import Optional
 
@@ -38,9 +39,15 @@ ROMS_GATEWAY_PORT = int(os.getenv("ROMS_GATEWAY_PORT", "8844"))
 ROMS_UPSTREAM_LLM_URL = os.getenv("ROMS_UPSTREAM_LLM_URL", "http://127.0.0.1:11434/v1")
 
 _cached_model = None
+_model_lock = threading.Lock()
 
 
 def get_embedding_model():
+    with _model_lock:
+        return _load_embedding_model()
+
+
+def _load_embedding_model():
     """Centralized singleton loader for SentenceTransformer.
 
     Hard-pinned to CPU with thread capping to preserve 100% of GPU VRAM and CPU

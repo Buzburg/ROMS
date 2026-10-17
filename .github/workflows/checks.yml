@@ -43,7 +43,7 @@ jobs:
       - name: Build the required Mojo search module
         run: python scripts/build_search_native.py
       - name: Verify real native kernels and local document extraction
-        run: python -m pytest tests/test_search_native.py tests/test_search_upgrades.py tests/test_retrieval_quality.py tests/test_messy_ingestion.py tests/test_ingestion_quality.py tests/test_document_identity.py tests/test_source_library.py -q
+        run: python -m pytest tests/test_search_native.py tests/test_search_upgrades.py tests/test_retrieval_quality.py tests/test_messy_ingestion.py tests/test_ingestion_quality.py tests/test_document_identity.py tests/test_source_library.py tests/test_knowledge_intake.py -q
         env:
           HF_HUB_OFFLINE: '1'
           TRANSFORMERS_OFFLINE: '1'

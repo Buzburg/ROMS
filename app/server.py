@@ -2,6 +2,7 @@
 
 import importlib.util
 import os
+import threading
 import sys
 from pathlib import Path
 from app.safe_paths import markdown_path
@@ -69,6 +70,61 @@ def search_grounded_context(query: str, limit: int = 3, max_tokens: int = 512) -
 def add_knowledge_document(filename: str, content: str, title: str = "", doc_type: str = "general") -> str:
     """Adds a new OKF Markdown document to knowledge/ and indexes it in the vector DB in real time."""
     return _add_doc(filename=filename, content=content, title=title, doc_type=doc_type)
+
+
+_intake = None
+_intake_lock = threading.Lock()
+
+
+def _knowledge_intake():
+    global _intake
+    with _intake_lock:
+        if _intake is None:
+            from app.knowledge_intake import Intake
+            _intake = Intake().start()
+    return _intake
+
+
+@mcp.tool()
+def queue_knowledge_text(name: str, content: str) -> dict:
+    """Save pasted text and queue local extraction/indexing. Name must have a supported extension."""
+    return {'id': _knowledge_intake().submit(name, content.encode('utf-8')), 'state': 'queued'}
+
+
+@mcp.tool()
+def queue_knowledge_path(path: str, kind: str = 'file') -> dict:
+    """Snapshot an explicitly selected local file/folder and queue imports; never run its code."""
+    from app.source_library import plan_source
+    if kind not in {'file', 'folder'}:
+        raise ValueError('kind must be file or folder')
+    _, files, skipped = plan_source(path, kind)
+    intake = _knowledge_intake()
+    jobs, failures = [], []
+    for relative, data in files:
+        try:
+            jobs.append({'name': str(relative), 'id': intake.submit(relative.as_posix(), data)})
+        except ValueError as error:
+            failures.append({'name': str(relative), 'error': str(error)})
+    return {'jobs': jobs, 'skipped': skipped, 'failures': failures}
+
+
+@mcp.tool()
+def knowledge_import_progress(offset: int = 0) -> dict:
+    """List queued, processing, ready and failed imports with retry diagnostics."""
+    return _knowledge_intake().status(offset)
+
+
+@mcp.tool()
+def retry_knowledge_import(job_id: str) -> dict:
+    """Retry a failed import from its retained original snapshot."""
+    return {'queued': _knowledge_intake().retry(job_id)}
+
+
+@mcp.tool()
+def knowledge_table_of_contents(offset: int = 0) -> dict:
+    """List documents, section headings and explicit source-linked glossary definitions."""
+    from app.knowledge_catalog import catalog
+    return catalog(offset=offset)
 
 
 @mcp.tool()
