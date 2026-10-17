@@ -1,0 +1,9 @@
+{
+  "compiler": "Mojo 1.1.0 (8189361e)",
+  "sources": {
+    "app_mojo/roms_search_native.mojo": "608b76e27b8df1a4db426f81f4b3e2e899476c137ac09366379a6e0a4fef880f",
+    "app_mojo/search_kernels.mojo": "f0f9262150122ccb498ea351099fcf7c5c20517f0b931e68b85738f84a1604be",
+    "app_mojo/document_text.mojo": "d5374c4409ed558aac185e60c264c8d221cfe74378fd61bbd5f74a2620ca7461"
+  },
+  "binary_sha256": "ece9ded7c9e450032e162def35dd7d7aee78a5a39a253f164969bda15bbf08c1"
+}

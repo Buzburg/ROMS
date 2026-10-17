@@ -1,5 +1,6 @@
 """ROMS Business Actions and Sandboxed Task Execution Tools."""
 
+import json
 import frontmatter
 import os
 from pathlib import Path
@@ -204,7 +205,9 @@ def add_knowledge_document(
 def reload_knowledge(db_path: Path | str | None = None) -> str:
     """Re-scans the knowledge directory and updates vector embeddings for new/modified files."""
     count = ingest_okf_directory(KNOWLEDGE_DIR, db_path=db_path)
-    return f"Knowledge reload complete: {count} new or updated document(s) indexed."
+    from app.okf_loader import get_ingestion_status
+    status = get_ingestion_status(db_path)
+    return f"Knowledge reload complete: {count} new or updated document(s) indexed. " + json.dumps(status, ensure_ascii=False)
 
 
 # ==========================================
@@ -307,25 +310,20 @@ from app.trajectory_recorder import (
 from app.zgsearch import zg_search as _zg_search, get_zg_facets as _get_zg_facets
 
 
-def zg_search_engine(
-    query: str,
-    doc_type: str = "",
-    fuzzy: bool = True,
-    limit: int = 5,
-    db_path: Path | str | None = None,
-) -> str:
-    """Zero-Gravity Typo-Tolerant Hybrid Search with multi-facet filtering."""
-    filters = {"doc_type": doc_type} if doc_type else {}
-    results = _zg_search(query=query, filters=filters, fuzzy=fuzzy, limit=limit, db_path=db_path)
+def zg_search_engine(query: str, doc_type: str = "", limit: int = 5,
+                     db_path: Path | str | None = None, *, topic: str = "", doc_id: str = "") -> str:
+    """Compatibility formatter for the one local search engine."""
+    filters = {key: value for key, value in
+               (("doc_type", doc_type), ("topic", topic), ("doc_id", doc_id)) if value}
+    results = _zg_search(query=query, filters=filters, limit=limit, db_path=db_path)
     if not results:
         return f"No results found for query '{query}'."
-
-    lines = [f"ZG-Search Results for '{query}' (Fuzzy={fuzzy}):\n"]
-    for idx, r in enumerate(results, 1):
-        lines.append(f"[{idx}] {r['title']} ({r['doc_type']}) - Score: {r['score']:.4f}")
-        content_sample = r['content'][:250].replace('\n', ' ')
-        lines.append(f"    Content: {content_sample}...\n")
-    return "\n".join(lines).strip()
+    lines = [f"Local search results for '{query}':"]
+    for idx, result in enumerate(results, 1):
+        lines.append(f"[{idx}] {result['title']} ({result['doc_type']}) - Score: {result['score']:.4f}")
+        lines.append(f"    Source: {result.get('source_path') or result['doc_id']} | doc_id={result['doc_id']} | chunk_id={result['chunk_id']}")
+        lines.append(result['content'][:250])
+    return "\n".join(lines)
 
 
 def get_zg_search_facets(db_path: Path | str | None = None) -> Dict[str, Any]:

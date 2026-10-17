@@ -123,7 +123,7 @@ def test_menu_cancel_does_not_import(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr('builtins.input', lambda _: next(answers))
     monkeypatch.setattr(library, 'add_source', lambda *args: pytest.fail('Cancelled import must not run'))
     library.library_menu()
-    assert '1 text files' in capsys.readouterr().out
+    assert '1 files' in capsys.readouterr().out
 
 
 def test_repository_manifest_limit(tmp_path, monkeypatch):

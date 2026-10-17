@@ -1,0 +1,34 @@
+{
+  "scope": "Small manually labeled ROMS repository exercise, not a representative benchmark. Labels selected before scoring.",
+  "documents": [
+    "knowledge/refund_policy.md", "docs/chat-privacy.md", "docs/native-sandbox-verification.md",
+    "docs/project-repair.md", "docs/local-memory.md", "docs/HARNESS.md", "docs/voice.md",
+    "docs/voice-performance.md", "docs/patch-promotion-verification.md", "docs/model-input-verification.md",
+    "docs/worker-recovery-verification.md", "docs/components.md", "README.md",
+    "app/rag_engine.py", "app/okf_loader.py", "app/source_library.py", "app/voice_stt.py",
+    "app/voice_tts.py", "app/task_worker.py", "app/memory.py", "app/validation_policy.py",
+    "app/prompt_builder.py", "app/project_repair.py", "app/worker_recovery.py"
+  ],
+  "queries": [
+    {"id":"refund_exact","kind":"keyword","query":"damaged replacement 30 days","relevant":["knowledge/refund_policy.md"]},
+    {"id":"refund_typo","kind":"typo","query":"damagd replacment","relevant":["knowledge/refund_policy.md"]},
+    {"id":"refund_meaning","kind":"paraphrase","query":"My package arrived broken. Can you send another one?","relevant":["knowledge/refund_policy.md"]},
+    {"id":"privacy_exact","kind":"identifier","query":"ROMS_RECORD_CHAT_TRAJECTORIES","relevant":["docs/chat-privacy.md"]},
+    {"id":"privacy_meaning","kind":"paraphrase","query":"Are my conversations saved automatically?","relevant":["docs/chat-privacy.md"]},
+    {"id":"sandbox_exact","kind":"keyword","query":"Landlock staging root","relevant":["docs/native-sandbox-verification.md"]},
+    {"id":"sandbox_typo","kind":"typo","query":"sandbxo permisions","relevant":["docs/native-sandbox-verification.md"]},
+    {"id":"sandbox_meaning","kind":"paraphrase","query":"Stop a generated program from changing files outside its allowed folder","relevant":["docs/native-sandbox-verification.md"]},
+    {"id":"repair_meaning","kind":"paraphrase","query":"Fix the draft after its tests failed without applying it automatically","relevant":["docs/project-repair.md","app/project_repair.py"]},
+    {"id":"memory_meaning","kind":"paraphrase","query":"Remember a verified lesson for the next session in the same project","relevant":["docs/local-memory.md","app/memory.py"]},
+    {"id":"voice_meaning","kind":"paraphrase","query":"How do I speak into the microphone and hear the assistant answer?","relevant":["docs/voice.md"]},
+    {"id":"voice_latency","kind":"keyword","query":"first generated audio latency prompt cache","relevant":["docs/voice-performance.md","docs/voice.md"]},
+    {"id":"ingest_symbol","kind":"identifier","query":"ingest_document_file","relevant":["app/okf_loader.py","app/source_library.py"]},
+    {"id":"ingest_meaning","kind":"paraphrase","query":"Import markdown CSV and JSON documents into both search indexes","relevant":["app/okf_loader.py"]},
+    {"id":"query_cache","kind":"identifier","query":"_get_query_embedding","relevant":["app/rag_engine.py"]},
+    {"id":"source_symbol","kind":"identifier","query":"plan_source","relevant":["app/source_library.py"]},
+    {"id":"tts_symbol","kind":"identifier","query":"PocketSpeaker","relevant":["app/voice_tts.py"]},
+    {"id":"stt_symbol","kind":"identifier","query":"TinyRecognizer","relevant":["app/voice_stt.py"]},
+    {"id":"harness_meaning","kind":"paraphrase","query":"Prepare a proposed next step using knowledge and selected skills but do not execute it","relevant":["docs/HARNESS.md","docs/components.md","README.md"]},
+    {"id":"repair_typo","kind":"typo","query":"repaor faild validaton","relevant":["docs/project-repair.md","app/project_repair.py"]}
+  ]
+}

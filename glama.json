@@ -4,7 +4,7 @@
     "Buzburg"
   ],
   "name": "roms",
-  "description": "ROMS (RAG, OKF, MCP, Skills) & Prefrontal Agent Harness: Hybrid SQLite FTS5/vec + 16,384-bit VSA RAG, Titans + DeltaNet-2 Associative Memory, 98.8% SnapKV Log Sieve, 25.61x Mojo 1.1.0 Knapsack Context Packer, CoW Time Machine, 280 Skill Cartridges & Omarchy Dual-Brain Router.",
+  "description": "Turn messy documents, code and scanned pages into searchable local knowledge. One Mojo-powered search combines keywords, typos and meaning, with local OCR, source references, MCP tools and reusable agent workflows.",
   "categories": [
     "memory",
     "developer-tools",

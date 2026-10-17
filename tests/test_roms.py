@@ -460,7 +460,7 @@ def test_zgsearch_fuzzy_and_faceted(temp_db, temp_knowledge_dir):
     ingest_okf_directory(temp_knowledge_dir, db_path=temp_db)
 
     # 1. Test typo tolerance: "damagd replacment" instead of "damaged replacement"
-    typo_results = zg_search("damagd replacment", fuzzy=True, limit=3, db_path=temp_db)
+    typo_results = zg_search("damagd replacment", limit=3, db_path=temp_db)
     assert len(typo_results) > 0
     assert any("refund_policy.md" in r["doc_id"] for r in typo_results)
 

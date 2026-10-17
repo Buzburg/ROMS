@@ -1,6 +1,6 @@
 """AutoResearch: Autonomous Multi-Source Deep Investigation & Knowledge Compounding Engine.
 
-Inspired by Karpathy's LLM OS and autonomous research methodologies:
+Collects evidence across related local research questions:
 - Topic Deconstruction: Breaks high-level research questions into targeted facet sub-queries
 - Multi-Source Investigation: Coordinates ZG-Search (fuzzy), Topic-Routed RAG, and Dense RRF
 - Cross-Verification & Fact Extraction: Extracts verifiable claims, metrics, and resolves contradictions
@@ -19,9 +19,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from app.config import KNOWLEDGE_DIR
 from app.db import get_connection
 from app.okf_loader import ingest_okf_file
-from app.rag_engine import hybrid_search
+from app.rag_engine import local_search, _chunk_identity
 from app.topic import detect_query_topics, search_by_topic
-from app.zgsearch import zg_search
 
 
 def deconstruct_research_topic(topic: str) -> List[str]:
@@ -160,32 +159,23 @@ def execute_autoresearch(
     subqueries = deconstruct_research_topic(clean_topic) if depth >= 2 else [clean_topic]
 
     # 2. Multi-Source Evidence Harvesting
-    collected_sources: Dict[str, Dict[str, Any]] = {}
+    collected_sources: Dict[tuple, Dict[str, Any]] = {}
 
     # Check for relevant topic taxonomy
     detected_topics = detect_query_topics(clean_topic, db_path=db_path)
     for top in detected_topics[:2]:
         topic_chunks = search_by_topic(topic=top, query=clean_topic, limit=2, db_path=db_path)
         for tc in topic_chunks:
-            key = f"{tc['doc_id']}::{tc['content'][:60]}"
+            key = _chunk_identity(tc)
             if key not in collected_sources:
                 collected_sources[key] = tc
 
-    # Run ZG-Search & Hybrid RRF for each subquery
-    for sq in subqueries:
-        # Typo-tolerant ZG-search
-        zg_results = zg_search(sq, fuzzy=True, limit=3, db_path=db_path)
-        for zr in zg_results:
-            key = f"{zr['doc_id']}::{zr['content'][:60]}"
+    # Search each distinct question once; the local engine already fuses both paths.
+    for sq in dict.fromkeys(subqueries):
+        for hit in local_search(sq, limit=3, db_path=db_path):
+            key = _chunk_identity(hit)
             if key not in collected_sources:
-                collected_sources[key] = zr
-
-        # Dense + lexical hybrid search
-        h_results = hybrid_search(sq, limit=3, db_path=db_path)
-        for hr in h_results:
-            key = f"{hr['doc_id']}::{hr['content'][:60]}"
-            if key not in collected_sources:
-                collected_sources[key] = hr
+                collected_sources[key] = hit
 
         if len(collected_sources) >= max_sources * 2:
             break

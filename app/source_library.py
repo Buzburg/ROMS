@@ -15,7 +15,7 @@ from app.config import DATA_DIR
 from app.db import get_connection, init_database
 from app.okf_loader import SUPPORTED_EXTENSIONS, ingest_document_file
 
-MAX_FILE_BYTES = 1024 * 1024
+MAX_FILE_BYTES = 32 * 1024 * 1024
 MAX_TOTAL_BYTES = 32 * 1024 * 1024
 MAX_FILES = 1000
 MAX_MANIFEST_BYTES = 4 * 1024 * 1024
@@ -60,9 +60,9 @@ def _read_regular(root: Path, relative: Path) -> bytes:
         if not stat.S_ISREG(info.st_mode) or info.st_size > MAX_FILE_BYTES:
             raise ValueError('Source is not a bounded regular file')
         content = stream.read(MAX_FILE_BYTES + 1)
-        if len(content) > MAX_FILE_BYTES or b'\x00' in content:
-            raise ValueError('Oversized or binary source')
-        content.decode('utf-8', errors='strict')
+        if len(content) > MAX_FILE_BYTES:
+            raise ValueError('Oversized source')
+        # Decoding and binary format validation belong to the shared importer.
         if not content.strip():
             raise ValueError('Empty source')
         if re.search(br'-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----', content):
@@ -143,7 +143,7 @@ def plan_source(value: str, kind: str) -> tuple[Path, list[tuple[Path, bytes]], 
             raise ValueError('Source exceeds 32 MiB; select a smaller folder')
         admitted.append((relative, content))
     if not admitted:
-        raise ValueError('No supported, readable text files were selected')
+        raise ValueError('No supported, readable files were selected')
     return root, admitted, skipped
 
 
@@ -220,7 +220,10 @@ def remove_source(source_id: str, *, db_path: Path | None = None, library: Path 
         with connection:
             ids = [row[0] for row in connection.execute('SELECT doc_id FROM okf_registry WHERE doc_id LIKE ?',
                                                         (f'source:{source_id}/%',))]
+            has_details = connection.execute("SELECT 1 FROM sqlite_master WHERE name='ingestion_details'").fetchone()
             for doc_id in ids:
+                if has_details:
+                    connection.execute('DELETE FROM ingestion_details WHERE doc_id=?', (doc_id,))
                 connection.execute('DELETE FROM chunk_topics WHERE chunk_id IN (SELECT chunk_id FROM fts_chunks WHERE doc_id=?)', (doc_id,))
                 for table in ('vec_chunks', 'fts_chunks', 'okf_registry'):
                     connection.execute(f'DELETE FROM {table} WHERE doc_id=?', (doc_id,))
@@ -246,7 +249,7 @@ def library_menu() -> None:
                 kind = {'1': 'file', '2': 'repo', '3': 'folder'}[choice]
                 value = input('Paste the Windows or Linux path: ').strip().strip('"')
                 _, files, skipped = plan_source(value, kind)
-                print(f'{len(files)} text files, {sum(len(data) for _, data in files):,} bytes; {len(skipped)} skipped.')
+                print(f'{len(files)} files, {sum(len(data) for _, data in files):,} bytes; {len(skipped)} skipped.')
                 for relative, _ in files[:30]:
                     print('  ' + relative.as_posix())
                 if len(files) > 30:

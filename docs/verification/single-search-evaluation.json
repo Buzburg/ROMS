@@ -1,0 +1,1093 @@
+{
+  "scope": "Small synthetic/manual CPU exercises; not production accuracy or speed guarantees.",
+  "timing": "Loaded local MiniLM, fresh query embedding per measured call; separate populated result cache measurements.",
+  "token_window_check": "Long subwords, CJK and Unicode slices all fit actual model tokenizer window.",
+  "frozen": {
+    "fresh": {
+      "summary": {
+        "queries": 20,
+        "top1": 17,
+        "hit5": 20,
+        "mrr5": 0.9083333333333334,
+        "median_ms": 7.6980560006632,
+        "p95_ms": 34.52080499846488
+      },
+      "queries": [
+        {
+          "id": "refund_exact",
+          "kind": "keyword",
+          "query": "damaged replacement 30 days",
+          "relevant": [
+            "knowledge/refund_policy.md"
+          ],
+          "rank": 1,
+          "latency_ms": 34.52080499846488,
+          "hits": [
+            {
+              "doc_id": "knowledge/refund_policy.md",
+              "chunk_id": 2
+            },
+            {
+              "doc_id": "knowledge/refund_policy.md",
+              "chunk_id": 1
+            },
+            {
+              "doc_id": "knowledge/refund_policy.md",
+              "chunk_id": 3
+            },
+            {
+              "doc_id": "docs/model-input-verification.md",
+              "chunk_id": 161
+            },
+            {
+              "doc_id": "docs/project-repair.md",
+              "chunk_id": 36
+            }
+          ]
+        },
+        {
+          "id": "refund_typo",
+          "kind": "typo",
+          "query": "damagd replacment",
+          "relevant": [
+            "knowledge/refund_policy.md"
+          ],
+          "rank": 3,
+          "latency_ms": 8.61346699821297,
+          "hits": [
+            {
+              "doc_id": "docs/patch-promotion-verification.md",
+              "chunk_id": 145
+            },
+            {
+              "doc_id": "docs/patch-promotion-verification.md",
+              "chunk_id": 150
+            },
+            {
+              "doc_id": "knowledge/refund_policy.md",
+              "chunk_id": 2
+            },
+            {
+              "doc_id": "docs/worker-recovery-verification.md",
+              "chunk_id": 176
+            },
+            {
+              "doc_id": "knowledge/refund_policy.md",
+              "chunk_id": 1
+            }
+          ]
+        },
+        {
+          "id": "refund_meaning",
+          "kind": "paraphrase",
+          "query": "My package arrived broken. Can you send another one?",
+          "relevant": [
+            "knowledge/refund_policy.md"
+          ],
+          "rank": 1,
+          "latency_ms": 9.006817002955358,
+          "hits": [
+            {
+              "doc_id": "knowledge/refund_policy.md",
+              "chunk_id": 2
+            },
+            {
+              "doc_id": "docs/voice.md",
+              "chunk_id": 97
+            },
+            {
+              "doc_id": "docs/HARNESS.md",
+              "chunk_id": 75
+            },
+            {
+              "doc_id": "knowledge/refund_policy.md",
+              "chunk_id": 3
+            },
+            {
+              "doc_id": "docs/native-sandbox-verification.md",
+              "chunk_id": 21
+            }
+          ]
+        },
+        {
+          "id": "privacy_exact",
+          "kind": "identifier",
+          "query": "ROMS_RECORD_CHAT_TRAJECTORIES",
+          "relevant": [
+            "docs/chat-privacy.md"
+          ],
+          "rank": 1,
+          "latency_ms": 7.9277080003521405,
+          "hits": [
+            {
+              "doc_id": "docs/chat-privacy.md",
+              "chunk_id": 6
+            },
+            {
+              "doc_id": "docs/chat-privacy.md",
+              "chunk_id": 4
+            },
+            {
+              "doc_id": "docs/chat-privacy.md",
+              "chunk_id": 9
+            },
+            {
+              "doc_id": "docs/chat-privacy.md",
+              "chunk_id": 5
+            },
+            {
+              "doc_id": "docs/local-memory.md",
+              "chunk_id": 49
+            }
+          ]
+        },
+        {
+          "id": "privacy_meaning",
+          "kind": "paraphrase",
+          "query": "Are my conversations saved automatically?",
+          "relevant": [
+            "docs/chat-privacy.md"
+          ],
+          "rank": 3,
+          "latency_ms": 6.421063997549936,
+          "hits": [
+            {
+              "doc_id": "docs/voice.md",
+              "chunk_id": 110
+            },
+            {
+              "doc_id": "docs/local-memory.md",
+              "chunk_id": 54
+            },
+            {
+              "doc_id": "docs/chat-privacy.md",
+              "chunk_id": 8
+            },
+            {
+              "doc_id": "docs/voice-performance.md",
+              "chunk_id": 127
+            },
+            {
+              "doc_id": "docs/voice-performance.md",
+              "chunk_id": 130
+            }
+          ]
+        },
+        {
+          "id": "sandbox_exact",
+          "kind": "keyword",
+          "query": "Landlock staging root",
+          "relevant": [
+            "docs/native-sandbox-verification.md"
+          ],
+          "rank": 1,
+          "latency_ms": 5.68576200021198,
+          "hits": [
+            {
+              "doc_id": "docs/native-sandbox-verification.md",
+              "chunk_id": 14
+            },
+            {
+              "doc_id": "docs/native-sandbox-verification.md",
+              "chunk_id": 15
+            },
+            {
+              "doc_id": "docs/native-sandbox-verification.md",
+              "chunk_id": 29
+            },
+            {
+              "doc_id": "docs/native-sandbox-verification.md",
+              "chunk_id": 16
+            },
+            {
+              "doc_id": "docs/patch-promotion-verification.md",
+              "chunk_id": 140
+            }
+          ]
+        },
+        {
+          "id": "sandbox_typo",
+          "kind": "typo",
+          "query": "sandbxo permisions",
+          "relevant": [
+            "docs/native-sandbox-verification.md"
+          ],
+          "rank": 2,
+          "latency_ms": 9.319263997895177,
+          "hits": [
+            {
+              "doc_id": "docs/project-repair.md",
+              "chunk_id": 37
+            },
+            {
+              "doc_id": "docs/native-sandbox-verification.md",
+              "chunk_id": 11
+            },
+            {
+              "doc_id": "docs/native-sandbox-verification.md",
+              "chunk_id": 29
+            },
+            {
+              "doc_id": "docs/native-sandbox-verification.md",
+              "chunk_id": 25
+            },
+            {
+              "doc_id": "docs/native-sandbox-verification.md",
+              "chunk_id": 16
+            }
+          ]
+        },
+        {
+          "id": "sandbox_meaning",
+          "kind": "paraphrase",
+          "query": "Stop a generated program from changing files outside its allowed folder",
+          "relevant": [
+            "docs/native-sandbox-verification.md"
+          ],
+          "rank": 1,
+          "latency_ms": 7.88403600017773,
+          "hits": [
+            {
+              "doc_id": "docs/native-sandbox-verification.md",
+              "chunk_id": 15
+            },
+            {
+              "doc_id": "docs/model-input-verification.md",
+              "chunk_id": 159
+            },
+            {
+              "doc_id": "app/source_library.py",
+              "chunk_id": 355
+            },
+            {
+              "doc_id": "docs/project-repair.md",
+              "chunk_id": 35
+            },
+            {
+              "doc_id": "docs/patch-promotion-verification.md",
+              "chunk_id": 145
+            }
+          ]
+        },
+        {
+          "id": "repair_meaning",
+          "kind": "paraphrase",
+          "query": "Fix the draft after its tests failed without applying it automatically",
+          "relevant": [
+            "docs/project-repair.md",
+            "app/project_repair.py"
+          ],
+          "rank": 1,
+          "latency_ms": 6.970677997742314,
+          "hits": [
+            {
+              "doc_id": "docs/project-repair.md",
+              "chunk_id": 34
+            },
+            {
+              "doc_id": "docs/project-repair.md",
+              "chunk_id": 41
+            },
+            {
+              "doc_id": "docs/project-repair.md",
+              "chunk_id": 35
+            },
+            {
+              "doc_id": "docs/project-repair.md",
+              "chunk_id": 33
+            },
+            {
+              "doc_id": "docs/worker-recovery-verification.md",
+              "chunk_id": 175
+            }
+          ]
+        },
+        {
+          "id": "memory_meaning",
+          "kind": "paraphrase",
+          "query": "Remember a verified lesson for the next session in the same project",
+          "relevant": [
+            "docs/local-memory.md",
+            "app/memory.py"
+          ],
+          "rank": 1,
+          "latency_ms": 9.29356699634809,
+          "hits": [
+            {
+              "doc_id": "app/memory.py",
+              "chunk_id": 413
+            },
+            {
+              "doc_id": "app/memory.py",
+              "chunk_id": 421
+            },
+            {
+              "doc_id": "app/memory.py",
+              "chunk_id": 404
+            },
+            {
+              "doc_id": "docs/local-memory.md",
+              "chunk_id": 56
+            },
+            {
+              "doc_id": "docs/project-repair.md",
+              "chunk_id": 33
+            }
+          ]
+        },
+        {
+          "id": "voice_meaning",
+          "kind": "paraphrase",
+          "query": "How do I speak into the microphone and hear the assistant answer?",
+          "relevant": [
+            "docs/voice.md"
+          ],
+          "rank": 1,
+          "latency_ms": 7.934068999020383,
+          "hits": [
+            {
+              "doc_id": "docs/voice.md",
+              "chunk_id": 106
+            },
+            {
+              "doc_id": "docs/voice.md",
+              "chunk_id": 105
+            },
+            {
+              "doc_id": "docs/voice-performance.md",
+              "chunk_id": 127
+            },
+            {
+              "doc_id": "docs/voice-performance.md",
+              "chunk_id": 120
+            },
+            {
+              "doc_id": "docs/voice-performance.md",
+              "chunk_id": 118
+            }
+          ]
+        },
+        {
+          "id": "voice_latency",
+          "kind": "keyword",
+          "query": "first generated audio latency prompt cache",
+          "relevant": [
+            "docs/voice-performance.md",
+            "docs/voice.md"
+          ],
+          "rank": 1,
+          "latency_ms": 6.55148000078043,
+          "hits": [
+            {
+              "doc_id": "docs/voice-performance.md",
+              "chunk_id": 122
+            },
+            {
+              "doc_id": "docs/voice.md",
+              "chunk_id": 100
+            },
+            {
+              "doc_id": "docs/voice-performance.md",
+              "chunk_id": 134
+            },
+            {
+              "doc_id": "docs/voice-performance.md",
+              "chunk_id": 130
+            },
+            {
+              "doc_id": "docs/voice-performance.md",
+              "chunk_id": 121
+            }
+          ]
+        },
+        {
+          "id": "ingest_symbol",
+          "kind": "identifier",
+          "query": "ingest_document_file",
+          "relevant": [
+            "app/okf_loader.py",
+            "app/source_library.py"
+          ],
+          "rank": 1,
+          "latency_ms": 7.101253999280743,
+          "hits": [
+            {
+              "doc_id": "app/okf_loader.py",
+              "chunk_id": 327
+            },
+            {
+              "doc_id": "app/okf_loader.py",
+              "chunk_id": 343
+            },
+            {
+              "doc_id": "app/okf_loader.py",
+              "chunk_id": 346
+            },
+            {
+              "doc_id": "app/source_library.py",
+              "chunk_id": 349
+            },
+            {
+              "doc_id": "app/okf_loader.py",
+              "chunk_id": 344
+            }
+          ]
+        },
+        {
+          "id": "ingest_meaning",
+          "kind": "paraphrase",
+          "query": "Import markdown CSV and JSON documents into both search indexes",
+          "relevant": [
+            "app/okf_loader.py"
+          ],
+          "rank": 1,
+          "latency_ms": 7.512076001148671,
+          "hits": [
+            {
+              "doc_id": "app/okf_loader.py",
+              "chunk_id": 327
+            },
+            {
+              "doc_id": "app/okf_loader.py",
+              "chunk_id": 330
+            },
+            {
+              "doc_id": "app/okf_loader.py",
+              "chunk_id": 307
+            },
+            {
+              "doc_id": "app/okf_loader.py",
+              "chunk_id": 308
+            },
+            {
+              "doc_id": "app/okf_loader.py",
+              "chunk_id": 310
+            }
+          ]
+        },
+        {
+          "id": "query_cache",
+          "kind": "identifier",
+          "query": "_get_query_embedding",
+          "relevant": [
+            "app/rag_engine.py"
+          ],
+          "rank": 1,
+          "latency_ms": 6.458484996983316,
+          "hits": [
+            {
+              "doc_id": "app/rag_engine.py",
+              "chunk_id": 270
+            },
+            {
+              "doc_id": "app/rag_engine.py",
+              "chunk_id": 278
+            },
+            {
+              "doc_id": "app/rag_engine.py",
+              "chunk_id": 268
+            },
+            {
+              "doc_id": "app/rag_engine.py",
+              "chunk_id": 265
+            },
+            {
+              "doc_id": "app/rag_engine.py",
+              "chunk_id": 272
+            }
+          ]
+        },
+        {
+          "id": "source_symbol",
+          "kind": "identifier",
+          "query": "plan_source",
+          "relevant": [
+            "app/source_library.py"
+          ],
+          "rank": 1,
+          "latency_ms": 5.83592399925692,
+          "hits": [
+            {
+              "doc_id": "app/source_library.py",
+              "chunk_id": 359
+            },
+            {
+              "doc_id": "app/source_library.py",
+              "chunk_id": 355
+            },
+            {
+              "doc_id": "app/source_library.py",
+              "chunk_id": 361
+            },
+            {
+              "doc_id": "app/source_library.py",
+              "chunk_id": 362
+            },
+            {
+              "doc_id": "docs/local-memory.md",
+              "chunk_id": 44
+            }
+          ]
+        },
+        {
+          "id": "tts_symbol",
+          "kind": "identifier",
+          "query": "PocketSpeaker",
+          "relevant": [
+            "app/voice_tts.py"
+          ],
+          "rank": 1,
+          "latency_ms": 5.93609300267417,
+          "hits": [
+            {
+              "doc_id": "app/voice_tts.py",
+              "chunk_id": 384
+            },
+            {
+              "doc_id": "docs/voice.md",
+              "chunk_id": 109
+            },
+            {
+              "doc_id": "app/voice_tts.py",
+              "chunk_id": 376
+            },
+            {
+              "doc_id": "docs/voice.md",
+              "chunk_id": 97
+            },
+            {
+              "doc_id": "app/voice_tts.py",
+              "chunk_id": 386
+            }
+          ]
+        },
+        {
+          "id": "stt_symbol",
+          "kind": "identifier",
+          "query": "TinyRecognizer",
+          "relevant": [
+            "app/voice_stt.py"
+          ],
+          "rank": 1,
+          "latency_ms": 6.641489002504386,
+          "hits": [
+            {
+              "doc_id": "app/voice_stt.py",
+              "chunk_id": 370
+            },
+            {
+              "doc_id": "docs/local-memory.md",
+              "chunk_id": 56
+            },
+            {
+              "doc_id": "docs/local-memory.md",
+              "chunk_id": 47
+            },
+            {
+              "doc_id": "docs/voice.md",
+              "chunk_id": 102
+            },
+            {
+              "doc_id": "docs/local-memory.md",
+              "chunk_id": 44
+            }
+          ]
+        },
+        {
+          "id": "harness_meaning",
+          "kind": "paraphrase",
+          "query": "Prepare a proposed next step using knowledge and selected skills but do not execute it",
+          "relevant": [
+            "docs/HARNESS.md",
+            "docs/components.md",
+            "README.md"
+          ],
+          "rank": 1,
+          "latency_ms": 8.397149998927489,
+          "hits": [
+            {
+              "doc_id": "README.md",
+              "chunk_id": 216
+            },
+            {
+              "doc_id": "docs/components.md",
+              "chunk_id": 196
+            },
+            {
+              "doc_id": "docs/HARNESS.md",
+              "chunk_id": 91
+            },
+            {
+              "doc_id": "README.md",
+              "chunk_id": 229
+            },
+            {
+              "doc_id": "docs/HARNESS.md",
+              "chunk_id": 84
+            }
+          ]
+        },
+        {
+          "id": "repair_typo",
+          "kind": "typo",
+          "query": "repaor faild validaton",
+          "relevant": [
+            "docs/project-repair.md",
+            "app/project_repair.py"
+          ],
+          "rank": 1,
+          "latency_ms": 10.44126500346465,
+          "hits": [
+            {
+              "doc_id": "docs/project-repair.md",
+              "chunk_id": 32
+            },
+            {
+              "doc_id": "docs/project-repair.md",
+              "chunk_id": 36
+            },
+            {
+              "doc_id": "docs/project-repair.md",
+              "chunk_id": 41
+            },
+            {
+              "doc_id": "README.md",
+              "chunk_id": 220
+            },
+            {
+              "doc_id": "docs/project-repair.md",
+              "chunk_id": 33
+            }
+          ]
+        }
+      ]
+    },
+    "cached": {
+      "summary": {
+        "queries": 20,
+        "top1": 17,
+        "hit5": 20,
+        "mrr5": 0.9083333333333334,
+        "median_ms": 0.02649999805726111,
+        "p95_ms": 0.0628990019322373
+      }
+    }
+  },
+  "messy": {
+    "files": 14,
+    "ingestion_seconds": 0.6455786320002517,
+    "sources": {
+      "unicode.log": "286bc52042c7a4ccebe9deb4a5f300f3c42557d2fcf511b3de7a40fd9b2b7b31",
+      "notes.txt": "87df28fd4bd58626fa1e9de5c8a3e9263705970361825048facb4266de2d9071",
+      "scan.png": "b389d0a8d1215a108bb1199251dc788f2839c886811416a4d997776cc64c214b",
+      "scan.pdf": "5e9f0982ef785ce2a91548055dfcf5acc10f98a855a5c53ec0df706b879bbb5d",
+      "orders.xlsx": "91941f836d92b2a904fb869a34f489dc36b9626b8c662502cfe6e030f12bf1ee",
+      "safety.pptx": "694225f9d156bf21818b07daa83602b2b2b5c9aa6ff960ca07465f2dea6d8717",
+      "frames.tiff": "2b9ba88091790234c5c2c8b102d6f605b011e33714ce889d4a85a7f4aa8e6914",
+      "events.ndjson": "8de569c0ed10622559069e61c2828998d25e937c37e819f1775c2880621431ff",
+      "inventory.csv": "02fb5be0e1aad067dc240d685dd42050e8c0b006b50120d9cafa78b0ec147f2d",
+      "inspection.pdf": "3fe32ecbd6f91b38fd3729481666e7074f3511770467056ab0de7c3ed87c57fd",
+      "warranty.docx": "f5bd26560debd4ffa154f73a244a3d76b86d98ca618ae082fc890fd00d171055",
+      "repair.md": "8e7116a798507078524b0cdc90b608f35354f0aaac5f1635c1beb4abcb86db0b",
+      "meeting.odt": "29ff8e4021eee3ef993b132b8a85a1cf7855f552c7efc27616646fbdcaa6aa95",
+      "help.html": "70b8175c4c0819b08e075ed1c5d244d7a1fff84c04aab761c3f818304171645c"
+    },
+    "fresh": {
+      "summary": {
+        "queries": 12,
+        "top1": 12,
+        "hit5": 12,
+        "mrr5": 1.0,
+        "median_ms": 5.7191450032405555,
+        "p95_ms": 7.553814997663721
+      },
+      "queries": [
+        {
+          "id": "messy-1",
+          "query": "free replacement for broken delivery",
+          "relevant": [
+            "repair.md"
+          ],
+          "rank": 1,
+          "latency_ms": 7.1701929991832,
+          "hits": [
+            {
+              "doc_id": "repair.md",
+              "chunk_id": 11
+            },
+            {
+              "doc_id": "events.ndjson",
+              "chunk_id": 1
+            },
+            {
+              "doc_id": "warranty.docx",
+              "chunk_id": 17
+            },
+            {
+              "doc_id": "notes.txt",
+              "chunk_id": 8
+            },
+            {
+              "doc_id": "inventory.csv",
+              "chunk_id": 6
+            }
+          ]
+        },
+        {
+          "id": "messy-2",
+          "query": "Cobalt bearings warehouse quantity",
+          "relevant": [
+            "inventory.csv"
+          ],
+          "rank": 1,
+          "latency_ms": 5.458885003463365,
+          "hits": [
+            {
+              "doc_id": "inventory.csv",
+              "chunk_id": 6
+            },
+            {
+              "doc_id": "orders.xlsx",
+              "chunk_id": 10
+            },
+            {
+              "doc_id": "inspection.pdf",
+              "chunk_id": 5
+            },
+            {
+              "doc_id": "unicode.log",
+              "chunk_id": 15
+            },
+            {
+              "doc_id": "notes.txt",
+              "chunk_id": 8
+            }
+          ]
+        },
+        {
+          "id": "messy-3",
+          "query": "Nebula emergency reboot token",
+          "relevant": [
+            "events.ndjson"
+          ],
+          "rank": 1,
+          "latency_ms": 6.190159998368472,
+          "hits": [
+            {
+              "doc_id": "events.ndjson",
+              "chunk_id": 1
+            },
+            {
+              "doc_id": "warranty.docx",
+              "chunk_id": 17
+            },
+            {
+              "doc_id": "unicode.log",
+              "chunk_id": 15
+            },
+            {
+              "doc_id": "help.html",
+              "chunk_id": 4
+            },
+            {
+              "doc_id": "safety.pptx",
+              "chunk_id": 12
+            }
+          ]
+        },
+        {
+          "id": "messy-4",
+          "query": "When are cafe repair appointments?",
+          "relevant": [
+            "notes.txt"
+          ],
+          "rank": 1,
+          "latency_ms": 5.849679997481871,
+          "hits": [
+            {
+              "doc_id": "notes.txt",
+              "chunk_id": 8
+            },
+            {
+              "doc_id": "repair.md",
+              "chunk_id": 11
+            },
+            {
+              "doc_id": "meeting.odt",
+              "chunk_id": 7
+            },
+            {
+              "doc_id": "inspection.pdf",
+              "chunk_id": 5
+            },
+            {
+              "doc_id": "warranty.docx",
+              "chunk_id": 17
+            }
+          ]
+        },
+        {
+          "id": "messy-5",
+          "query": "Aurora coolant maintenance interval",
+          "relevant": [
+            "unicode.log"
+          ],
+          "rank": 1,
+          "latency_ms": 5.769009003415704,
+          "hits": [
+            {
+              "doc_id": "unicode.log",
+              "chunk_id": 15
+            },
+            {
+              "doc_id": "warranty.docx",
+              "chunk_id": 16
+            },
+            {
+              "doc_id": "notes.txt",
+              "chunk_id": 8
+            },
+            {
+              "doc_id": "inspection.pdf",
+              "chunk_id": 5
+            },
+            {
+              "doc_id": "safety.pptx",
+              "chunk_id": 12
+            }
+          ]
+        },
+        {
+          "id": "messy-6",
+          "query": "I forgot my password how do I recover access?",
+          "relevant": [
+            "help.html"
+          ],
+          "rank": 1,
+          "latency_ms": 7.553814997663721,
+          "hits": [
+            {
+              "doc_id": "help.html",
+              "chunk_id": 4
+            },
+            {
+              "doc_id": "scan.pdf",
+              "chunk_id": 13
+            },
+            {
+              "doc_id": "inventory.csv",
+              "chunk_id": 6
+            },
+            {
+              "doc_id": "warranty.docx",
+              "chunk_id": 18
+            },
+            {
+              "doc_id": "frames.tiff",
+              "chunk_id": 2
+            }
+          ]
+        },
+        {
+          "id": "messy-7",
+          "query": "Violet laboratory access code",
+          "relevant": [
+            "scan.png",
+            "scan.pdf",
+            "frames.tiff",
+            "warranty.docx"
+          ],
+          "rank": 1,
+          "latency_ms": 5.53961699915817,
+          "hits": [
+            {
+              "doc_id": "scan.pdf",
+              "chunk_id": 13
+            },
+            {
+              "doc_id": "frames.tiff",
+              "chunk_id": 3
+            },
+            {
+              "doc_id": "frames.tiff",
+              "chunk_id": 2
+            },
+            {
+              "doc_id": "scan.png",
+              "chunk_id": 14
+            },
+            {
+              "doc_id": "warranty.docx",
+              "chunk_id": 18
+            }
+          ]
+        },
+        {
+          "id": "messy-8",
+          "query": "Saturn warranty duration",
+          "relevant": [
+            "warranty.docx"
+          ],
+          "rank": 1,
+          "latency_ms": 5.643032003717963,
+          "hits": [
+            {
+              "doc_id": "warranty.docx",
+              "chunk_id": 16
+            },
+            {
+              "doc_id": "unicode.log",
+              "chunk_id": 15
+            },
+            {
+              "doc_id": "repair.md",
+              "chunk_id": 11
+            },
+            {
+              "doc_id": "inspection.pdf",
+              "chunk_id": 5
+            },
+            {
+              "doc_id": "meeting.odt",
+              "chunk_id": 7
+            }
+          ]
+        },
+        {
+          "id": "messy-9",
+          "query": "Emerald pump order number",
+          "relevant": [
+            "orders.xlsx"
+          ],
+          "rank": 1,
+          "latency_ms": 5.530009002541192,
+          "hits": [
+            {
+              "doc_id": "orders.xlsx",
+              "chunk_id": 10
+            },
+            {
+              "doc_id": "orders.xlsx",
+              "chunk_id": 9
+            },
+            {
+              "doc_id": "warranty.docx",
+              "chunk_id": 17
+            },
+            {
+              "doc_id": "inspection.pdf",
+              "chunk_id": 5
+            },
+            {
+              "doc_id": "unicode.log",
+              "chunk_id": 15
+            }
+          ]
+        },
+        {
+          "id": "messy-10",
+          "query": "Helios evacuation assembly location",
+          "relevant": [
+            "safety.pptx"
+          ],
+          "rank": 1,
+          "latency_ms": 5.901486998482142,
+          "hits": [
+            {
+              "doc_id": "safety.pptx",
+              "chunk_id": 12
+            },
+            {
+              "doc_id": "meeting.odt",
+              "chunk_id": 7
+            },
+            {
+              "doc_id": "events.ndjson",
+              "chunk_id": 1
+            },
+            {
+              "doc_id": "scan.pdf",
+              "chunk_id": 13
+            },
+            {
+              "doc_id": "frames.tiff",
+              "chunk_id": 3
+            }
+          ]
+        },
+        {
+          "id": "messy-11",
+          "query": "Lunar planning meeting schedule",
+          "relevant": [
+            "meeting.odt"
+          ],
+          "rank": 1,
+          "latency_ms": 5.649574006383773,
+          "hits": [
+            {
+              "doc_id": "meeting.odt",
+              "chunk_id": 7
+            },
+            {
+              "doc_id": "safety.pptx",
+              "chunk_id": 12
+            },
+            {
+              "doc_id": "notes.txt",
+              "chunk_id": 8
+            },
+            {
+              "doc_id": "unicode.log",
+              "chunk_id": 15
+            },
+            {
+              "doc_id": "events.ndjson",
+              "chunk_id": 1
+            }
+          ]
+        },
+        {
+          "id": "messy-12",
+          "query": "Copper turbine inspection due",
+          "relevant": [
+            "inspection.pdf"
+          ],
+          "rank": 1,
+          "latency_ms": 5.669281003065407,
+          "hits": [
+            {
+              "doc_id": "inspection.pdf",
+              "chunk_id": 5
+            },
+            {
+              "doc_id": "warranty.docx",
+              "chunk_id": 16
+            },
+            {
+              "doc_id": "notes.txt",
+              "chunk_id": 8
+            },
+            {
+              "doc_id": "frames.tiff",
+              "chunk_id": 3
+            },
+            {
+              "doc_id": "frames.tiff",
+              "chunk_id": 2
+            }
+          ]
+        }
+      ]
+    },
+    "cached": {
+      "summary": {
+        "queries": 12,
+        "top1": 12,
+        "hit5": 12,
+        "mrr5": 1.0,
+        "median_ms": 0.02270299955853261,
+        "p95_ms": 0.034354998206254095
+      }
+    }
+  }
+}

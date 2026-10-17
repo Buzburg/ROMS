@@ -28,3 +28,23 @@ jobs:
       - run: python -m pytest tests/test_release_safety.py tests/test_memory.py tests/test_context.py tests/test_gateway_privacy.py tests/test_doctor.py tests/test_workbench_package.py tests/test_os_model.py tests/test_os_workshop.py tests/test_voice_audio.py tests/test_voice_chat.py tests/test_voice_stt.py tests/test_voice_tts.py tests/test_voice_workshop.py -q
         env:
           HF_HUB_OFFLINE: '1'
+  native-search:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install local OCR tools
+        run: sudo apt-get update && sudo apt-get install -y tesseract-ocr tesseract-ocr-eng poppler-utils fonts-liberation
+      - name: Install CPU model adapters and compiler
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -r requirements.txt mojo==1.1.0
+      - name: Build the required Mojo search module
+        run: python scripts/build_search_native.py
+      - name: Verify real native kernels and local document extraction
+        run: python -m pytest tests/test_search_native.py tests/test_search_upgrades.py tests/test_retrieval_quality.py tests/test_messy_ingestion.py tests/test_ingestion_quality.py tests/test_document_identity.py tests/test_source_library.py -q
+        env:
+          HF_HUB_OFFLINE: '1'
+          TRANSFORMERS_OFFLINE: '1'

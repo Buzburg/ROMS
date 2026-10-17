@@ -9,6 +9,8 @@ platforms = ["linux-64"]
 [dependencies]
 mojo = ">=1.1.0"
 python = ">=3.11,<3.13"
+tesseract = ">=5"
+poppler = "*"
 
 [pypi-dependencies]
 sentence-transformers = ">=3.0.0"
@@ -18,8 +20,15 @@ python-frontmatter = ">=1.1.0"
 pydantic = ">=2.0.0"
 psutil = ">=5.9.0"
 numpy = "*"
+pypdf = ">=6.21.1"
+pillow = ">=13"
+python-docx = ">=1.2"
+python-pptx = ">=1.0.2"
+openpyxl = ">=3.1.5"
 
 [tasks]
+build-search = "python scripts/build_search_native.py"
+test-search = "python -m pytest tests/test_search_native.py tests/test_search_upgrades.py tests/test_messy_ingestion.py -q"
 build-broker = "mojo build app_mojo/omarchy_broker.mojo -o .pixi/envs/default/bin/omarchy-broker"
 test-broker = "env OMARCHY_BROKER_BINARY=.pixi/envs/default/bin/omarchy-broker python -m unittest discover -s tests -p test_omarchy_broker.py -v"
 broker = ".pixi/envs/default/bin/omarchy-broker"

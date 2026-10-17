@@ -16,7 +16,7 @@ def forwarded(monkeypatch):
     requests, queries = [], []
     monkeypatch.delenv('ROMS_RECORD_CHAT_TRAJECTORIES', raising=False)
     monkeypatch.delenv('ROMS_GATEWAY_INCLUDE_PROCEDURES', raising=False)
-    monkeypatch.setattr(gateway, 'hybrid_search', lambda **kwargs: queries.append(kwargs) or [])
+    monkeypatch.setattr(gateway, 'local_search', lambda **kwargs: queries.append(kwargs) or [])
     monkeypatch.setattr(gateway, 'format_context_for_local_llm',
                         lambda *args, **kwargs: '<reference>fixture local fact</reference>')
 

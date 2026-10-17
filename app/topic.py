@@ -153,38 +153,7 @@ def search_by_topic(
     limit: int = 3,
     db_path: Path | str | None = None,
 ) -> List[Dict[str, Any]]:
-    """Performs topic-routed hybrid search: restricts candidate chunks to the topic subgraph first."""
-    conn = get_connection(db_path)
-    cur = conn.cursor()
-
-    cur.execute("""
-    SELECT f.chunk_id, f.doc_id, f.content, bm25(fts_chunks) AS score
-    FROM fts_chunks f
-    JOIN chunk_topics ct ON f.chunk_id = ct.chunk_id
-    WHERE ct.topic_id = ? AND f.fts_chunks MATCH ?
-    ORDER BY score
-    LIMIT ?
-    """, (topic.lower().strip(), query, limit))
-    rows = cur.fetchall()
-
-    if not rows:
-        # Fallback to topic chunks without MATCH if query words don't exact-match FTS5
-        cur.execute("""
-        SELECT f.chunk_id, f.doc_id, f.content, 0.05
-        FROM fts_chunks f
-        JOIN chunk_topics ct ON f.chunk_id = ct.chunk_id
-        WHERE ct.topic_id = ?
-        LIMIT ?
-        """, (topic.lower().strip(), limit))
-        rows = cur.fetchall()
-
-    return [
-        {
-            "chunk_id": r[0],
-            "doc_id": r[1],
-            "content": r[2],
-            "topic": topic,
-            "score": float(r[3]),
-        }
-        for r in rows
-    ]
+    """Compatibility wrapper using the same local engine with an exact topic filter."""
+    from app.rag_engine import local_search
+    return [{**hit, 'topic': topic} for hit in local_search(
+        query, limit=limit, db_path=db_path, filters={'topic': topic.lower().strip()})]

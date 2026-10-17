@@ -34,7 +34,7 @@ from app.config import (
     MIN_RELEVANCE_SCORE,
     SKILLS_DIR,
 )
-from app.rag_engine import hybrid_search
+from app.rag_engine import local_search
 from app.prompt_builder import format_context_for_local_llm
 from app.tool_rag import format_tool_search_results
 from app.trajectory_recorder import start_session, finish_session
@@ -139,7 +139,7 @@ async def chat_completions(request: Request) -> Response:
     # Augment with knowledge, skills and tool descriptions
     if last_user_query and retrieval == 'default':
         # A. Hybrid RAG
-        rag_chunks = await run_in_threadpool(hybrid_search,
+        rag_chunks = await run_in_threadpool(local_search,
             query=last_user_query,
             limit=3,
             min_score=MIN_RELEVANCE_SCORE,

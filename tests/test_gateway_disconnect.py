@@ -39,7 +39,7 @@ def test_client_disconnect_closes_actual_upstream_socket_and_allows_next_request
     def retrieve(**kwargs):
         assert mode != 'scoped', 'Scoped context must not trigger unscoped retrieval'
         return []
-    monkeypatch.setattr(gateway, 'hybrid_search', retrieve)
+    monkeypatch.setattr(gateway, 'local_search', retrieve)
     monkeypatch.setattr(gateway, 'start_session', lambda **_: None)
     finished = []
     monkeypatch.setattr(gateway, 'finish_session', lambda **record: finished.append(record))

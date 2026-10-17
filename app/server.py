@@ -51,9 +51,12 @@ def roms_prepare_harness(request_json: str) -> str:
 
 
 @mcp.tool()
-def search_knowledge_base(query: str, limit: int = 3) -> str:
-    """Semantic vector search across ingested OKF markdown documentation."""
-    return _search_knowledge_base(query=query, limit=limit)
+def search_knowledge_base(query: str, limit: int = 3, doc_type: str = "",
+                          topic: str = "", doc_id: str = "") -> str:
+    """Search local indexed knowledge with adaptive keyword/semantic fusion and exact filters."""
+    filters = {key: value for key, value in
+               (("doc_type", doc_type), ("topic", topic), ("doc_id", doc_id)) if value}
+    return _search_knowledge_base(query=query, limit=limit, filters=filters)
 
 
 @mcp.tool()
@@ -66,6 +69,13 @@ def search_grounded_context(query: str, limit: int = 3, max_tokens: int = 512) -
 def add_knowledge_document(filename: str, content: str, title: str = "", doc_type: str = "general") -> str:
     """Adds a new OKF Markdown document to knowledge/ and indexes it in the vector DB in real time."""
     return _add_doc(filename=filename, content=content, title=title, doc_type=doc_type)
+
+
+@mcp.tool()
+def get_knowledge_ingestion_status() -> dict:
+    """Show files that could not be indexed and text/OCR extraction notes."""
+    from app.okf_loader import get_ingestion_status
+    return get_ingestion_status()
 
 
 @mcp.tool()
@@ -237,12 +247,6 @@ from app.tools import (
 
 
 @mcp.tool()
-def zg_search(query: str, doc_type: str = "", fuzzy: bool = True, limit: int = 5) -> str:
-    """Search with optional fuzzy query expansion and document-type filtering."""
-    return _zg_search_engine(query=query, doc_type=doc_type, fuzzy=fuzzy, limit=limit)
-
-
-@mcp.tool()
 def get_zg_facets() -> str:
     """Return document-type counts and knowledge facets for filters."""
     import json
@@ -261,7 +265,6 @@ def list_topics() -> str:
     return json.dumps(_list_knowledge_topics(), indent=2)
 
 
-@mcp.tool()
 def search_by_topic(topic: str, query: str, limit: int = 3) -> str:
     """Search indexed knowledge within a topic; relevance and correctness still need review."""
     return _search_knowledge_by_topic(topic=topic, query=query, limit=limit)

@@ -42,6 +42,8 @@ _RESULT_CACHE_MAX = 512
 def clear_result_cache():
     """Clears in-memory search result cache when knowledge documents are updated."""
     _RESULT_CACHE.clear()
+    from app.zgsearch import clear_search_cache
+    clear_search_cache()
 
 
 def _embedding_namespace() -> tuple:
@@ -97,12 +99,14 @@ def _get_query_embedding(
         raise ValueError(f'Expected {config.EMBEDDING_DIM} finite float32 embedding values')
     emb_bytes = vector.tobytes()
 
-    # Persist in DB and memory
+    # Keep caller-owned transactions private; a read must never commit their edits.
+    caller_transaction = active_conn.in_transaction
     cur.execute(
         "INSERT OR REPLACE INTO embedding_cache (query_hash, embedding_blob) VALUES (?, ?)",
         (q_hash, emb_bytes),
     )
-    active_conn.commit()
+    if not caller_transaction:
+        active_conn.commit()
 
     if use_memory:
         _MEM_CACHE[memory_key] = emb_bytes
@@ -125,21 +129,29 @@ def vector_search(
     limit: int = 5,
     db_path: Path | str | None = None,
     conn: Optional[Any] = None,
+    *, chunk_ids: Optional[List[int]] = None,
 ) -> List[Dict[str, Any]]:
     """Performs semantic vector search using sqlite-vec."""
+    if chunk_ids is not None and not chunk_ids:
+        return []
     active_conn = conn or get_connection(db_path)
     query_bytes = _get_query_embedding(query, db_path=db_path, conn=active_conn)
 
     cur = active_conn.cursor()
+    restriction = " AND chunk_id IN (SELECT value FROM json_each(?))" if chunk_ids is not None else ""
+    params = [query_bytes]
+    if chunk_ids is not None:
+        params.append(json.dumps(chunk_ids))
+    params.append(limit)
     cur.execute(
-        """
+        f"""
     SELECT doc_id, content, distance, chunk_id
     FROM vec_chunks
-    WHERE embedding MATCH ?
+    WHERE embedding MATCH ? {restriction}
     ORDER BY distance
     LIMIT ?
     """,
-        (query_bytes, limit),
+        params,
     )
 
     rows = cur.fetchall()
@@ -217,7 +229,7 @@ def hybrid_search(
     min_score: float = 0.0,
     conn: Optional[Any] = None,
 ) -> List[Dict[str, Any]]:
-    """Combines vector search and FTS5 BM25 search using Reciprocal Rank Fusion (RRF)."""
+    """Legacy low-level RRF API; application callers use local_search."""
     norm_q = query.strip().lower()
     db_tag = str(db_path) if db_path is not None else "default"
     active_conn = conn or get_connection(db_path)
@@ -317,11 +329,19 @@ def format_search_results(
     return "\n\n---\n\n".join(formatted)
 
 
+def local_search(query: str, limit: int = 3, db_path: Path | str | None = None,
+                 min_score: float = 0.0, *, filters=None) -> List[Dict[str, Any]]:
+    """One adaptive local retrieval path for Python tools, chat and research."""
+    from app.zgsearch import zg_search
+    return [item for item in zg_search(query, limit=limit, db_path=db_path, filters=filters)
+            if item['score'] >= min_score]
+
+
 def search_knowledge_base(
-    query: str, limit: int = 3, db_path: Path | str | None = None
+    query: str, limit: int = 3, db_path: Path | str | None = None, *, filters=None
 ) -> str:
     """Unified entrypoint executing hybrid RRF search with context window budgeting."""
-    results = hybrid_search(query, limit=limit, db_path=db_path)
+    results = local_search(query, limit=limit, db_path=db_path, filters=filters)
     return format_search_results(results)
 
 
@@ -333,6 +353,6 @@ def search_grounded_context(
     format_style: str = "xml",
 ) -> str:
     """Retrieves top chunks and formats them as a clean XML or Markdown context block for local LLMs."""
-    results = hybrid_search(query, limit=limit, db_path=db_path, min_score=MIN_RELEVANCE_SCORE)
+    results = local_search(query, limit=limit, db_path=db_path, min_score=MIN_RELEVANCE_SCORE)
     return format_context_for_local_llm(results, format_style=format_style, max_tokens=max_tokens)
 

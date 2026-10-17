@@ -65,3 +65,6 @@ build/
 .cortex/
 roms_dashboard.html
 
+
+# Isolated search verification environment
+.venv-search/

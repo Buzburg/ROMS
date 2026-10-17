@@ -1,11 +1,11 @@
 """ROMS Autonomous Background File Watcher.
 
 Continuously monitors:
-1. `knowledge/` -> Auto-indexes new or modified OKF markdown files into sqlite-vec + FTS5 in <50ms.
+1. `knowledge/` -> Indexes supported text, documents and images into sqlite-vec + FTS5.
 2. `skills/`     -> Detects new or edited SOP playbooks.
 3. `custom_tools/` -> Hot-reloads and registers new Python MCP tools.
 
-Runs non-intrusively on a daemon thread with zero GPU/CPU interference for local LLMs.
+Runs on a daemon thread; extraction and OCR may take longer for large documents.
 """
 
 import importlib.util
@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Set
 
 from app.config import KNOWLEDGE_DIR, SKILLS_DIR, BASE_DIR
-from app.okf_loader import ingest_okf_file
+from app.okf_loader import ingest_managed_file, knowledge_files
 
 _WATCHER_THREAD: Optional[threading.Thread] = None
 _STOP_EVENT = threading.Event()
@@ -61,7 +61,7 @@ def _watcher_loop(mcp_instance: Any = None, poll_interval: float = 1.0):
 
     # Initialize existing file mtimes
     for d in dirs_to_watch:
-        for f in d.glob("*"):
+        for f in (knowledge_files(d) if d == KNOWLEDGE_DIR else d.glob("*")):
             if f.is_file():
                 try:
                     mtimes[str(f)] = f.stat().st_mtime
@@ -72,7 +72,7 @@ def _watcher_loop(mcp_instance: Any = None, poll_interval: float = 1.0):
         time.sleep(poll_interval)
         try:
             for d in dirs_to_watch:
-                for f in d.glob("*"):
+                for f in (knowledge_files(d) if d == KNOWLEDGE_DIR else d.glob("*")):
                     if not f.is_file():
                         continue
                     f_str = str(f)
@@ -82,16 +82,17 @@ def _watcher_loop(mcp_instance: Any = None, poll_interval: float = 1.0):
                         continue
 
                     last_mtime = mtimes.get(f_str, 0.0)
-                    if current_mtime > last_mtime:
+                    if current_mtime != last_mtime:
                         # Debounce wait for write completion
                         time.sleep(0.1)
                         mtimes[f_str] = current_mtime
                         _WATCHER_STATS["reloads_count"] += 1
 
-                        if f.suffix.lower() == ".md" and d == KNOWLEDGE_DIR:
+                        if d == KNOWLEDGE_DIR:
                             _WATCHER_STATS["last_event"] = f"Ingested {f.name}"
                             print(f"[ROMS Watcher] Hot-indexing knowledge file: {f.name}", file=sys.stderr)
-                            ingest_okf_file(f)
+                            changed = ingest_managed_file(f, KNOWLEDGE_DIR)
+                            _WATCHER_STATS["last_event"] = f"Processed {f.name}; indexed={changed}"
 
                         elif f.suffix.lower() == ".md" and d == SKILLS_DIR:
                             _WATCHER_STATS["last_event"] = f"Updated skill {f.stem}"

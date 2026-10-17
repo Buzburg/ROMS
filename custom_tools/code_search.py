@@ -1,4 +1,4 @@
-"""Drop-in Code Search Plugin for ROMS (zg / ripgrep functionality).
+"""Local file and symbol inspection tools for ROMS.
 
 Provides ultra-fast local code search across workspaces, repositories, and directories
 without requiring any background server or external daemon.
@@ -11,11 +11,12 @@ import subprocess
 from pathlib import Path
 from typing import List
 
-from app.config import BASE_DIR, BASE_REPOS_DIR, WORKSPACES_DIR
+from app.config import BASE_DIR
 
 IGNORE_DIRS = {
     ".git",
     ".venv",
+    ".venv-search",
     "venv",
     "node_modules",
     "__pycache__",
@@ -29,6 +30,7 @@ IGNORE_DIRS = {
 def register_tools(mcp):
     """Registers high-speed codebase search tools with FastMCP."""
 
+
     @mcp.tool()
     def search_codebase(
         pattern: str,
@@ -36,7 +38,7 @@ def register_tools(mcp):
         file_extension: str = "",
         max_matches: int = 15,
     ) -> str:
-        """Searches files in the codebase for a text pattern or regex (like zg / ripgrep).
+        """Searches files in the codebase for a text pattern or regex using literal patterns or regular expressions.
 
         Args:
             pattern: Search string or regex pattern
@@ -44,6 +46,8 @@ def register_tools(mcp):
             file_extension: Filter by extension, e.g. '.py', '.mojo', '.md'
             max_matches: Maximum number of match snippets to return
         """
+        if type(max_matches) is not int or not 1 <= max_matches <= 100:
+            raise ValueError("max_matches must be from 1 to 100")
         search_root = Path(target_dir) if target_dir else BASE_DIR
         if not search_root.is_absolute():
             search_root = BASE_DIR / search_root
@@ -51,18 +55,19 @@ def register_tools(mcp):
         if not search_root.exists():
             return f"Directory '{search_root}' does not exist."
 
-        # Try ripgrep or zg if installed on the host
-        rg_path = shutil.which("rg") or shutil.which("zvec-grep")
+        # Use the installed ripgrep CLI for bounded file inspection.
+        rg_path = shutil.which("rg")
         if rg_path:
-            cmd = [rg_path, "-n", "-m", str(max_matches), pattern, str(search_root)]
+            cmd = [rg_path, "-n", "--no-heading", "--color", "never", "-i", "-m", str(max_matches), "-e", pattern]
             if file_extension:
                 cmd.extend(["-g", f"*{file_extension}"])
             for ig in IGNORE_DIRS:
                 cmd.extend(["-g", f"!{ig}/*"])
+            cmd.extend(["--", str(search_root)])
             try:
                 res = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
                 if res.stdout.strip():
-                    return res.stdout.strip()
+                    return "\n".join(res.stdout.strip().splitlines()[:max_matches])
             except Exception:
                 pass
 

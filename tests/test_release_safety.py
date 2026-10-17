@@ -89,7 +89,7 @@ def test_gateway_does_not_reuse_completions(monkeypatch: pytest.MonkeyPatch) -> 
             return httpx.Response(200, json={'id': str(len(sent)), 'model': json['model']})
 
     monkeypatch.setattr(gateway.httpx, 'AsyncClient', Backend)
-    monkeypatch.setattr(gateway, 'hybrid_search', lambda **kw: [])
+    monkeypatch.setattr(gateway, 'local_search', lambda **kw: [])
     monkeypatch.setattr(gateway, '_find_matching_skill', lambda query: None)
     monkeypatch.setattr(gateway, 'format_tool_search_results', lambda *a, **kw: '')
     monkeypatch.setattr(gateway, 'start_session', lambda **kw: None)

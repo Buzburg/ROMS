@@ -54,40 +54,6 @@ def test_duplicate_query_terms_do_not_expand_fts_expression():
     assert rag._sanitize_fts_query('refund refund refund') == rag._sanitize_fts_query('refund')
 
 
-def test_filtered_zg_search_batches_vector_result_metadata(monkeypatch):
-    connection = sqlite3.connect(":memory:")
-    connection.execute("CREATE TABLE fts_chunks (chunk_id INTEGER, doc_id TEXT, content TEXT)")
-    connection.execute("CREATE TABLE okf_registry (doc_id TEXT, doc_type TEXT, title TEXT)")
-    connection.execute("INSERT INTO fts_chunks VALUES (1, 'candidate.md', 'unrelated candidate text')")
-    connection.executemany(
-        "INSERT INTO okf_registry VALUES (?, ?, ?)",
-        [("candidate.md", "policy", "Candidate"),
-         ("allowed.md", "policy", "Allowed"),
-         ("excluded.md", "guide", "Excluded")],
-    )
-    connection.commit()
-    statements = []
-    connection.set_trace_callback(statements.append)
-    monkeypatch.setattr(zgsearch, "get_connection", lambda *args: connection)
-    monkeypatch.setattr(zgsearch, "vector_search", lambda *args, **kwargs: [
-        {"chunk_id": 10, "doc_id": "allowed.md", "content": "vector-only allowed", "distance": 0.1},
-        {"chunk_id": 11, "doc_id": "excluded.md", "content": "vector-only excluded", "distance": 0.2},
-        {"chunk_id": 12, "doc_id": "missing.md", "content": "vector-only missing registry", "distance": 0.3},
-    ])
-
-    results = zgsearch.zg_search("query", filters={"doc_type": "policy"}, limit=5)
-
-    metadata_reads = [
-        statement for statement in statements
-        if "SELECT doc_id, doc_type, title FROM okf_registry WHERE doc_id IN" in statement
-    ]
-    assert len(metadata_reads) == 1
-    assert [(item["doc_id"], item["title"], item["doc_type"]) for item in results] == [
-        ("allowed.md", "Allowed", "policy"),
-        ("missing.md", "missing.md", "general"),
-    ]
-    connection.close()
-
 
 def test_zg_top_k_lexical_ranking_matches_stable_full_sort():
     candidates = [
