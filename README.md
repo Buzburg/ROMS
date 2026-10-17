@@ -104,7 +104,7 @@ Standalone Decision Maker utilities can also persist topic discovery under `ROMS
 
 ## Connect an MCP client
 
-The full server needs `requirements.txt`, a local embedding model, and the required compiled Mojo search module. On Linux/WSL, use `pixi install` and `pixi run build-search`, or install into an environment with Mojo 1.1.0:
+The full server needs the runtime packages in `requirements.txt`, a local embedding model, and the required compiled Mojo search module. On Linux/WSL, use `pixi install` and `pixi run build-search`, or install into an environment with Mojo 1.1.0:
 
 ```sh
 python -m pip install -r requirements.txt
@@ -128,6 +128,11 @@ The command uses stdio and waits for MCP messages. For clients with an `mcpServe
 For the native search server on Windows, run the Linux environment through WSL. OCR also requires Tesseract with English data and Poppler (`pdftoppm`), included in the Pixi dependencies. See the [search setup guide](docs/search-upgrades.md).
 
 Startup initializes the database, indexes supported files in `knowledge/`, loads local plugins and starts the watcher. The default embedding model is `sentence-transformers/all-MiniLM-L6-v2` on CPU; first use may download model files. Knowledge search and ingestion require the local embedding provider. The index requires 384-dimensional embeddings; changing models requires a compatible rebuilt index. Review [security and data handling](SECURITY.md) before connecting an agent.
+
+Reference repositories used for design inspiration are not required installations.
+See the [dependency guide](docs/dependencies.md) for what the runtime actually uses.
+Test tools are separate: install `requirements-dev.txt` when running the full test
+suite, or use `pixi run -e dev test-search` for native search checks.
 
 ### Useful registered interfaces
 

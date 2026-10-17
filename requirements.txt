@@ -1,12 +1,14 @@
-mcp[cli]>=1.3.0
+# Runtime dependencies only; tests use requirements-dev.txt.
+# ROMS embeddings run on CPU; do not install the CUDA distribution.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.14.1+cpu ; sys_platform == "linux" or sys_platform == "win32"
+mcp>=1.3.0
 fastmcp>=0.4.0
 sentence-transformers>=3.0.0
 sqlite-vec>=0.1.3
 python-frontmatter>=1.1.0
-pydantic>=2.0.0
 psutil>=5.9.0
 numpy
-pytest>=8.0.0
 
 # Direct gateway dependencies (do not rely on transitive installs)
 httpx>=0.27

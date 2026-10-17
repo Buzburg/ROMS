@@ -1,0 +1,3 @@
+# Full runtime plus development/test tools.
+-r requirements.txt
+pytest>=8.0.0

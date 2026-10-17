@@ -39,8 +39,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y tesseract-ocr tesseract-ocr-eng poppler-utils fonts-liberation
       - name: Install CPU model adapters and compiler
         run: |
-          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
-          python -m pip install -r requirements.txt mojo==1.1.0
+          python -m pip install -r requirements-dev.txt mojo==1.1.0
       - name: Build the required Mojo search module
         run: python scripts/build_search_native.py
       - name: Verify real native kernels and local document extraction

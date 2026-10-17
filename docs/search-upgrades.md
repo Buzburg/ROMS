@@ -18,6 +18,10 @@ filters apply before candidate selection. Results include source paths and chunk
 IDs. A bounded cache follows database changes; uncommitted transactions bypass it.
 The semantic route can return approximate matches even when no literal term matches.
 
+Reference projects are design inspiration, not install requirements or search
+services. The [dependency guide](dependencies.md) maps the actual runtime packages
+to the features that use them.
+
 ## Mojo and installation
 
 Mojo implements Unicode typo scoring, alternative selection, rank fusion, top-k
@@ -29,7 +33,7 @@ SentenceTransformers/PyTorch embedding model. This is not a pure-Mojo model port
 ```sh
 pixi install
 pixi run build-search
-pixi run test-search
+pixi run -e dev test-search
 ```
 
 In an existing environment containing Mojo 1.1.0 and the dependencies in

@@ -44,7 +44,7 @@ installed services, operating-system integrations or a complete deployment.
 
 ## Reproduce
 
-Install the dependencies in `requirements.txt`, Mojo 1.1.0, Tesseract with English
+Install the dependencies in `requirements-dev.txt`, Mojo 1.1.0, Tesseract with English
 language data and Poppler, then run:
 
 ```sh
