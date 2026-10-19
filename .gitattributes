@@ -1,2 +1,5 @@
 config/llama-cancellation.patch text eol=lf whitespace=-blank-at-eol
 app/workbench/vendor/** -text
+
+# Keep the reviewed lockfile byte identity stable on Windows checkouts.
+pixi.lock text eol=lf
