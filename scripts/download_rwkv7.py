@@ -49,7 +49,8 @@ def check_header(header: bytes) -> None:
 
 def verify_file(path: Path, spec: dict) -> dict:
     validate_spec(spec)
-    if path.suffix.lower() != '.gguf' or path.is_symlink():
+    path_before = path.lstat()
+    if path.suffix.lower() != '.gguf' or stat.S_ISLNK(path_before.st_mode):
         raise ValueError('Use a regular .gguf file, not a symlink or renamed checkpoint')
     fd = os.open(path, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_BINARY', 0))
     with os.fdopen(fd, 'rb') as source:
@@ -61,7 +62,15 @@ def verify_file(path: Path, spec: dict) -> dict:
         digest = hashlib.file_digest(source, 'sha256').hexdigest()
         after = os.fstat(source.fileno())
         identity = lambda info: (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
-        if identity(before) != identity(after) or identity(after) != identity(path.lstat()):
+        path_after = path.lstat()
+        # Windows Python can give fstat and lstat different ctime semantics.
+        # Track each API's full identity separately, and match the shared file
+        # identity/size/mtime across APIs without comparing their ctime values.
+        shared = lambda info: (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns)
+        if (identity(before) != identity(after)
+                or identity(path_before) != identity(path_after)
+                or shared(after) != shared(path_after)
+                or not stat.S_ISREG(path_after.st_mode)):
             raise ValueError('Model changed during verification')
         if digest != spec['sha256']:
             raise ValueError('Model SHA-256 does not match the input record')

@@ -167,3 +167,41 @@ def test_runtime_builder_refuses_modified_source_or_wrong_origin(tmp_path, monke
 def test_runtime_revision_comes_from_input_manifest():
     from scripts import build_llama
     assert build_llama.REVISION == json.loads(models.MANIFEST.read_text())['runtime']['revision']
+
+
+def test_path_and_handle_ctime_can_differ_without_content_change(destination, monkeypatch):
+    # Windows Python 3.12+ can expose change time through fstat and birth time
+    # through lstat. Each API is stable, but cross-API ctime equality is invalid.
+    from types import SimpleNamespace
+    destination.write_bytes(PAYLOAD)
+    original = models.os.fstat
+    def handle_stat(fd):
+        info = original(fd)
+        values = {name: getattr(info, name) for name in
+                  ('st_dev', 'st_ino', 'st_mode', 'st_size', 'st_mtime_ns', 'st_ctime_ns')}
+        values['st_ctime_ns'] += 1000000000
+        return SimpleNamespace(**values)
+    monkeypatch.setattr(models.os, 'fstat', handle_stat)
+    assert models.verify_file(destination, SPEC)['status'] == 'verified_local_bytes'
+
+
+@pytest.mark.parametrize('api', ['handle', 'path'])
+def test_ctime_change_within_either_api_is_still_rejected(destination, monkeypatch, api):
+    from types import SimpleNamespace
+    destination.write_bytes(PAYLOAD)
+    original = models.os.fstat if api == 'handle' else Path.lstat
+    calls = []
+    def changed_stat(value, *args, **kwargs):
+        info = original(value, *args, **kwargs)
+        calls.append(1)
+        values = {name: getattr(info, name) for name in
+                  ('st_dev', 'st_ino', 'st_mode', 'st_size', 'st_mtime_ns', 'st_ctime_ns')}
+        if len(calls) > 1:
+            values['st_ctime_ns'] += 1000000000
+        return SimpleNamespace(**values)
+    if api == 'handle':
+        monkeypatch.setattr(models.os, 'fstat', changed_stat)
+    else:
+        monkeypatch.setattr(Path, 'lstat', changed_stat)
+    with pytest.raises(ValueError, match='changed during verification'):
+        models.verify_file(destination, SPEC)
