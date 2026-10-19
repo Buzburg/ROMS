@@ -1,5 +1,7 @@
 # ROMS
 
+Snapshot restoration now validates paths and saved content before writing. Older unbound snapshots require manual recovery. See [snapshot recovery boundaries](SNAPSHOT_SAFETY.md).
+
 **Your documents. Your machine. One fast search.**
 
 ROMS turns scattered documents, source code and scanned pages into a searchable
@@ -141,7 +143,7 @@ The command uses stdio and waits for MCP messages. For clients with an `mcpServe
 
 For the native search server on Windows, run the Linux environment through WSL. OCR also requires Tesseract with English data and Poppler (`pdftoppm`), included in the Pixi dependencies. See the [search setup guide](docs/search-upgrades.md).
 
-Startup initializes the database, indexes supported files in `knowledge/`, loads local plugins and starts the watcher. The default embedding model is `sentence-transformers/all-MiniLM-L6-v2` on CPU; first use may download model files. Knowledge search and ingestion require the local embedding provider. The index requires 384-dimensional embeddings; changing models requires a compatible rebuilt index. Review [security and data handling](SECURITY.md) before connecting an agent.
+Startup initializes the database, indexes supported files in `knowledge/`, starts the watcher and loads only explicitly enabled local plugins. The default embedding model is `sentence-transformers/all-MiniLM-L6-v2` on CPU; first use may download model files. Knowledge search and ingestion require the local embedding provider. The index requires 384-dimensional embeddings; changing models requires a compatible rebuilt index. Review [security and data handling](SECURITY.md) before connecting an agent.
 
 Reference repositories used for design inspiration are not required installations.
 See the [dependency guide](docs/dependencies.md) for what the runtime actually uses.
@@ -162,6 +164,8 @@ suite, or use `pixi run -e dev test-search` for native search checks.
 | Find tools and skills | `search_tools`, `list_skills` |
 | Read a skill | Resource `skills://{skill_name}` or prompt `get_skill_playbook` |
 | Inspect logs and source locations | `roms_sieve_compact`, `roms_symdex_lookup` |
+
+MCP starts in `read_only` mode: search and recall work immediately, while authoring tools require `ROMS_MCP_PROFILE=local`. Rewind and permanent deletion additionally require `ROMS_MCP_ALLOW_DESTRUCTIVE=1`. See [MCP settings](docs/mcp-settings.md) for plugin opt-in and request limits.
 
 The server advertises the full tool list and schemas on connection. The harness tool uses the server's configured database and skills directory; it does not accept arbitrary paths. Other tools can write knowledge, change lessons, author skills or restore files. Caller-supplied verification records are not authenticated test results.
 

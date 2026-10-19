@@ -17,6 +17,7 @@ import math
 import time
 import struct
 import hashlib
+from app.snapshot_restore import checked_path, workspace_path, restore_files, validate_relative
 import argparse
 from pathlib import Path
 
@@ -485,7 +486,8 @@ class PolyglotSymdex:
                 if ext not in LANGUAGE_EXTENSIONS:
                     continue
                 full_path = os.path.join(dirpath, fname)
-                rel_path = os.path.relpath(full_path, root).replace("\\", "/")
+                rel_path = os.path.relpath(full_path, root).replace(os.sep, "/")
+                validate_relative(rel_path)
                 files_scanned += 1
 
                 try:
@@ -573,6 +575,8 @@ class WorkspaceTimeMachine:
         self.manifest_file = os.path.join(self.state_dir, "snapshots.json")
 
     def _ensure_init(self):
+        checked_path(self.cas_dir)
+        checked_path(self.manifest_file)
         os.makedirs(self.cas_dir, exist_ok=True)
         if not os.path.exists(self.manifest_file):
             with open(self.manifest_file, "w", encoding="utf-8") as f:
@@ -591,7 +595,7 @@ class WorkspaceTimeMachine:
     def snapshot(self, label: str = "Pre-tool checkpoint", workspace_root: str = ".") -> dict:
         start = time.perf_counter()
         self._ensure_init()
-        root = os.path.abspath(workspace_root)
+        root = str(workspace_path(workspace_root))
         manifest = self._load_manifest()
 
         files_map = {}
@@ -600,17 +604,23 @@ class WorkspaceTimeMachine:
                 d for d in dirnames
                 if d not in IGNORE_DIRS and os.path.abspath(os.path.join(dirpath, d)) != self.state_dir
             ]
+            for dirname in dirnames:
+                checked_path(os.path.join(dirpath, dirname))
             for fname in filenames:
                 full_path = os.path.join(dirpath, fname)
-                rel_path = os.path.relpath(full_path, root).replace("\\", "/")
+                checked_path(full_path)
+                if not os.path.isfile(full_path):
+                    raise ValueError("Snapshot source must be a regular file")
+                rel_path = os.path.relpath(full_path, root).replace(os.sep, "/")
+                validate_relative(rel_path)
                 try:
                     with open(full_path, "rb") as f:
                         raw = f.read()
-                except Exception:
-                    continue
+                except OSError as error:
+                    raise ValueError(f"Cannot snapshot {full_path}: {error}") from error
 
                 sha = hashlib.sha256(raw).hexdigest()[:24]
-                blob_path = os.path.join(self.cas_dir, sha)
+                blob_path = str(checked_path(os.path.join(self.cas_dir, sha)))
                 if not os.path.exists(blob_path):
                     with open(blob_path, "wb") as bf:
                         bf.write(raw)
@@ -622,6 +632,7 @@ class WorkspaceTimeMachine:
             "label": label,
             "timestamp": time.time(),
             "files_tracked": len(files_map),
+            "workspace_root": root,
             "files": files_map
         }
         manifest["snapshots"].append(snap_entry)
@@ -648,18 +659,7 @@ class WorkspaceTimeMachine:
         if target_snap is None:
             return {"success": False, "error": f"Snapshot '{snapshot_id}' not found"}
 
-        restored_count = 0
-        for rel_path, sha in target_snap["files"].items():
-            blob_path = os.path.join(self.cas_dir, sha)
-            if not os.path.exists(blob_path):
-                continue
-            dest_path = os.path.join(root, rel_path.replace("/", os.sep))
-            os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-            with open(blob_path, "rb") as bf:
-                blob_bytes = bf.read()
-            with open(dest_path, "wb") as df:
-                df.write(blob_bytes)
-            restored_count += 1
+        restored_count = restore_files(target_snap, root, self.state_dir)
 
         return {
             "success": True,

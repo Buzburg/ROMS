@@ -191,7 +191,10 @@ def test_skills_loader():
 
 def test_mcp_registration():
     """Verifies FastMCP exposes all expected tools and resources."""
-    assert mcp.name == "ROMS-Engine"
+    assert mcp.name == "ROMS"
+    import asyncio
+    tools = asyncio.run(mcp.list_tools())
+    assert {"search_knowledge_base", "roms_prepare_harness", "roms_snapshot_rewind"} <= {tool.name for tool in tools}
 
 
 def test_prompt_builder_grounding_and_deduplication():
@@ -422,7 +425,7 @@ def test_autonomous_skill_evolver(temp_db, tmp_path):
 
 
 def test_gateway_health_and_models(temp_db, monkeypatch):
-    """Verifies health against an isolated database and deterministic model fallback."""
+    """An unavailable backend reports degraded health and no invented models."""
     from starlette.testclient import TestClient
     from app.gateway import app
 
@@ -444,13 +447,16 @@ def test_gateway_health_and_models(temp_db, monkeypatch):
     # 1. Health endpoint
     h_resp = client.get("/health")
     assert h_resp.status_code == 200
-    assert h_resp.json()["status"] == "online"
+    assert h_resp.json()["status"] == "degraded"
+    assert h_resp.json()["upstream_ready"] is False
+    assert h_resp.json()["model"] is None
+    assert h_resp.json()["tool_execution"] is False
 
     # 2. Models endpoint
     m_resp = client.get("/v1/models")
-    assert m_resp.status_code == 200
+    assert m_resp.status_code == 503
     models = m_resp.json()
-    assert any("roms" in m["id"] for m in models["data"])
+    assert models["data"] == []
 
 
 def test_zgsearch_fuzzy_and_faceted(temp_db, temp_knowledge_dir):

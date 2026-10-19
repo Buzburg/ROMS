@@ -1,5 +1,5 @@
 # Dependencies for offline release-boundary tests; no embedding model needed.
-fastmcp>=0.4.0
+fastmcp>=4.1,<5
 sqlite-vec>=0.1.3
 python-frontmatter>=1.1.0
 psutil>=5.9.0

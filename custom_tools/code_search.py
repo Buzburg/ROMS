@@ -4,6 +4,8 @@ Provides ultra-fast local code search across workspaces, repositories, and direc
 without requiring any background server or external daemon.
 """
 
+from app.mcp_annotations import tool_annotations
+
 import os
 import re
 import shutil
@@ -31,7 +33,7 @@ def register_tools(mcp):
     """Registers high-speed codebase search tools with FastMCP."""
 
 
-    @mcp.tool()
+    @mcp.tool(annotations=tool_annotations('search_codebase'))
     def search_codebase(
         pattern: str,
         target_dir: str = "",
@@ -109,7 +111,7 @@ def register_tools(mcp):
             return f"No matches found for pattern '{pattern}'."
         return "\n".join(matches)
 
-    @mcp.tool()
+    @mcp.tool(annotations=tool_annotations('find_symbol_definition'))
     def find_symbol_definition(symbol_name: str, target_dir: str = "") -> str:
         """Finds definition of a function, class, or struct across python, mojo, or code files."""
         pattern = rf"(def|fn|class|struct|interface)\s+{re.escape(symbol_name)}\b"

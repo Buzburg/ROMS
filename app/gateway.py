@@ -86,7 +86,7 @@ def _find_matching_skill(query: str) -> Optional[tuple[str, str]]:
 
 
 async def list_models(request: Request) -> JSONResponse:
-    """Proxies /v1/models to upstream local LLM or returns ROMS default model list."""
+    """Proxy the configured local model list; return 503 if it is unavailable."""
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
             resp = await client.get(f"{ROMS_UPSTREAM_LLM_URL}/models", headers=upstream_headers())

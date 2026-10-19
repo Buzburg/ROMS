@@ -19,7 +19,7 @@ async def verify(binary: str, root: str) -> None:
         (state / 'knowledge').mkdir()
         (state / 'skills').mkdir()
         shutil.copy2(Path(root) / 'skills/customer_service.md', state / 'skills/customer_service.md')
-        env = dict(os.environ, ROMS_DATA_DIR=str(state / 'data'),
+        env = dict(os.environ, ROMS_MCP_PROFILE='local', ROMS_MCP_ALLOW_DESTRUCTIVE='1', ROMS_DATA_DIR=str(state / 'data'),
                    ROMS_DB_PATH=str(state / 'data/roms.db'),
                    ROMS_KNOWLEDGE_DIR=str(state / 'knowledge'),
                    ROMS_SKILLS_DIR=str(state / 'skills'),
@@ -90,9 +90,12 @@ async def verify(binary: str, root: str) -> None:
                 connection.enable_load_extension(True)
                 sqlite_vec.load(connection)
                 connection.enable_load_extension(False)
+                connection.execute('INSERT INTO okf_registry(doc_id, title, doc_type) VALUES (?, ?, ?)', ('bridge.md', 'Bridge fixture', 'general'))
                 connection.execute('INSERT INTO vec_chunks(chunk_id, doc_id, embedding, content) VALUES (?, ?, ?, ?)', (1, 'bridge.md', vector, 'Bridge fixture policy: verified source passage.'))
                 connection.execute('INSERT INTO fts_chunks(chunk_id, doc_id, content) VALUES (?, ?, ?)', (1, 'bridge.md', 'Bridge fixture policy: verified source passage.'))
-                connection.execute('INSERT INTO embedding_cache(query_hash, embedding_blob) VALUES (?, ?)', (hashlib.sha256(query.encode()).hexdigest(), vector))
+                from app.rag_engine import _embedding_namespace
+                cache_payload = json.dumps((_embedding_namespace(), query), ensure_ascii=False)
+                connection.execute('INSERT INTO embedding_cache(query_hash, embedding_blob) VALUES (?, ?)', (hashlib.sha256(cache_payload.encode()).hexdigest(), vector))
                 connection.commit()
                 connection.close()
                 async def call(name, arguments, expected):

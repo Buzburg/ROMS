@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Set
 
 from app.config import KNOWLEDGE_DIR, SKILLS_DIR, BASE_DIR
+from app.mcp_annotations import plugin_allowed
 from app.okf_loader import ingest_managed_file, knowledge_files
 
 _WATCHER_THREAD: Optional[threading.Thread] = None
@@ -31,7 +32,7 @@ _WATCHER_STATS: Dict[str, Any] = {
 
 def _reload_custom_tool(py_path: Path, mcp_instance: Any = None):
     """Dynamically reloads a single tool file from custom_tools/."""
-    if py_path.name.startswith("__"):
+    if py_path.name.startswith("__") or not plugin_allowed(py_path, BASE_DIR / "custom_tools", reload=True):
         return
     try:
         mod_name = f"custom_tools.{py_path.stem}"

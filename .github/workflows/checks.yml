@@ -25,7 +25,7 @@ jobs:
       - run: python -m pytest tests/test_first_run_demo.py tests/test_prefrontal_integration.py tests/test_decisions_jev_laya.py tests/test_decision_boundaries.py tests/test_harness.py tests/test_harness_cli.py tests/test_retrieval_quality.py tests/test_experiment_claims.py -q
         env:
           HF_HUB_OFFLINE: '1'
-      - run: python -m pytest tests/test_release_safety.py tests/test_memory.py tests/test_context.py tests/test_gateway_privacy.py tests/test_doctor.py tests/test_workbench_package.py tests/test_os_model.py tests/test_os_workshop.py tests/test_voice_audio.py tests/test_voice_chat.py tests/test_voice_stt.py tests/test_voice_tts.py tests/test_voice_workshop.py -q
+      - run: python -m pytest tests/test_mcp_security.py tests/test_snapshot_safety.py tests/test_model_inputs.py tests/test_roms.py::test_mcp_registration tests/test_roms.py::test_gateway_health_and_models tests/test_release_safety.py tests/test_memory.py tests/test_context.py tests/test_gateway_privacy.py tests/test_doctor.py tests/test_workbench_package.py tests/test_os_model.py tests/test_os_workshop.py tests/test_voice_audio.py tests/test_voice_chat.py tests/test_voice_stt.py tests/test_voice_tts.py tests/test_voice_workshop.py -q
         env:
           HF_HUB_OFFLINE: '1'
   native-search:
@@ -42,8 +42,24 @@ jobs:
           python -m pip install -r requirements-dev.txt mojo==1.1.0
       - name: Build the required Mojo search module
         run: python scripts/build_search_native.py
-      - name: Verify real native kernels and local document extraction
-        run: python -m pytest tests/test_search_native.py tests/test_search_upgrades.py tests/test_retrieval_quality.py tests/test_messy_ingestion.py tests/test_ingestion_quality.py tests/test_document_identity.py tests/test_source_library.py tests/test_knowledge_intake.py -q
+      - name: Build execution boundaries and cache the public embedding model
+        run: |
+          mkdir -p build
+          mojo build app_mojo/main.mojo -I . -o build/roms-mcp
+          mojo build app_mojo/omarchy_broker.mojo -o build/omarchy-broker
+          mojo build app_mojo/staging_sandbox.mojo -o build/staging-sandbox
+          python -c "from app.config import get_embedding_model; get_embedding_model()"
+      - name: Verify the full suite with real native artifacts and cached embeddings
+        run: |
+          export OMARCHY_BROKER_BINARY="$PWD/build/omarchy-broker"
+          export OMARCHY_SANDBOX_BINARY="$PWD/build/staging-sandbox"
+          export ROMS_PYTHON_PREFIX="$(python -c 'import sys; print(sys.prefix)')"
+          export MOJO_PYTHON_LIBRARY="$(python -c 'import os, sysconfig; print(os.path.join(sysconfig.get_config_var("LIBDIR"), sysconfig.get_config_var("LDLIBRARY")))')"
+          export PYTHONPATH="$PWD:$(python -c 'import site; print(":".join(site.getsitepackages()))')"
+          export ROMS_DATA_DIR="$RUNNER_TEMP/roms-test-data"
+          export ROMS_STATE_DIR="$RUNNER_TEMP/roms-test-state"
+          python -m pytest -q
+          python tests/test_mojo_protocol.py "$PWD/build/roms-mcp" "$PWD"
         env:
           HF_HUB_OFFLINE: '1'
           TRANSFORMERS_OFFLINE: '1'

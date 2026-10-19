@@ -1,5 +1,7 @@
 """ROMS FastMCP Unified Server Entrypoint."""
 
+from app.mcp_annotations import tool_annotations
+
 import importlib.util
 import os
 import threading
@@ -7,6 +9,8 @@ import sys
 from pathlib import Path
 from app.safe_paths import markdown_path
 from fastmcp import FastMCP
+from app.mcp_policy import MCPPolicy
+from app.mcp_annotations import plugin_allowed
 
 from app.config import SKILLS_DIR, KNOWLEDGE_DIR, BASE_DIR, DB_PATH
 from app.db import init_database
@@ -32,11 +36,11 @@ from app.tools import (
 
 from app.memory_tools import register_memory_tools
 
-mcp = FastMCP("ROMS")
+mcp = FastMCP("ROMS", middleware=[MCPPolicy()])
 register_memory_tools(mcp)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('roms_prepare_harness'))
 def roms_prepare_harness(request_json: str) -> str:
     """Prepare bounded knowledge, selected skills and a heuristic decision for review. Never executes or approves an action."""
     import json
@@ -51,7 +55,7 @@ def roms_prepare_harness(request_json: str) -> str:
 # ============================================================================
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('search_knowledge_base'))
 def search_knowledge_base(query: str, limit: int = 3, doc_type: str = "",
                           topic: str = "", doc_id: str = "") -> str:
     """Search local indexed knowledge with adaptive keyword/semantic fusion and exact filters."""
@@ -60,13 +64,13 @@ def search_knowledge_base(query: str, limit: int = 3, doc_type: str = "",
     return _search_knowledge_base(query=query, limit=limit, filters=filters)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('search_grounded_context'))
 def search_grounded_context(query: str, limit: int = 3, max_tokens: int = 512) -> str:
     """Retrieve bounded knowledge context with source references, formatted as XML text."""
     return _search_grounded_context(query=query, limit=limit, max_tokens=max_tokens)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('add_knowledge_document'))
 def add_knowledge_document(filename: str, content: str, title: str = "", doc_type: str = "general") -> str:
     """Adds a new OKF Markdown document to knowledge/ and indexes it in the vector DB in real time."""
     return _add_doc(filename=filename, content=content, title=title, doc_type=doc_type)
@@ -85,13 +89,13 @@ def _knowledge_intake():
     return _intake
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('queue_knowledge_text'))
 def queue_knowledge_text(name: str, content: str) -> dict:
     """Save pasted text and queue local extraction/indexing. Name must have a supported extension."""
     return {'id': _knowledge_intake().submit(name, content.encode('utf-8')), 'state': 'queued'}
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('queue_knowledge_path'))
 def queue_knowledge_path(path: str, kind: str = 'file') -> dict:
     """Snapshot an explicitly selected local file/folder and queue imports; never run its code."""
     from app.source_library import plan_source
@@ -108,39 +112,39 @@ def queue_knowledge_path(path: str, kind: str = 'file') -> dict:
     return {'jobs': jobs, 'skipped': skipped, 'failures': failures}
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('knowledge_import_progress'))
 def knowledge_import_progress(offset: int = 0) -> dict:
     """List queued, processing, ready and failed imports with retry diagnostics."""
     return _knowledge_intake().status(offset)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('retry_knowledge_import'))
 def retry_knowledge_import(job_id: str) -> dict:
     """Retry a failed import from its retained original snapshot."""
     return {'queued': _knowledge_intake().retry(job_id)}
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('knowledge_table_of_contents'))
 def knowledge_table_of_contents(offset: int = 0) -> dict:
     """List documents, section headings and explicit source-linked glossary definitions."""
     from app.knowledge_catalog import catalog
     return catalog(offset=offset)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('get_knowledge_ingestion_status'))
 def get_knowledge_ingestion_status() -> dict:
     """Show files that could not be indexed and text/OCR extraction notes."""
     from app.okf_loader import get_ingestion_status
     return get_ingestion_status()
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('reload_knowledge'))
 def reload_knowledge() -> str:
     """Re-scans knowledge/ directory and updates vector embeddings for new or modified markdown files."""
     return _reload_knowledge()
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('list_knowledge_documents'))
 def list_knowledge_documents() -> str:
     """List registered OKF document IDs, titles, types and indexing times."""
     docs = _list_docs()
@@ -150,7 +154,7 @@ def list_knowledge_documents() -> str:
     return "\n".join(lines)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('get_file_watcher_status'))
 def get_file_watcher_status() -> str:
     """Returns real-time status of the background file watcher (auto-indexing knowledge, skills, and tools)."""
     status = _get_watcher_status()
@@ -168,13 +172,13 @@ def get_file_watcher_status() -> str:
 # ============================================================================
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('create_support_ticket'))
 def create_support_ticket(ticket_id: str, email: str, summary: str) -> str:
     """Inserts a verified customer support ticket into the operational database."""
     return _create_ticket(ticket_id=ticket_id, customer_email=email, issue_summary=summary)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('get_ticket'))
 def get_ticket(ticket_id: str) -> str:
     """Retrieves current details and status for a given support ticket ID."""
     ticket = _get_ticket(ticket_id)
@@ -189,13 +193,13 @@ def get_ticket(ticket_id: str) -> str:
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('update_ticket_status'))
 def update_ticket_status(ticket_id: str, status: str) -> str:
     """Updates the operational status of an existing ticket (e.g., OPEN, URGENT, RESOLVED, CLOSED)."""
     return _update_ticket_status(ticket_id, status)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('list_tickets'))
 def list_tickets(status: str = "") -> str:
     """Lists recent support tickets, optionally filtered by status (e.g. 'OPEN', 'URGENT')."""
     filter_status = status.strip() if status and status.strip() else None
@@ -208,7 +212,7 @@ def list_tickets(status: str = "") -> str:
     return "\n".join(lines)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('get_system_metrics'))
 def get_system_metrics() -> str:
     """Returns real-time host hardware metrics (CPU %, available RAM) and ROMS database statistics."""
     metrics = _get_metrics()
@@ -223,7 +227,7 @@ def get_system_metrics() -> str:
     )
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('run_sandboxed_command'))
 async def run_sandboxed_command(image: str, command: str) -> str:
     """Executes a tool inside an isolated, hardware-capped container using Podman or Docker.
 
@@ -237,7 +241,7 @@ async def run_sandboxed_command(image: str, command: str) -> str:
 # ============================================================================
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('list_skills'))
 def list_skills() -> str:
     """Lists all available agent procedural playbooks (SOPs) in the skills directory."""
     skills = _list_skills()
@@ -246,7 +250,7 @@ def list_skills() -> str:
     return "Available Skills:\n" + "\n".join(f"- {s} (accessible via skills://{s})" for s in skills)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('add_skill'))
 def add_skill(skill_name: str, content: str) -> str:
     """Creates a new agent skill SOP file in the skills directory."""
     return _add_skill(skill_name, content)
@@ -264,13 +268,13 @@ from app.tool_rag import (
 from app.trajectory_recorder import distill_trajectory_to_skill as _distill_trajectory
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('search_tools'))
 def search_tools(query: str, category: str = "", limit: int = 3) -> str:
     """AnyTool Smart Tool RAG: retrieves exact tool schemas on-demand instead of crowding context."""
     return _format_tool_search_results(query=query, category=category, limit=limit)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('get_tool_health_report'))
 def get_tool_health_report() -> str:
     """Returns reliability metrics, call counts, average latency, and recent errors for all tools."""
     return _get_tool_health_report()
@@ -281,7 +285,7 @@ def get_tool_health_report() -> str:
 # ============================================================================
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('distill_trajectory_to_skill'))
 def distill_trajectory_to_skill(session_id: str, skill_name: str, description: str = "") -> str:
     """Draft a candidate playbook from a recorded trajectory; review is required before activation."""
     return _distill_trajectory(session_id=session_id, skill_name=skill_name, description=description)
@@ -302,7 +306,7 @@ from app.tools import (
 )
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('get_zg_facets'))
 def get_zg_facets() -> str:
     """Return document-type counts and knowledge facets for filters."""
     import json
@@ -314,7 +318,7 @@ def get_zg_facets() -> str:
 # ============================================================================
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('list_topics'))
 def list_topics() -> str:
     """Lists all auto-extracted hierarchical knowledge topics and chunk counts."""
     import json
@@ -331,21 +335,21 @@ def search_by_topic(topic: str, query: str, limit: int = 3) -> str:
 # ============================================================================
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('autokarpathy_generate_dataset'))
 def autokarpathy_generate_dataset(output_path: str = "") -> str:
     """Export synthetic training-pair candidates from knowledge and recorded trajectories. Does not train a model."""
     import json
     return json.dumps(_generate_synthetic_dataset(output_path=output_path), indent=2)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('autokarpathy_optimize_prompt'))
 def autokarpathy_optimize_prompt(task_description: str, base_prompt: str = "") -> str:
     """Prepare a prompt draft with context and constraints. Does not measure improvement or run iterative optimization."""
     import json
     return json.dumps(_optimize_agent_prompt(task_description=task_description, base_prompt=base_prompt), indent=2)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('autokarpathy_eval_cartridge'))
 def autokarpathy_eval_cartridge() -> str:
     """Summarize local document and trajectory counts. These are inventory statistics, not factuality measurements."""
     import json
@@ -359,7 +363,7 @@ def autokarpathy_eval_cartridge() -> str:
 from app.tools import run_autoresearch as _run_autoresearch
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('autoresearch'))
 def autoresearch(topic: str, depth: int = 2, max_sources: int = 6, save_to_knowledge: bool = True) -> str:
     """Gather indexed context for a research topic and optionally save a draft to knowledge. Sources and conclusions need review."""
     res = _run_autoresearch(topic=topic, depth=depth, max_sources=max_sources, save_to_knowledge=save_to_knowledge)
@@ -429,70 +433,70 @@ from app.prefrontal_cortex import (
 )
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('roms_titans_remember'))
 def roms_titans_remember(key: str, value: str, category: str = "architecture") -> str:
     """Store or overwrite a keyed value in local associative memory. Legacy tool ID retained for compatibility."""
     import json
     return json.dumps(_HybridNeuralMemory().remember(key=key, value=value, category=category), indent=2)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('roms_titans_recall'))
 def roms_titans_recall(query: str) -> str:
     """Retrieve a value from local associative memory. Legacy tool ID retained for compatibility."""
     import json
     return json.dumps(_HybridNeuralMemory().recall(query=query), indent=2)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('roms_titans_erase'))
 def roms_titans_erase(key: str) -> str:
     """Erase a keyed local memory entry. Legacy tool ID retained for compatibility."""
     import json
     return json.dumps(_HybridNeuralMemory().erase(key=key), indent=2)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('roms_sieve_compact'))
 def roms_sieve_compact(raw_text: str, max_lines: int = 35) -> str:
     """Select diagnostic lines within a source-line budget. Omission markers add display lines; retain the original log separately."""
     import json
     return json.dumps(_ContextSieve().compact(raw_text=raw_text, max_lines=max_lines), indent=2)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('roms_symdex_lookup'))
 def roms_symdex_lookup(query: str, top_k: int = 10, workspace_root: str = ".") -> str:
     """Look up names and signatures in the local symbol index. Results depend on index coverage and freshness."""
     import json
     return json.dumps(_PolyglotSymdex().lookup(query=query, top_k=top_k, workspace_root=workspace_root), indent=2)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('roms_snapshot_create'))
 def roms_snapshot_create(label: str = "Pre-tool checkpoint", workspace_root: str = ".") -> str:
     """Save a content-addressed snapshot of selected workspace files."""
     import json
     return json.dumps(_WorkspaceTimeMachine().snapshot(label=label, workspace_root=workspace_root), indent=2)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('roms_snapshot_rewind'))
 def roms_snapshot_rewind(snapshot_id: str, workspace_root: str = ".") -> str:
     """Restore tracked file bytes from a snapshot. This writes files and is not a transaction over concurrent edits."""
     import json
     return json.dumps(_WorkspaceTimeMachine().rewind(snapshot_id=snapshot_id, workspace_root=workspace_root), indent=2)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('roms_shield_forecast'))
 def roms_shield_forecast(action: str, goal: str = "General coding task") -> str:
     """Flag heuristic action hazards and repeated patterns. This advice does not execute, authorize or sandbox a command."""
     import json
     return json.dumps(_ExecutionShield().forecast_action(action=action, goal=goal), indent=2)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('roms_shield_repair_json'))
 def roms_shield_repair_json(raw_llm_output: str) -> str:
     """Repairs broken JSON tool calls emitted by local 7B-32B models (fences, single quotes, trailing commas, unclosed braces)."""
     import json
     return json.dumps(_ExecutionShield().repair_tool_call(raw_llm_output=raw_llm_output), indent=2)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('roms_prompt_lookup'))
 def roms_prompt_lookup(history_csv: str, window: int = 2, limit: int = 4) -> str:
     """Suggest token continuations from repeated n-grams in supplied history."""
     import json
@@ -508,7 +512,7 @@ def roms_prompt_lookup(history_csv: str, window: int = 2, limit: int = 4) -> str
 from app.decisions import ROMSDecisionEngine as _ROMSDecisionEngine
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('roms_decide'))
 def roms_decide(state: str, question: str, options_json: str, threshold: float = 0.45, min_margin: float = 0.08) -> str:
     """Rank 2–26 options using local heuristic text scores, with abstention. Scores are not calibrated factual confidence or permission to act."""
     import json
@@ -522,7 +526,7 @@ def roms_decide(state: str, question: str, options_json: str, threshold: float =
     return json.dumps(res, indent=2)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('roms_noul'))
 def roms_noul(state: str, question: str, threshold: float = 0.45, min_margin: float = 0.08) -> str:
     """Return heuristic yes/no advice or abstain on supplied text. Not a factual verifier, test runner or approval gate."""
     import json
@@ -532,7 +536,7 @@ def roms_noul(state: str, question: str, threshold: float = 0.45, min_margin: fl
     return json.dumps(res, indent=2)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('roms_score'))
 def roms_score(state: str, question: str, rubric_csv: str = "Poor,Fair,Good,Excellent", threshold: float = 0.35, min_margin: float = 0.05) -> str:
     """Score 2–10 ordered rubric levels using local text heuristics. The result is advisory and not model-calibrated."""
     import json
@@ -543,7 +547,7 @@ def roms_score(state: str, question: str, rubric_csv: str = "Poor,Fair,Good,Exce
     return json.dumps(res, indent=2)
 
 
-@mcp.tool()
+@mcp.tool(annotations=tool_annotations('roms_bertopic_discover'))
 def roms_bertopic_discover(document: str = "") -> str:
     """Group supplied text into local topic suggestions. Legacy tool ID retained; this does not run the BERTopic package or authorize new options."""
     import json
@@ -560,14 +564,14 @@ def roms_bertopic_discover(document: str = "") -> str:
 
 
 def load_custom_tools():
-    """Auto-discovers and registers custom Python tool files from custom_tools/ directory."""
+    """Register explicitly allowed local Python plugins from custom_tools/."""
     custom_dir = BASE_DIR / "custom_tools"
     if not custom_dir.exists():
         custom_dir.mkdir(parents=True, exist_ok=True)
         return
 
     for py_file in custom_dir.glob("*.py"):
-        if py_file.name.startswith("__"):
+        if py_file.name.startswith("__") or not plugin_allowed(py_file, custom_dir):
             continue
         try:
             module_name = f"custom_tools.{py_file.stem}"
@@ -601,7 +605,7 @@ def start_server():
     print("[ROMS] Starting background file watcher...", file=sys.stderr)
     start_watcher(mcp)
     print("[ROMS] Starting FastMCP server...", file=sys.stderr)
-    mcp.run()
+    mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":

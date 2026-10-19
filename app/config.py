@@ -39,6 +39,7 @@ ROMS_GATEWAY_PORT = int(os.getenv("ROMS_GATEWAY_PORT", "8844"))
 ROMS_UPSTREAM_LLM_URL = os.getenv("ROMS_UPSTREAM_LLM_URL", "http://127.0.0.1:11434/v1")
 
 _cached_model = None
+_torch_threads_configured = False
 _model_lock = threading.Lock()
 
 
@@ -53,14 +54,16 @@ def _load_embedding_model():
     Hard-pinned to CPU with thread capping to preserve 100% of GPU VRAM and CPU
     scheduling bandwidth for the co-located local LLM.
     """
-    global _cached_model
+    global _cached_model, _torch_threads_configured
     if _cached_model is None:
         import torch
 
         # Limit CPU threads to 2 so embeddings do not starve LLM inference threads
-        torch.set_num_threads(2)
-        if hasattr(torch, "set_num_interop_threads"):
-            torch.set_num_interop_threads(1)
+        if not _torch_threads_configured:
+            torch.set_num_threads(2)
+            if hasattr(torch, "set_num_interop_threads"):
+                torch.set_num_interop_threads(1)
+            _torch_threads_configured = True
 
         from sentence_transformers import SentenceTransformer
 
