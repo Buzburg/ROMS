@@ -77,10 +77,23 @@ extraction and OCR for unchanged files. Metadata-only edits trigger reindexing.
 `get_knowledge_ingestion_status` reports failed files and extraction notes;
 `reload_knowledge` includes this status. A failed file in `knowledge/` does not
 stop other files. Its previous index remains available until a successful update;
-check failure status when freshness matters. The source-library importer retains
-its transactional whole-import rollback on failure. Removing a library source
-removes its index and extraction notes. Deleting a knowledge file alone does not
-currently purge its old indexed content.
+check failure status when freshness matters. The watcher retries failed updates
+with exponential backoff (1, 2, 4, 8, 16, 32, then 60 seconds between attempts),
+including failures from startup. A new file version bypasses the previous version's
+retry delay; `reload_knowledge` also retries immediately.
+
+After a complete directory scan, the watcher and `reload_knowledge` remove deleted
+managed documents from the registry, keyword/vector indexes, topic memberships,
+and navigation, then invalidate cached search results. Renames remove the old
+identity and index the new one. Missing roots, failed/incomplete walks, and roots
+replaced during reconciliation preserve the existing index. These checks cannot
+identify every storage failure that presents as a successfully readable empty
+folder; keep backups of important originals.
+
+Only root-relative document IDs whose recorded source belongs to that directory
+are reconciled. Independent browser/MCP queue imports and source-library snapshots
+are retained. The source-library importer retains its transactional whole-import
+rollback on failure. Removing a library source removes its index and extraction notes.
 
 “All” covers these categories, not every possible encoding or file format.
 Encrypted/password-protected files, legacy `.doc/.xls/.ppt`, archives, audio/video,

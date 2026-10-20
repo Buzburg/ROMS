@@ -222,8 +222,8 @@ The server advertises the full tool list and schemas on connection. The harness 
 | “Build the required Mojo search module” | Build in that environment with `python scripts/build_search_native.py`, then restart ROMS and its MCP client process. |
 | Model loading fails offline | Provision the model while online first; for an existing local copy, set `ROMS_EMBEDDING_MODEL` to its directory. Use a compatible 384-dimensional model/index. |
 | A scan or image cannot be imported | Check Tesseract English data and `pdftoppm`; inspect the job error or `get_knowledge_ingestion_status`. OCR cannot recover every scan. |
-| A changed file still returns old content | A failed update retains the previous index. Inspect ingestion status, resolve the error and call `reload_knowledge`; the file watcher does not automatically retry an unchanged failed file. |
-| Deleted files still appear in search | Deleting files in `knowledge/` does not currently remove their indexed content. Treat search results as saved snapshots and verify the source. |
+| A changed file still returns old content | A failed update retains the previous index while the watcher retries with backoff capped at 60 seconds. Inspect ingestion status and resolve persistent errors; `reload_knowledge` retries immediately. |
+| Deleted files still appear in search | The watcher and `reload_knowledge` remove deleted managed files after a complete scan. If the folder is unavailable or a scan fails, the old index is preserved. Independently imported snapshots remain until explicitly removed. |
 | MCP authoring tools are denied | The default profile is `read_only`. Enable `ROMS_MCP_PROFILE=local` only for a client you intend to grant write access. |
 
 See [search setup](docs/search-upgrades.md), [MCP settings](docs/mcp-settings.md)
@@ -263,7 +263,7 @@ pixi run -e dev python -m pytest tests/test_search_native.py tests/test_search_u
 ```
 
 The [October 20 review](docs/verification/review-2026-10-20.md) records verified
-checks, remaining reliability findings and recommended follow-up work.
+checks, the index-freshness fixes and recommended follow-up work.
 The [harness guide](docs/HARNESS.md) records its checks, and the [CI workflow](.github/workflows/checks.yml) defines the portable test matrix. Native builds and live-model checks have separate prerequisites.
 
 ## More documentation

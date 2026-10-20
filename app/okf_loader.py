@@ -191,23 +191,113 @@ def ingest_okf_directory(
     Returns the number of files ingested or updated.
     """
     target_dir = Path(directory_path) if directory_path is not None else KNOWLEDGE_DIR
+    # An unavailable root is not evidence that its documents were deleted.
     if not target_dir.exists():
-        target_dir.mkdir(parents=True, exist_ok=True)
         return 0
-
+    files, identity = scan_knowledge_files(target_dir)
     ingested_count = 0
-    for file_path in knowledge_files(target_dir):
+    for file_path in files:
         if ingest_managed_file(file_path, target_dir, db_path):
             ingested_count += 1
 
+    prune_missing_knowledge(target_dir, files, identity, db_path)
     return ingested_count
+
+
+def scan_knowledge_files(root):
+    """Return a complete scan and its root identity; never accept a partial walk."""
+    root = Path(root)
+    before = root.stat()
+    files = list(knowledge_files(root))
+    after = root.stat()
+    identity = (before.st_dev, before.st_ino)
+    if identity != (after.st_dev, after.st_ino):
+        raise OSError('Knowledge root changed during scanning; retry')
+    return files, identity
+
+
+def prune_missing_knowledge(root, files, identity, db_path=None):
+    """Reconcile a completed scan, only for identities owned by this directory.
+
+    Independently imported snapshots and documents belonging to another root are
+    preserved. Recheck absence under the writer lock and invalidate search caches
+    only after all related index records have committed together.
+    """
+    root = Path(root)
+    present = {Path(path).relative_to(root).as_posix() for path in files}
+    root = root.resolve()
+
+    def check_root():
+        current = root.stat()
+        if (current.st_dev, current.st_ino) != identity:
+            raise OSError('Knowledge root changed during reconciliation; retry')
+
+    check_root()
+    conn = get_connection(db_path, reuse=False)
+    removed = 0
+    try:
+        with conn:
+            conn.execute('BEGIN IMMEDIATE')
+            tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            for doc_id, source in conn.execute('SELECT doc_id,source_path FROM okf_registry').fetchall():
+                if not source or doc_id in present:
+                    continue
+                path = Path(source)
+                try:
+                    relative = path.relative_to(root)
+                except ValueError:
+                    continue
+                # Existing managed documents need no migration. Namespaced UI and
+                # library imports cannot be mistaken for root-relative identities.
+                if relative.as_posix() != doc_id or '..' in relative.parts:
+                    continue
+                try:
+                    path.lstat()  # A reappeared file/link is not a confirmed deletion.
+                    continue
+                except FileNotFoundError:
+                    pass
+                check_root()
+                conn.execute('DELETE FROM chunk_topics WHERE chunk_id IN (SELECT chunk_id FROM fts_chunks WHERE doc_id=?)', (doc_id,))
+                for table in ('vec_chunks', 'fts_chunks', 'okf_registry', 'ingestion_details', 'knowledge_navigation'):
+                    if table in tables:
+                        conn.execute(f'DELETE FROM {table} WHERE doc_id=?', (doc_id,))
+                if 'ingestion_failures' in tables:
+                    conn.execute('DELETE FROM ingestion_failures WHERE source_path=?', (source,))
+                removed += 1
+            if 'ingestion_failures' in tables:
+                # Failed first imports have no registry row, but their diagnostics
+                # should disappear when the failed source is deliberately removed.
+                for (source,) in conn.execute('SELECT source_path FROM ingestion_failures').fetchall():
+                    path = Path(source)
+                    try:
+                        relative = path.relative_to(root)
+                    except ValueError:
+                        continue
+                    if relative.as_posix() in present or '..' in relative.parts:
+                        continue
+                    try:
+                        path.lstat()
+                    except FileNotFoundError:
+                        conn.execute('DELETE FROM ingestion_failures WHERE source_path=?', (source,))
+            if removed:
+                conn.execute('UPDATE topics SET chunk_count=(SELECT COUNT(*) FROM chunk_topics WHERE chunk_topics.topic_id=topics.topic_id)')
+            check_root()
+    finally:
+        conn.close()
+    if removed:
+        from app.rag_engine import clear_result_cache
+        clear_result_cache()
+    return removed
 
 
 def knowledge_files(root):
     """Walk the user knowledge folder without following links or dependency folders."""
     root = Path(root)
     count = 0
-    for parent, dirs, files in os.walk(root, followlinks=False):
+    def scan_error(error):
+        raise error
+
+    for parent, dirs, files in os.walk(root, followlinks=False, onerror=scan_error):
         dirs[:] = sorted(name for name in dirs if not name.startswith('.') and name not in
                          {'node_modules', 'venv', '__pycache__', 'target', 'build', 'dist'}
                          and not (Path(parent) / name).is_symlink())
@@ -226,7 +316,7 @@ def _failure_table(conn):
 
 
 def ingest_managed_file(path, root, db_path=None):
-    """Isolate one file failure, keep its previous index, and expose the diagnostic."""
+    """Return True for indexed, False for unchanged, None for a recorded failure."""
     import sys
     path, root = Path(path), Path(root)
     try:
@@ -240,7 +330,7 @@ def ingest_managed_file(path, root, db_path=None):
                      (str(path.resolve()), f'{type(error).__name__}: {error}'[:2000]))
         conn.commit()
         print(f'[ROMS ingestion] {path.name}: {error}', file=sys.stderr)
-        return False
+        return None
     conn = get_connection(db_path)
     _failure_table(conn)
     conn.execute('DELETE FROM ingestion_failures WHERE source_path=?', (str(path.resolve()),))

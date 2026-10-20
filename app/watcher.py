@@ -9,16 +9,15 @@ Runs on a daemon thread; extraction and OCR may take longer for large documents.
 """
 
 import importlib.util
-import os
 import sys
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, Optional
 
 from app.config import KNOWLEDGE_DIR, SKILLS_DIR, BASE_DIR
 from app.mcp_annotations import plugin_allowed
-from app.okf_loader import ingest_managed_file, knowledge_files
+from app.okf_loader import ingest_managed_file, scan_knowledge_files, prune_missing_knowledge
 
 _WATCHER_THREAD: Optional[threading.Thread] = None
 _STOP_EVENT = threading.Event()
@@ -49,64 +48,92 @@ def _reload_custom_tool(py_path: Path, mcp_instance: Any = None):
 
 
 def _watcher_loop(mcp_instance: Any = None, poll_interval: float = 1.0):
-    """Polling loop with mtime tracking and debouncing."""
+    """Poll complete scans; retry failures with exponential backoff capped at 60s."""
     custom_dir = BASE_DIR / "custom_tools"
     dirs_to_watch = [KNOWLEDGE_DIR, SKILLS_DIR, custom_dir]
-    for d in dirs_to_watch:
-        d.mkdir(parents=True, exist_ok=True)
+    for directory in (SKILLS_DIR, custom_dir):
+        directory.mkdir(parents=True, exist_ok=True)
 
     _WATCHER_STATS["monitored_paths"] = [str(d) for d in dirs_to_watch]
     _WATCHER_STATS["is_running"] = True
+    versions = {}
+    retries = {}
+    known_files = None
+    # Knowledge is deliberately unacknowledged on startup: a prior startup scan
+    # may have failed. Unchanged successful documents skip extraction by checksum.
+    for directory in (SKILLS_DIR, custom_dir):
+        for path in directory.glob("*"):
+            try:
+                if path.is_file():
+                    stat = path.stat()
+                    versions[str(path)] = (stat.st_mtime_ns, stat.st_size)
+            except OSError:
+                continue
 
-    mtimes: Dict[str, float] = {}
-
-    # Initialize existing file mtimes
-    for d in dirs_to_watch:
-        for f in (knowledge_files(d) if d == KNOWLEDGE_DIR else d.glob("*")):
-            if f.is_file():
+    try:
+        while not _STOP_EVENT.is_set():
+            if _STOP_EVENT.wait(poll_interval):
+                break
+            for directory in dirs_to_watch:
                 try:
-                    mtimes[str(f)] = f.stat().st_mtime
-                except Exception:
-                    pass
-
-    while not _STOP_EVENT.is_set():
-        time.sleep(poll_interval)
-        try:
-            for d in dirs_to_watch:
-                for f in (knowledge_files(d) if d == KNOWLEDGE_DIR else d.glob("*")):
-                    if not f.is_file():
-                        continue
-                    f_str = str(f)
-                    try:
-                        current_mtime = f.stat().st_mtime
-                    except Exception:
-                        continue
-
-                    last_mtime = mtimes.get(f_str, 0.0)
-                    if current_mtime != last_mtime:
-                        # Debounce wait for write completion
-                        time.sleep(0.1)
-                        mtimes[f_str] = current_mtime
+                    if directory == KNOWLEDGE_DIR:
+                        files, identity = scan_knowledge_files(directory)
+                        current_files = {str(path) for path in files}
+                        if known_files != current_files:
+                            prune_missing_knowledge(directory, files, identity)
+                            for missing in (known_files or set()) - current_files:
+                                versions.pop(missing, None)
+                                retries.pop(missing, None)
+                            known_files = current_files
+                    else:
+                        files = list(directory.glob("*"))
+                    for path in files:
+                        if _STOP_EVENT.is_set():
+                            break
+                        if not path.is_file():
+                            continue
+                        key = str(path)
+                        try:
+                            stat = path.stat()
+                        except OSError:
+                            continue
+                        version = (stat.st_mtime_ns, stat.st_size)
+                        if versions.get(key) == version:
+                            continue
+                        failed_version, failures, due = retries.get(key, (None, 0, 0))
+                        if failed_version == version and time.monotonic() < due:
+                            continue
+                        # Do not add a per-file sleep to the initial checksum scan.
+                        # Changed files already observed by this watcher debounce.
+                        if key in versions and _STOP_EVENT.wait(0.1):
+                            break
                         _WATCHER_STATS["reloads_count"] += 1
-
-                        if d == KNOWLEDGE_DIR:
-                            _WATCHER_STATS["last_event"] = f"Ingested {f.name}"
-                            print(f"[ROMS Watcher] Hot-indexing knowledge file: {f.name}", file=sys.stderr)
-                            changed = ingest_managed_file(f, KNOWLEDGE_DIR)
-                            _WATCHER_STATS["last_event"] = f"Processed {f.name}; indexed={changed}"
-
-                        elif f.suffix.lower() == ".md" and d == SKILLS_DIR:
-                            _WATCHER_STATS["last_event"] = f"Updated skill {f.stem}"
-                            print(f"[ROMS Watcher] Detected skill update: {f.stem}", file=sys.stderr)
-
-                        elif f.suffix.lower() == ".py" and d == custom_dir:
-                            _WATCHER_STATS["last_event"] = f"Reloaded tool {f.name}"
-                            _reload_custom_tool(f, mcp_instance)
-
-        except Exception as e:
-            print(f"[ROMS Watcher Exception] {e}", file=sys.stderr)
-
-    _WATCHER_STATS["is_running"] = False
+                        if directory == KNOWLEDGE_DIR:
+                            try:
+                                changed = ingest_managed_file(path, KNOWLEDGE_DIR)
+                            except Exception as error:
+                                # Even writing the failure diagnostic can fail (e.g.
+                                # a busy database). Keep that file eligible for retry.
+                                print(f"[ROMS Watcher Error] {path.name}: {error}", file=sys.stderr)
+                                changed = None
+                            if changed is None:
+                                failures = min(failures + 1, 7) if failed_version == version else 1
+                                delay = min(2 ** (failures - 1), 60)
+                                retries[key] = (version, failures, time.monotonic() + delay)
+                                _WATCHER_STATS["last_event"] = f"Failed {path.name}; retry in {delay}s"
+                                continue
+                            _WATCHER_STATS["last_event"] = f"Processed {path.name}; indexed={changed}"
+                        elif path.suffix.lower() == ".md" and directory == SKILLS_DIR:
+                            _WATCHER_STATS["last_event"] = f"Updated skill {path.stem}"
+                        elif path.suffix.lower() == ".py" and directory == custom_dir:
+                            _reload_custom_tool(path, mcp_instance)
+                            _WATCHER_STATS["last_event"] = f"Reloaded tool {path.name}"
+                        versions[key] = version
+                        retries.pop(key, None)
+                except Exception as error:
+                    print(f"[ROMS Watcher Exception] {error}", file=sys.stderr)
+    finally:
+        _WATCHER_STATS["is_running"] = False
 
 
 def start_watcher(mcp_instance: Any = None) -> bool:

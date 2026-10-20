@@ -107,6 +107,7 @@ def test_watcher_processes_nested_csv_and_images(tmp_path, monkeypatch):
     monkeypatch.setattr(watcher,'BASE_DIR',tmp_path)
     processed=[]
     monkeypatch.setattr(watcher,'ingest_managed_file',lambda path,root: processed.append(path.name) or True)
+    monkeypatch.setattr(watcher,'prune_missing_knowledge',lambda root,files,identity: 0)
     watcher._STOP_EVENT.clear()
     thread=threading.Thread(target=watcher._watcher_loop,kwargs={'poll_interval':.02})
     thread.start()

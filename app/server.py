@@ -140,7 +140,7 @@ def get_knowledge_ingestion_status() -> dict:
 
 @mcp.tool(annotations=tool_annotations('reload_knowledge'))
 def reload_knowledge() -> str:
-    """Re-scans knowledge/ directory and updates vector embeddings for new or modified markdown files."""
+    """Re-scan supported knowledge files, retry failures and remove deleted managed documents."""
     return _reload_knowledge()
 
 
