@@ -1,0 +1,4 @@
+# Optional CPU backend; install the core requirements first.
+onnxruntime>=1.22,<2
+transformers>=4.56
+huggingface-hub>=0.34

@@ -122,3 +122,45 @@ single tokens. The current model remains separate from the Mojo ranking kernels.
 Current measurements and checks are recorded in
 [single-search verification](verification/single-search-messy.md). The evaluation
 script requires the local model and frozen evaluation assets described there.
+
+## Optional quantized EmbeddingGemma
+
+ROMS supports the public [ONNX-community EmbeddingGemma 300M conversion](https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX)
+with 8-bit weights, pinned to revision `5090578d9565bb06545b4552f76e6bc2c93e4a66`.
+Inference runs locally with ONNX Runtime's CPU provider and two compute threads.
+MiniLM remains the default. After installing the core ROMS requirements:
+
+```bash
+python -m pip install -r requirements-embeddinggemma.txt
+export ROMS_EMBEDDING_MODEL=embeddinggemma-q8
+python -c 'from app.config import get_embedding_model; get_embedding_model()'
+```
+
+The first load downloads approximately 330 MB of model/tokenizer files into the
+Hugging Face cache. Review the upstream [Gemma terms](https://ai.google.dev/gemma/terms).
+No model weights are bundled in this repository. Once cached, set
+`HF_HUB_OFFLINE=1` to run without network access. If your stored Hub login has
+expired, public provisioning can use `HF_HUB_DISABLE_IMPLICIT_TOKEN=1`.
+
+Start ROMS with the same environment setting and ingest your knowledge files.
+This backend uses normalized 768-dimensional embeddings and the model's distinct
+search-query and document prefixes. It defaults to `data/embeddinggemma-q8.db`
+(or that filename under `ROMS_DATA_DIR`), keeping the existing MiniLM index intact.
+If you override `ROMS_DB_PATH`, choose a fresh database and re-ingest everything;
+an incompatible vector dimension is rejected before schema changes. Never reuse
+an index built by a different model, even when dimensions happen to match.
+Switching back to MiniLM means unsetting `ROMS_EMBEDDING_MODEL` and using its index.
+
+Document passages are split using the actual tokenizer with room for prefixes.
+Inputs still exceeding the 2048-token model window raise an error rather than
+silently truncating. Long queries must be shortened. Inference batches are capped
+at four passages to bound attention memory.
+
+Run the real-model acceptance check (requires the compiled Mojo search module):
+
+```bash
+python scripts/verify_embeddinggemma.py
+```
+
+It checks embeddings, semantic ranking, long Unicode passages, document ingestion,
+and vector/hybrid search in a disposable database. It does not modify your index.

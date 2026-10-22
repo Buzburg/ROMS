@@ -19,7 +19,11 @@ BASE_REPOS_DIR = Path(os.getenv("ROMS_REPOS_DIR", str(BASE_DIR / "repos")))
 EMBEDDING_MODEL_NAME = os.getenv(
     "ROMS_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
 )
-EMBEDDING_DIM = 384
+# Explicit opt-in keeps existing MiniLM installations and indexes unchanged.
+EMBEDDING_GEMMA = EMBEDDING_MODEL_NAME == "embeddinggemma-q8"
+EMBEDDING_DIM = 768 if EMBEDDING_GEMMA else 384
+if EMBEDDING_GEMMA and "ROMS_DB_PATH" not in os.environ:
+    DB_PATH = DATA_DIR / "embeddinggemma-q8.db"
 
 EMBEDDING_PROVIDER = os.getenv("ROMS_EMBEDDING_PROVIDER", "local").lower()
 OLLAMA_BASE_URL = os.getenv("ROMS_OLLAMA_URL", "http://127.0.0.1:11434")
@@ -56,6 +60,10 @@ def _load_embedding_model():
     """
     global _cached_model, _torch_threads_configured
     if _cached_model is None:
+        if EMBEDDING_GEMMA:
+            from app.embeddinggemma import EmbeddingGemma
+            _cached_model = EmbeddingGemma()
+            return _cached_model
         import torch
 
         # Limit CPU threads to 2 so embeddings do not starve LLM inference threads
@@ -98,6 +106,8 @@ def compute_embedding_vector(text: str) -> list[float]:
             data = json.loads(resp.read().decode("utf-8"))
             return data["data"][0]["embedding"]
     else:
+        if EMBEDDING_GEMMA:
+            return get_embedding_model().encode(norm_text, query=True).tolist()
         # Default: CPU-pinned SentenceTransformer with gradient disabled
         import torch
         model = get_embedding_model()

@@ -285,3 +285,5 @@ The Linux/Omarchy workshop adds staged changes, registered validation and operat
 ## License
 
 [Apache-2.0](LICENSE). Copyright 2026 Buzburg LLC. Third-party licenses and acknowledgements remain in [NOTICE](NOTICE) and the relevant source directories.
+
+For optional local 8-bit EmbeddingGemma embeddings, see [setup and verification](docs/search-upgrades.md#optional-quantized-embeddinggemma).
