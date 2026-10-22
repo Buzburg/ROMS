@@ -158,7 +158,7 @@ def test_all_registered_tools_have_explicit_conservative_metadata():
     import ast
     from app.mcp_annotations import READ_TOOLS, WRITE_TOOLS
     root = Path(__file__).resolve().parents[1]
-    paths = [root/'app/server.py', root/'app/mojo_bridge.py', root/'app/memory_tools.py',
+    paths = [root/'app/server.py', root/'app/mojo_bridge.py', root/'app/memory_tools.py', root/'app/knowledge_skill_tools.py',
              *sorted((root/'custom_tools').glob('*.py'))]
     names = set()
     for path in paths:

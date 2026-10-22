@@ -5,6 +5,7 @@ import re
 
 # Read operations can initialize application caches/indexes, but do not author user content.
 READ_TOOLS = frozenset("""
+search_knowledge_skills get_knowledge_skill
 roms_prepare_harness search_knowledge_base search_grounded_context
 knowledge_table_of_contents get_knowledge_ingestion_status list_knowledge_documents
 get_file_watcher_status get_ticket list_tickets get_system_metrics list_skills
@@ -14,6 +15,7 @@ memory_prepare_context memory_recall memory_get
 search_codebase find_symbol_definition calculate_refund_amount
 """.split())
 WRITE_TOOLS = frozenset("""
+refresh_knowledge_skills record_knowledge_skill_feedback
 add_knowledge_document queue_knowledge_text queue_knowledge_path knowledge_import_progress
 retry_knowledge_import reload_knowledge create_support_ticket update_ticket_status
 run_sandboxed_command add_skill distill_trajectory_to_skill autokarpathy_generate_dataset

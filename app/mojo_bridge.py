@@ -18,6 +18,8 @@ class NativeHandlers(Protocol):
 
 def build_server(native: NativeHandlers) -> FastMCP:
     server = FastMCP("ROMS-Mojo-Engine", middleware=[MCPPolicy()])
+    from app.knowledge_skill_tools import register_knowledge_skill_tools
+    register_knowledge_skill_tools(server)
     register_memory_tools(server, selector=native.pack_context, backend='mojo')
 
     @server.tool(annotations=tool_annotations('search_knowledge_base'))

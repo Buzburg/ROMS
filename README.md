@@ -26,6 +26,10 @@ Results keep their source references so you can inspect the evidence.
 - **Keep knowledge close.** Search, embeddings and OCR run locally after setup.
   Connect an MCP-compatible client to make the same knowledge available to your
   agent; that client's own data-sharing settings still apply.
+- **Turn knowledge into reusable skills.** Imported guides and checklists become
+  source-backed procedural drafts automatically. New evidence updates the drafts;
+  revisions, source links and feedback help you decide what to reuse.
+  [Explore knowledge-derived skills](docs/knowledge-skills.md).
 - **Build on what you learn.** Retain project lessons, reuse skills and prepare
   bounded, source-backed next steps for review.
 

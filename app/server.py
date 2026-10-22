@@ -40,6 +40,9 @@ mcp = FastMCP("ROMS", middleware=[MCPPolicy()])
 register_memory_tools(mcp)
 
 
+from app.knowledge_skill_tools import register_knowledge_skill_tools
+register_knowledge_skill_tools(mcp)
+
 @mcp.tool(annotations=tool_annotations('roms_prepare_harness'))
 def roms_prepare_harness(request_json: str) -> str:
     """Prepare bounded knowledge, selected skills and a heuristic decision for review. Never executes or approves an action."""
@@ -601,6 +604,8 @@ def start_server():
     print("[ROMS] Ingesting OKF knowledge documents...", file=sys.stderr)
     count = ingest_okf_directory(KNOWLEDGE_DIR)
     print(f"[ROMS] OKF ingestion complete ({count} files processed).", file=sys.stderr)
+    from app.knowledge_skills import rebuild as rebuild_knowledge_skills
+    rebuild_knowledge_skills()
     load_custom_tools()
     print("[ROMS] Starting background file watcher...", file=sys.stderr)
     start_watcher(mcp)

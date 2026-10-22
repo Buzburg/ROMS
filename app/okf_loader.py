@@ -159,6 +159,8 @@ def ingest_document_file(filepath: Path | str, db_path: Path | str | None = None
         )
         from app.knowledge_catalog import replace_navigation
         replace_navigation(conn, filename, list(zip(chunk_ids, chunks)))
+        from app.knowledge_skills import replace_sources
+        replace_sources(conn, filename, title, checksum, list(zip(chunk_ids, chunks)))
         tag_chunks_with_topics(
             list(zip(chunk_ids, chunks)), conn, doc_type=doc_type,
             refresh_topic_ids=old_topic_ids,
@@ -258,7 +260,7 @@ def prune_missing_knowledge(root, files, identity, db_path=None):
                     pass
                 check_root()
                 conn.execute('DELETE FROM chunk_topics WHERE chunk_id IN (SELECT chunk_id FROM fts_chunks WHERE doc_id=?)', (doc_id,))
-                for table in ('vec_chunks', 'fts_chunks', 'okf_registry', 'ingestion_details', 'knowledge_navigation'):
+                for table in ('vec_chunks', 'fts_chunks', 'okf_registry', 'ingestion_details', 'knowledge_navigation', 'knowledge_skill_sources'):
                     if table in tables:
                         conn.execute(f'DELETE FROM {table} WHERE doc_id=?', (doc_id,))
                 if 'ingestion_failures' in tables:

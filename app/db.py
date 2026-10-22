@@ -207,5 +207,8 @@ def init_database(db_path: Path | str | None = None) -> None:
     )
     """)
 
+    from app.knowledge_skills import schema as skill_schema
+    skill_schema(conn)
+
     conn.commit()
     conn.close()

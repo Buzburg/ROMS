@@ -121,6 +121,9 @@ def test_gateway_start_initializes_local_state(monkeypatch: pytest.MonkeyPatch) 
 
 def test_mcp_startup_keeps_stdout_clean(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture) -> None:
     from app import server
+    from app import knowledge_skills
+    backfills = []
+    monkeypatch.setattr(knowledge_skills, 'rebuild', lambda: backfills.append(True))
     monkeypatch.setattr(server, 'init_database', lambda: None)
     monkeypatch.setattr(server, '_init_default_tool_registry', lambda: None)
     monkeypatch.setattr(server, 'ingest_okf_directory', lambda path: 0)
@@ -130,6 +133,7 @@ def test_mcp_startup_keeps_stdout_clean(monkeypatch: pytest.MonkeyPatch, capsys:
     monkeypatch.setattr(server.mcp, 'run', lambda *, transport: transports.append(transport))
     server.start_server()
     assert transports == ['stdio']
+    assert backfills == [True]
     output = capsys.readouterr()
     assert output.out == ''
     assert 'Starting FastMCP' in output.err

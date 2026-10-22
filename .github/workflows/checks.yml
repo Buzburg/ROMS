@@ -59,6 +59,7 @@ jobs:
           export ROMS_DATA_DIR="$RUNNER_TEMP/roms-test-data"
           export ROMS_STATE_DIR="$RUNNER_TEMP/roms-test-state"
           python scripts/verify_embeddinggemma.py
+          python scripts/verify_knowledge_skills.py
           python -m pytest -q
           python tests/test_mojo_protocol.py "$PWD/build/roms-mcp" "$PWD"
         env:

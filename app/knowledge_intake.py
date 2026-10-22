@@ -133,6 +133,8 @@ class Intake:
         return True
 
     def run(self):
+        from app.knowledge_skills import rebuild
+        rebuild(self.db_path)
         while not self.stop.is_set():
             with self.worker_lock() as acquired:
                 if acquired:

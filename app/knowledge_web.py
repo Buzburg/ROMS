@@ -7,7 +7,7 @@ import secrets
 from starlette.applications import Starlette
 from starlette.concurrency import run_in_threadpool
 from starlette.requests import Request
-from starlette.responses import HTMLResponse, JSONResponse
+from starlette.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from starlette.routing import Route
 from app.document_parse import MAX_FILE_BYTES
 from app.knowledge_catalog import catalog
@@ -70,8 +70,49 @@ def create_app(intake, token, port=8845, start_worker=True):
         result = await run_in_threadpool(zg_search, query, limit=10, db_path=intake.db_path)
         return JSONResponse({'results': result})
 
+    async def skills(request):
+        from app.knowledge_skills import list_drafts
+        return JSONResponse(await run_in_threadpool(list_drafts, intake.db_path,
+                            request.query_params.get('q', ''), request.query_params.get('offset', 0)))
+
+    async def skill_detail(request):
+        from app.knowledge_skills import get_draft, render_markdown
+        draft = await run_in_threadpool(get_draft, request.path_params['skill_id'], intake.db_path)
+        if not draft:
+            return JSONResponse({'error': 'Skill sources no longer exist'}, status_code=404)
+        if request.query_params.get('export') == '1':
+            if request.query_params.get('revision') != draft['revision']:
+                return JSONResponse({'error': 'Sources changed; review the current draft first'}, status_code=409)
+            return PlainTextResponse(render_markdown(draft), headers={
+                'Content-Disposition': 'attachment; filename="SKILL.md"'})
+        return JSONResponse(draft)
+
+    async def skill_refresh(request):
+        from app.knowledge_skills import rebuild
+        return JSONResponse(await run_in_threadpool(rebuild, intake.db_path))
+
+    async def skill_feedback(request):
+        import json
+        from app.knowledge_skills import record_feedback
+        body = bytearray()
+        async for block in request.stream():
+            body.extend(block)
+            if len(body) > 8192:
+                return JSONResponse({'error': 'Feedback exceeds 8 KiB'}, status_code=413)
+        try:
+            data = json.loads(body)
+        except (ValueError, UnicodeError):
+            raise ValueError('Feedback must be valid JSON')
+        if type(data) is not dict or set(data) != {'revision', 'outcome', 'note', 'event_id'}:
+            raise ValueError('Feedback requires revision, outcome, note and event_id')
+        return JSONResponse(await run_in_threadpool(record_feedback, request.path_params['skill_id'],
+                            data['revision'], data['outcome'], data['note'], data['event_id'], intake.db_path))
+
     app = Starlette(routes=[Route('/', home), Route('/api/upload', upload, methods=['POST']),
-                            Route('/api/jobs', jobs), Route('/api/catalog', navigation),
+                            Route('/api/jobs', jobs),
+                            Route('/api/skills', skills), Route('/api/skills/refresh', skill_refresh, methods=['POST']),
+                            Route('/api/skills/{skill_id}', skill_detail),
+                            Route('/api/skills/{skill_id}/feedback', skill_feedback, methods=['POST']), Route('/api/catalog', navigation),
                             Route('/api/retry/{job}', retry, methods=['POST']), Route('/api/search', search), Route('/api/source/{chunk:int}', source)], lifespan=lifespan)
 
     async def protect(request: Request, call_next):

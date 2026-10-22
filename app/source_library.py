@@ -225,6 +225,8 @@ def remove_source(source_id: str, *, db_path: Path | None = None, library: Path 
                 if has_details:
                     connection.execute('DELETE FROM ingestion_details WHERE doc_id=?', (doc_id,))
                 connection.execute('DELETE FROM chunk_topics WHERE chunk_id IN (SELECT chunk_id FROM fts_chunks WHERE doc_id=?)', (doc_id,))
+                if connection.execute("SELECT 1 FROM sqlite_master WHERE name='knowledge_skill_sources'").fetchone():
+                    connection.execute('DELETE FROM knowledge_skill_sources WHERE doc_id=?', (doc_id,))
                 for table in ('vec_chunks', 'fts_chunks', 'okf_registry'):
                     connection.execute(f'DELETE FROM {table} WHERE doc_id=?', (doc_id,))
             connection.execute('UPDATE topics SET chunk_count=(SELECT COUNT(*) FROM chunk_topics WHERE chunk_topics.topic_id=topics.topic_id)')
