@@ -76,3 +76,29 @@ assert conn.execute("SELECT sql FROM sqlite_master WHERE name='vec_chunks'").fet
     result = subprocess.run([sys.executable, '-c', code], env=env,
                             cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize('setting,value', [
+    ('ROMS_EMBEDDING_MODEL', 'sentence-transformers/all-MiniLM-L6-v2'),
+    ('ROMS_EMBEDDING_PROVIDER', 'openai'),
+])
+def test_legacy_backends_fail_with_actionable_error(setting, value):
+    env = {**os.environ, setting: value}
+    result = subprocess.run([sys.executable, '-c', 'import app.config'], env=env,
+                            cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True)
+    assert result.returncode != 0
+    assert 'ROMS supports only' in result.stderr
+
+
+def test_default_is_gemma_without_model_selector(tmp_path):
+    env = {**os.environ, 'ROMS_DATA_DIR': str(tmp_path)}
+    for name in ('ROMS_EMBEDDING_MODEL', 'ROMS_EMBEDDING_PROVIDER', 'ROMS_DB_PATH'):
+        env.pop(name, None)
+    result = subprocess.run([sys.executable, '-c', '''
+from app import config
+assert config.EMBEDDING_MODEL_NAME == 'embeddinggemma-q8'
+assert config.EMBEDDING_DIM == 768
+assert config.EMBEDDING_PROVIDER == 'local'
+assert config.DB_PATH.name == 'embeddinggemma-q8.db'
+'''], env=env, cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr

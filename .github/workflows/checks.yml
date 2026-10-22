@@ -58,6 +58,7 @@ jobs:
           export PYTHONPATH="$PWD:$(python -c 'import site; print(":".join(site.getsitepackages()))')"
           export ROMS_DATA_DIR="$RUNNER_TEMP/roms-test-data"
           export ROMS_STATE_DIR="$RUNNER_TEMP/roms-test-state"
+          python scripts/verify_embeddinggemma.py
           python -m pytest -q
           python tests/test_mojo_protocol.py "$PWD/build/roms-mcp" "$PWD"
         env:

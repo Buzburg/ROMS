@@ -11,7 +11,7 @@ hits = local_search("damagd replacment", limit=5,
                     filters={"doc_type": "policy"})
 ```
 
-The engine combines SQLite FTS5 keyword ranking with precomputed local MiniLM
+The engine combines SQLite FTS5 keyword ranking with precomputed local EmbeddingGemma Q8
 passage vectors, then fuses ranks in compiled Mojo. Known terms skip typo work;
 unknown terms use bounded prefix and typo expansion. Exact document/type/topic
 filters apply before candidate selection. Results include source paths and chunk
@@ -40,8 +40,8 @@ In an existing environment containing Mojo 1.1.0 and the dependencies in
 `pixi.toml`, use `python scripts/build_search_native.py`. Restart ROMS after
 rebuilding. The former `ROMS_SEARCH_KERNEL` selector is no longer used. The
 embedding provider must be `local`; external provider settings are rejected by
-search and ingestion. Provision the MiniLM model before offline use and point
-`ROMS_EMBEDDING_MODEL` at its local directory. Initial model provisioning may
+search and ingestion. Provision EmbeddingGemma Q8 with
+`python scripts/fetch_embedding.py` before offline use. Initial provisioning may
 require a download; queries and document inference then run on this machine.
 
 Tesseract with English language data and Poppler's `pdftoppm` provide local OCR.
@@ -123,16 +123,15 @@ Current measurements and checks are recorded in
 [single-search verification](verification/single-search-messy.md). The evaluation
 script requires the local model and frozen evaluation assets described there.
 
-## Optional quantized EmbeddingGemma
+## Quantized EmbeddingGemma
 
 ROMS supports the public [ONNX-community EmbeddingGemma 300M conversion](https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX)
 with 8-bit weights, pinned to revision `5090578d9565bb06545b4552f76e6bc2c93e4a66`.
 Inference runs locally with ONNX Runtime's CPU provider and two compute threads.
-MiniLM remains the default. After installing the core ROMS requirements:
+This is the only supported embedding backend. Install the core requirements:
 
 ```bash
-python -m pip install -r requirements-embeddinggemma.txt
-export ROMS_EMBEDDING_MODEL=embeddinggemma-q8
+python -m pip install -r requirements.txt
 python -c 'from app.config import get_embedding_model; get_embedding_model()'
 ```
 
@@ -142,14 +141,16 @@ No model weights are bundled in this repository. Once cached, set
 `HF_HUB_OFFLINE=1` to run without network access. If your stored Hub login has
 expired, public provisioning can use `HF_HUB_DISABLE_IMPLICIT_TOKEN=1`.
 
-Start ROMS with the same environment setting and ingest your knowledge files.
+Start ROMS and ingest your knowledge files; no model selector is required.
 This backend uses normalized 768-dimensional embeddings and the model's distinct
 search-query and document prefixes. It defaults to `data/embeddinggemma-q8.db`
 (or that filename under `ROMS_DATA_DIR`), keeping the existing MiniLM index intact.
 If you override `ROMS_DB_PATH`, choose a fresh database and re-ingest everything;
 an incompatible vector dimension is rejected before schema changes. Never reuse
 an index built by a different model, even when dimensions happen to match.
-Switching back to MiniLM means unsetting `ROMS_EMBEDDING_MODEL` and using its index.
+Remove old model/provider environment overrides. Unsupported model names and
+remote providers are rejected at startup. Re-ingest source files into the new
+Gemma index; existing MiniLM indexes are not automatically converted.
 
 Document passages are split using the actual tokenizer with room for prefixes.
 Inputs still exceeding the 2048-token model window raise an error rather than

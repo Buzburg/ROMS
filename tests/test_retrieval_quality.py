@@ -378,7 +378,7 @@ def test_explicit_embedding_connections_keep_their_own_vectors(monkeypatch):
     assert len(calls) == 2
 
 
-@pytest.mark.parametrize('invalid', [[1.0], [[0.5] * 384], [float('nan')] * 384, [float('inf')] * 384], ids=['wrong-length', 'nested', 'nan', 'infinity'])
+@pytest.mark.parametrize('invalid', [[1.0], [[0.5] * 768], [float('nan')] * 768, [float('inf')] * 768], ids=['wrong-length', 'nested', 'nan', 'infinity'])
 def test_invalid_provider_vectors_are_not_cached(monkeypatch, invalid):
     monkeypatch.setattr(rag, 'compute_embedding_vector', lambda query: invalid)
     with embedding_db() as connection:
@@ -387,9 +387,9 @@ def test_invalid_provider_vectors_are_not_cached(monkeypatch, invalid):
         assert connection.execute('SELECT COUNT(*) FROM embedding_cache').fetchone()[0] == 0
 
 
-@pytest.mark.parametrize('bad_blob', [b'bad', struct.pack('384f', *([float('nan')] * 384))], ids=['wrong-length', 'nan'])
+@pytest.mark.parametrize('bad_blob', [b'bad', struct.pack('768f', *([float('nan')] * 768))], ids=['wrong-length', 'nan'])
 def test_corrupt_persistent_embedding_is_recomputed(monkeypatch, bad_blob):
-    monkeypatch.setattr(rag, 'compute_embedding_vector', lambda query: [0.5] * 384)
+    monkeypatch.setattr(rag, 'compute_embedding_vector', lambda query: [0.5] * 768)
     with embedding_db() as connection:
         expected = rag._get_query_embedding('fixture', conn=connection)
         connection.execute('UPDATE embedding_cache SET embedding_blob = ?', (bad_blob,))
@@ -422,7 +422,7 @@ def test_persistent_embedding_cache_avoids_repeat_computation(monkeypatch):
 
     def embed(query):
         calls.append(1)
-        return [0.5] * 384
+        return [0.5] * 768
 
     monkeypatch.setattr(rag, 'compute_embedding_vector', embed)
     with embedding_db() as connection:
@@ -430,19 +430,19 @@ def test_persistent_embedding_cache_avoids_repeat_computation(monkeypatch):
     assert len(calls) == 1
 
 
-def test_embedding_endpoint_changes_recompute_query(monkeypatch):
+def test_embedding_revision_changes_recompute_query(monkeypatch):
     from app import config
-    monkeypatch.setattr(config, 'EMBEDDING_PROVIDER', 'openai')
+    from app import embeddinggemma
     calls = []
 
     def embed(query):
         calls.append(1)
-        return [float(len(calls))] * 384
+        return [float(len(calls))] * 768
 
     monkeypatch.setattr(rag, 'compute_embedding_vector', embed)
     with embedding_db() as connection:
         first = rag._get_query_embedding('fixture', conn=connection)
-        monkeypatch.setattr(config, 'OPENAI_EMBED_URL', 'http://localhost:9999/v1/embeddings')
+        monkeypatch.setattr(embeddinggemma, 'REVISION', 'different-revision')
         assert rag._get_query_embedding('fixture', conn=connection) != first
     assert len(calls) == 2
 
@@ -452,7 +452,7 @@ def test_hot_embedding_memory_cache_avoids_sql(monkeypatch):
 
     def embed(query):
         calls.append(1)
-        return [0.5] * 384
+        return [0.5] * 768
 
     monkeypatch.setattr(rag, 'compute_embedding_vector', embed)
     with embedding_db() as connection:
@@ -470,15 +470,15 @@ def test_legacy_query_only_cache_is_not_trusted(monkeypatch):
 
     def embed(query):
         calls.append(1)
-        return [0.5] * 384
+        return [0.5] * 768
 
     monkeypatch.setattr(rag, 'compute_embedding_vector', embed)
     legacy_hash = hashlib.sha256(b'fixture').hexdigest()
     with embedding_db() as connection:
         connection.execute('INSERT INTO embedding_cache VALUES (?, ?)',
-                           (legacy_hash, struct.pack('384f', *([1.0] * 384))))
+                           (legacy_hash, struct.pack('768f', *([1.0] * 768))))
         result = rag._get_query_embedding('fixture', conn=connection)
-        assert result == struct.pack('384f', *([0.5] * 384))
+        assert result == struct.pack('768f', *([0.5] * 768))
         assert connection.execute('SELECT COUNT(*) FROM embedding_cache').fetchone()[0] == 2
     assert len(calls) == 1
 

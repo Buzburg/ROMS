@@ -1,6 +1,6 @@
 """Exercise real quantized model inference and ROMS retrieval in a temporary index.
 
-Run after installing requirements-embeddinggemma.txt. First run downloads the
+Run after installing requirements.txt. First run downloads the
 pinned public model; subsequent runs work with HF_HUB_OFFLINE=1.
 """
 import os
@@ -9,8 +9,6 @@ import sys
 import tempfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-os.environ['ROMS_EMBEDDING_MODEL'] = 'embeddinggemma-q8'
-os.environ['ROMS_EMBEDDING_PROVIDER'] = 'local'
 
 
 def main():

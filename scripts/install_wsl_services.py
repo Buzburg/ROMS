@@ -42,7 +42,7 @@ def main() -> None:
                           'HF_HUB_OFFLINE=1\nROMS_ENABLE_EXPERIMENTAL_EXECUTION=0\n')
     envfile.chmod(0o600)
     settings = dict(line.split('=', 1) for line in envfile.read_text().splitlines() if '=' in line)
-    settings['ROMS_EMBEDDING_MODEL'] = '/opt/omarchy-embedding'
+    settings['ROMS_EMBEDDING_MODEL'] = 'embeddinggemma-q8'
     settings['ROMS_PYTHON_PREFIX'] = '/opt/roms-env'
     settings['ROMS_WORKSPACES_DIR'] = str(workers)
     envfile.write_text(''.join(f'{key}={value}\n' for key, value in settings.items()))

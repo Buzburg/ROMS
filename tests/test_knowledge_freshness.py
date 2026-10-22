@@ -235,7 +235,7 @@ def test_deletion_invalidates_real_search_results(tmp_path, monkeypatch):
     database, _, root, path = fixture(tmp_path, monkeypatch)
     from app import zgsearch
     import numpy as np
-    monkeypatch.setattr(rag_engine, '_get_query_embedding', lambda *args, **kwargs: np.ones(384, dtype=np.float32).tobytes())
+    monkeypatch.setattr(rag_engine, '_get_query_embedding', lambda *args, **kwargs: np.ones(768, dtype=np.float32).tobytes())
     assert zgsearch.zg_search('retention', db_path=database)
     assert zgsearch.zg_search('retention', db_path=database)
     path.unlink()

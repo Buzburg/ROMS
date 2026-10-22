@@ -4,7 +4,9 @@
 torch==2.14.1+cpu ; sys_platform == "linux" or sys_platform == "win32"
 mcp>=1.3.0
 fastmcp>=4.1,<5
-sentence-transformers>=3.0.0
+onnxruntime>=1.22,<2
+transformers>=4.56
+huggingface-hub>=0.34
 sqlite-vec>=0.1.3
 python-frontmatter>=1.1.0
 psutil>=5.9.0

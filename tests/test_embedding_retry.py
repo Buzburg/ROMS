@@ -1,4 +1,4 @@
-"""Exercise first-load recovery with real PyTorch thread configuration."""
+"""Exercise retry and singleton caching after a failed model load."""
 import os
 from pathlib import Path
 import subprocess
@@ -16,7 +16,7 @@ def load(*args, **kwargs):
     if len(calls) == 1:
         raise OSError('temporary first-load failure')
     return model
-sys.modules['sentence_transformers'] = types.SimpleNamespace(SentenceTransformer=load)
+sys.modules['app.embeddinggemma'] = types.SimpleNamespace(EmbeddingGemma=load)
 try:
     config.get_embedding_model()
 except OSError:

@@ -85,7 +85,7 @@ async def verify(binary: str, root: str) -> None:
                 # A known vector/query pair exercises the native search handler
                 # and SQLite without a model download or a substitute handler.
                 query = 'bridge fixture policy'
-                vector = struct.pack('384f', 1.0, *([0.0] * 383))
+                vector = struct.pack('768f', 1.0, *([0.0] * 767))
                 connection = sqlite3.connect(state / 'data/roms.db')
                 connection.enable_load_extension(True)
                 sqlite_vec.load(connection)

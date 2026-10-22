@@ -17,7 +17,7 @@ class EmbeddingGemma:
             import onnxruntime as ort
         except ImportError as exc:
             raise RuntimeError(
-                "EmbeddingGemma requires: pip install -r requirements-embeddinggemma.txt"
+                "EmbeddingGemma requires: pip install -r requirements.txt"
             ) from exc
         from huggingface_hub import snapshot_download, constants
         from transformers import AutoTokenizer

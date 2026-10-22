@@ -25,10 +25,10 @@ def corpus(tmp_path, monkeypatch):
             (4, 'guide', 'Überprüfung OR ERR_CONNECTION_REFUSED')]
     conn.executemany('INSERT INTO fts_chunks VALUES (?,?,?)', rows)
     conn.executemany('INSERT INTO vec_chunks(chunk_id,doc_id,content,embedding) VALUES (?,?,?,?)',
-                     [(cid, doc, text, struct.pack('384f', *([float(cid)] * 384))) for cid, doc, text in rows])
+                     [(cid, doc, text, struct.pack('768f', *([float(cid)] * 768))) for cid, doc, text in rows])
     conn.execute("INSERT INTO chunk_topics VALUES (2, 'billing', 1)")
     conn.commit()
-    monkeypatch.setattr(rag_engine, 'compute_embedding_vector', lambda query: [0.0] * 384)
+    monkeypatch.setattr(rag_engine, 'compute_embedding_vector', lambda query: [0.0] * 768)
     yield path, conn
     conn.close()
 
@@ -63,7 +63,7 @@ def test_vector_filter_before_top_k(corpus):
         text = 'nearer irrelevant guide'
         conn.execute('INSERT INTO fts_chunks VALUES (?,?,?)', (cid, 'guide', text))
         conn.execute('INSERT INTO vec_chunks(chunk_id,doc_id,content,embedding) VALUES (?,?,?,?)',
-                     (cid, 'guide', text, struct.pack('384f', *([0.0] * 384))))
+                     (cid, 'guide', text, struct.pack('768f', *([0.0] * 768))))
     conn.commit()
     results = zgsearch.zg_search('anything', filters={'doc_type': 'policy'}, limit=1, db_path=path)
     assert len(results) == 1 and results[0]['doc_id'] == 'policy'

@@ -48,11 +48,9 @@ def clear_result_cache():
 
 def _embedding_namespace() -> tuple:
     """Identify the embedding space; never reuse another provider's vectors."""
-    provider = config.EMBEDDING_PROVIDER
-    endpoint = (config.OLLAMA_BASE_URL if provider == 'ollama' else
-                config.OPENAI_EMBED_URL if provider == 'openai' else '')
-    return ('query-v2', provider, config.EMBEDDING_MODEL_NAME,
-            config.EMBEDDING_DIM, endpoint)
+    from app.embeddinggemma import REVISION
+    return ('query-v3', config.EMBEDDING_PROVIDER, config.EMBEDDING_MODEL_NAME,
+            config.EMBEDDING_DIM, REVISION)
 
 
 def _valid_embedding_blob(blob: Any) -> bool:

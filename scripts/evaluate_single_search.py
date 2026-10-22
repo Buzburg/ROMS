@@ -44,7 +44,7 @@ def score(database, cases):
 
 def main():
     work=ROOT/'scratch/search-evaluation'
-    os.environ.update(ROMS_EMBEDDING_MODEL=str(work/'models/minilm'),ROMS_EMBEDDING_PROVIDER='local',HF_HUB_OFFLINE='1',TRANSFORMERS_OFFLINE='1')
+    os.environ.update(ROMS_EMBEDDING_MODEL='embeddinggemma-q8',ROMS_EMBEDDING_PROVIDER='local',HF_HUB_OFFLINE='1',TRANSFORMERS_OFFLINE='1')
     from app import config
     from app.db import get_connection,init_database
     from app.document_parse import fit_model_window
@@ -61,7 +61,7 @@ def main():
     assert {int(cid):(did,text) for cid,did,text in conn.execute('SELECT chunk_id,doc_id,content FROM fts_chunks')} == {int(row['chunk_id']):(row['doc_id'],row['content']) for row in frozen}
     cases=json.loads((ROOT/'benchmarks/search_feature_cases.json').read_text())['queries']
     report={'scope':'Small synthetic/manual CPU exercises; not production accuracy or speed guarantees.',
-            'timing':'Loaded local MiniLM, fresh query embedding per measured call; separate populated result cache measurements.',
+            'timing':'Loaded local EmbeddingGemma Q8, fresh query embedding per measured call; separate populated result cache measurements.',
             'token_window_check':'Long subwords, CJK and Unicode slices all fit actual model tokenizer window.',
             'frozen':score(database,cases)}
     temp=ROOT/'scratch/single-search-evaluation'

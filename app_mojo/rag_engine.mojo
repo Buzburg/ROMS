@@ -1,7 +1,7 @@
 """One local search entry point shared with Python/MCP.
 
 Native typo expansion and rank fusion live in search_kernels.mojo. SQLite and
-SentenceTransformer access is delegated through the shared Python adapters so
+EmbeddingGemma Q8 access is delegated through the shared Python adapters so
 filtering, model identity, citations and cache invalidation cannot diverge.
 """
 from std.python import Python, PythonObject

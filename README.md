@@ -29,10 +29,10 @@ Results keep their source references so you can inspect the evidence.
 - **Build on what you learn.** Retain project lessons, reuse skills and prepare
   bounded, source-backed next steps for review.
 
-In small local tests, ROMS found the intended document first for all 12
+In earlier MiniLM fixture tests, ROMS found the intended document first for all 12
 messy-document queries, with roughly 6–8 ms median uncached searches after model
-loading. These are fixture measurements, not a production speed or accuracy
-promise. See the [results and limits](docs/verification/single-search-messy.md).
+loading. Those timings do not describe the current EmbeddingGemma Q8 backend
+and are not a production speed or accuracy promise. See the [results and limits](docs/verification/single-search-messy.md).
 
 The lightweight Python demos and preparation tools are tested on Windows and Linux
 with Python 3.11 and 3.12. The full Mojo search environment targets x86-64
@@ -185,7 +185,7 @@ Windows; a Windows process cannot directly execute this Linux Python binary.
 
 See the [search setup guide](docs/search-upgrades.md) for supported formats and extraction limits.
 
-Startup initializes the database, indexes supported files in `knowledge/`, starts the watcher and loads only explicitly enabled local plugins. The default embedding model is `sentence-transformers/all-MiniLM-L6-v2` on CPU; first use may download model files. Knowledge search and ingestion require the local embedding provider. The index requires 384-dimensional embeddings; changing models requires a compatible rebuilt index. Review [security and data handling](SECURITY.md) before connecting an agent.
+Startup initializes the database, indexes supported files in `knowledge/`, starts the watcher and loads only explicitly enabled local plugins. ROMS uses only pinned EmbeddingGemma Q8 on CPU; first use may download model files. The 768-dimensional index defaults to `data/embeddinggemma-q8.db`. Re-ingest your knowledge into this new index when upgrading from MiniLM; old databases are preserved. Review [security and data handling](SECURITY.md) before connecting an agent.
 
 Reference repositories used for design inspiration are not required installations.
 See the [dependency guide](docs/dependencies.md) for what the runtime actually uses.
@@ -220,7 +220,7 @@ The server advertises the full tool list and schemas on connection. The harness 
 | --- | --- |
 | `ModuleNotFoundError` after installing dependencies | Run with `pixi run python`, or the exact virtual-environment Python used for installation. |
 | “Build the required Mojo search module” | Build in that environment with `python scripts/build_search_native.py`, then restart ROMS and its MCP client process. |
-| Model loading fails offline | Provision the model while online first; for an existing local copy, set `ROMS_EMBEDDING_MODEL` to its directory. Use a compatible 384-dimensional model/index. |
+| Model loading fails offline | Run `python scripts/fetch_embedding.py` while online using the same user and Hugging Face cache as the service, then enable `HF_HUB_OFFLINE=1`. |
 | A scan or image cannot be imported | Check Tesseract English data and `pdftoppm`; inspect the job error or `get_knowledge_ingestion_status`. OCR cannot recover every scan. |
 | A changed file still returns old content | A failed update retains the previous index while the watcher retries with backoff capped at 60 seconds. Inspect ingestion status and resolve persistent errors; `reload_knowledge` retries immediately. |
 | Deleted files still appear in search | The watcher and `reload_knowledge` remove deleted managed files after a complete scan. If the folder is unavailable or a scan fails, the old index is preserved. Independently imported snapshots remain until explicitly removed. |
@@ -286,4 +286,4 @@ The Linux/Omarchy workshop adds staged changes, registered validation and operat
 
 [Apache-2.0](LICENSE). Copyright 2026 Buzburg LLC. Third-party licenses and acknowledgements remain in [NOTICE](NOTICE) and the relevant source directories.
 
-For optional local 8-bit EmbeddingGemma embeddings, see [setup and verification](docs/search-upgrades.md#optional-quantized-embeddinggemma).
+For local 8-bit EmbeddingGemma embeddings, see [setup and verification](docs/search-upgrades.md#quantized-embeddinggemma).
