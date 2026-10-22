@@ -99,6 +99,53 @@ def test_nonprocedures_and_long_sections_are_not_fabricated(tmp_path, monkeypatc
     conn.close()
 
 
+def test_child_procedure_inherits_ancestor_conditions_not_siblings(tmp_path, monkeypatch):
+    db, path, _ = ingest(tmp_path, monkeypatch)
+    path.write_text('# Database maintenance\nOnly staging; get operator approval.\n'
+                    '## Backup\nNever overwrite existing backups.\n'
+                    '### Steps\n1. Stop the writer.\n2. Copy the database.\n'
+                    '## Restore\nUse a separate staging instance.\n'
+                    '### Steps\n1. Open the backup.\n2. Verify the restored records.\n')
+    ingest_document_file(path, db)
+    rows = skills.list_drafts(db)['skills']
+    variants = [v for row in rows for v in skills.get_draft(row['id'], db)['variants']]
+    assert len(variants) == 2
+    for variant in variants:
+        assert 'Only staging; get operator approval.' in variant['text']
+        assert variant['steps'] == 2
+        if 'Stop the writer' in variant['text']:
+            assert 'Never overwrite existing backups.' in variant['text']
+            assert 'Use a separate staging instance.' not in variant['text']
+        else:
+            assert 'Use a separate staging instance.' in variant['text']
+            assert 'Never overwrite existing backups.' not in variant['text']
+
+
+def test_parent_context_budget_and_cross_chunk_provenance(tmp_path, monkeypatch):
+    db, _, _ = ingest(tmp_path, monkeypatch)
+    with get_connection(db, reuse=False) as conn:
+        chunks = [(100, '# Backup\nApproval required.\n'),
+                  (101, '## Steps\n1. Stop writer.\n2. Copy database.\n')]
+        assert skills.replace_sources(conn, 'fixture.md', 'Fixture', 'hash', chunks) == 1
+        text, ids = conn.execute('SELECT content,chunk_ids FROM knowledge_skill_sources '
+                                 'WHERE doc_id=?', ('fixture.md',)).fetchone()
+        assert 'Approval required.' in text
+        assert json.loads(ids) == [100, 101]
+        chunks[0] = (100, '# Backup\n' + 'x' * skills.MAX_SECTION)
+        assert skills.replace_sources(conn, 'fixture.md', 'Fixture', 'hash', chunks) == 0
+
+
+def test_heading_only_ancestor_restriction_is_preserved(tmp_path, monkeypatch):
+    db, path, _ = ingest(tmp_path, monkeypatch)
+    path.write_text('# Database operations\n## Staging only\n### Steps\n'
+                    '1. Stop the writer.\n2. Copy the database.\n')
+    ingest_document_file(path, db)
+    row = skills.list_drafts(db)['skills'][0]
+    text = skills.get_draft(row['id'], db)['variants'][0]['text']
+    assert '## Staging only' in text
+    assert text.index('Staging only') < text.index('Stop the writer')
+
+
 def test_rollback_retains_previous_draft(tmp_path, monkeypatch):
     db, path, _ = ingest(tmp_path, monkeypatch)
     key = skills.list_drafts(db)['skills'][0]['id']

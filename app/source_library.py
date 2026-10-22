@@ -241,7 +241,7 @@ def remove_source(source_id: str, *, db_path: Path | None = None, library: Path 
 def library_menu() -> None:
     """Human-operated source manager; imports require a reviewed preview."""
     while True:
-        print('\nGoose knowledge library\n1. Add a file\n2. Add a local Git repository'
+        print('\nROMS knowledge library\n1. Add a file\n2. Add a local Git repository'
               '\n3. Add a folder\n4. List sources\n5. Refresh a source\n6. Remove a source\n0. Exit')
         try:
             choice = input('Choose: ').strip()

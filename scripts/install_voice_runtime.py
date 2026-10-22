@@ -175,7 +175,7 @@ def install(lock: dict[str, Any], fingerprint: str) -> None:
     config.write_text(json.dumps(local_config(DATA), indent=2) + "\n", encoding="utf-8")
     (DATA / "voice-runtime.json").write_text(json.dumps(lock, indent=2) + "\n", encoding="utf-8")
     (DATA / "NOTICE.txt").write_text(
-        "Goose local voice runtime\nPocket TTS weights: Kyutai, CC BY 4.0.\n"
+        "ROMS local voice runtime\nPocket TTS weights: Kyutai, CC BY 4.0.\n"
         "Fixed Marius voice: Selfie, Kyutai Unmute voice donations, CC0.\n"
         "Moonshine Tiny Streaming: Moonshine AI, MIT.\n"
         "See licenses/pocket-model.md, licenses/voices.md and voice-runtime.json for exact sources.\n"

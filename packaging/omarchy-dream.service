@@ -1,5 +1,5 @@
 [Unit]
-Description=Omarchy OS Nightly Dream Cycle Continual Learning Consolidation
+Description=ROMS Nightly Knowledge Consolidation
 After=network.target
 
 [Service]

@@ -83,12 +83,12 @@ def build_waybar_status(check_network: bool = False) -> Dict[str, Any]:
     reflex_up = dual_brain_router.probe_health(BrainType.REFLEX, timeout=0.15) if check_network else True
     oracle_up = dual_brain_router.probe_health(BrainType.ORACLE, timeout=0.15) if check_network else False
 
-    brain_badge = "REFLEX+ORACLE" if (reflex_up and oracle_up) else ("REFLEX:RWKV7" if reflex_up else "STANDBY")
+    brain_badge = "REFLEX+ORACLE" if (reflex_up and oracle_up) else ("REFLEX" if reflex_up else "STANDBY")
     roles_count = len(role_registry.roles)
 
-    text = f"󰚩 {brain_badge} [{mbti} • {gut:.2f}] | UMA {used_gb}/{total_gb:.0f}G"
+    text = f"󰚩 ROMS {brain_badge} [{mbti} • {gut:.2f}] | UMA {used_gb}/{total_gb:.0f}G"
     tooltip_lines = [
-        "═══ OMARCHY OS SOVEREIGN HUD ═══",
+        "═══ ROMS STATUS ═══",
         f"• Active Brain   : {brain_badge}",
         f"• Soul Archetype : {mbti} ({primary_emotion}, gut={gut:.2f})",
         f"• Unified Memory : {used_gb:.1f} GB / {total_gb:.1f} GB ({used_gb / max(1.0, total_gb) * 100:.1f}%)",

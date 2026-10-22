@@ -1,4 +1,4 @@
-"""Local Goose chat and explicit management workshops; no arbitrary commands."""
+"""Local ROMS chat and explicit management workshops; no arbitrary commands."""
 import argparse
 import json
 import os
@@ -11,7 +11,7 @@ import urllib.request
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Local Omarchy Goose assistant')
+    parser = argparse.ArgumentParser(description='Local ROMS assistant')
     parser.add_argument('--status', action='store_true')
     parser.add_argument('--doctor', action='store_true', help='Explain current readiness without changing the system')
     intake = parser.add_mutually_exclusive_group()
@@ -22,7 +22,7 @@ def main() -> None:
     intake.add_argument('--library', action='store_true', help='Open the knowledge library menu')
     intake.add_argument('--project-workshop', action='store_true', help='Describe and review changes to selected project files')
     intake.add_argument('--system', action='store_true', help='Inspect services and open reviewed installed applications')
-    intake.add_argument('--voice', action='store_true', help='Talk with Goose using local speech models')
+    intake.add_argument('--voice', action='store_true', help='Talk with ROMS using local speech models')
     intake.add_argument('--remove-source')
     intake.add_argument('--refresh-source')
     intake.add_argument('--cleanup-worker', help='Retry container cleanup for a retained task ID')
@@ -110,7 +110,7 @@ def main() -> None:
             print(json.dumps(json.loads(data), indent=2))
         return
     messages: list[dict[str, str]] = []
-    print('Goose — local Omarchy test build. Type /exit to leave, /reset to clear this chat, /project to edit a project, /system for system controls, /voice to talk.')
+    print('ROMS — local test build. Type /exit to leave, /reset to clear this chat, /project to edit a project, /system for system controls, /voice to talk.')
     headers = {'Content-Type': 'application/json',
                'Authorization': 'Bearer ' + os.environ['ROMS_GATEWAY_API_KEY']}
     deadline = time.monotonic() + 90
@@ -124,7 +124,7 @@ def main() -> None:
         except (OSError, ValueError):
             pass
         if time.monotonic() >= deadline:
-            raise SystemExit('Goose did not become ready. Check the model and ROMS service logs.')
+            raise SystemExit('ROMS did not become ready. Check the model and ROMS service logs.')
         if not announced:
             print('Waiting for the local model to start...', flush=True)
             announced = True
@@ -153,11 +153,11 @@ def main() -> None:
         try:
             with urllib.request.urlopen(request, timeout=180) as response:
                 text = json.load(response)['choices'][0]['message']['content']
-            print('\nGoose:', text)
+            print('\nROMS:', text)
             messages.append({'role': 'assistant', 'content': text})
         except (OSError, ValueError, KeyError) as error:
             messages.pop()
-            print(f'Goose unavailable: {error}', file=sys.stderr)
+            print(f'ROMS unavailable: {error}', file=sys.stderr)
             if args.prompt:
                 raise SystemExit(1)
         if args.prompt:

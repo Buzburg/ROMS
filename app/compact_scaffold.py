@@ -69,7 +69,7 @@ CORE_PRIMITIVE_TOOLS = [
 
 
 def build_compact_system_prompt(
-    persona_name: str = "Goose",
+    persona_name: str = "ROMS",
     project_id: str = "omarchy",
     custom_instructions: str = "",
     include_temporal_anchor: bool = True
@@ -90,8 +90,8 @@ def build_compact_system_prompt(
         )
         
     parts.append(
-        f"You are {persona_name}, the sovereign AI assistant for Omarchy OS.\n"
-        f"You are running locally on RWKV-7. Be concise, direct, and exact.\n"
+        f"You are {persona_name}, the local ROMS assistant.\n"
+        f"You are running locally. Be concise, direct, and exact.\n"
         f"When modifying code, generate minimal, safe diffs or call tools precisely.\n"
         f"Never hallucinate external package managers or bypass sandbox boundaries.\n"
     )

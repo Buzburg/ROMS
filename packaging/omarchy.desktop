@@ -1,6 +1,6 @@
 [Desktop Entry]
-Name=Omarchy OS Studio
-Comment=Local-first Omarchy RWKV-7 & ROMS Autonomous Harness
+Name=ROMS
+Comment=Local knowledge and task tools by Buzburg
 Type=Application
 Exec=omarchy-menu
 Icon=utilities-terminal

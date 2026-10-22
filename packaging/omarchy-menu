@@ -16,11 +16,11 @@ EMBER_PORT = 8787
 
 def print_banner():
     print("=" * 60)
-    print("        \033[1;36mOMARCHY OS - LOCAL AUTONOMOUS HARNESS\033[0m")
+    print("        \033[1;36mROMS - LOCAL KNOWLEDGE AND TASK TOOLS\033[0m")
     print("=" * 60)
-    print(" 1) Run Autonomous Task (Interactive Goose/Omarchy CLI)")
+    print(" 1) Run Autonomous Task (Interactive ROMS CLI)")
     print(" 2) Open ROMS Knowledge Studio (Browser - Port 18082)")
-    print(" 3) Open Ember Workflow Automation (Browser - Port 8787)")
+    print(" 3) Open configured workflow service (Browser - Port 8787)")
     print(" 4) Check Production System Services (systemd status)")
     print(" 5) Launch Model Benchmark / Speculative Decoding Check")
     print(" 0) Exit")
@@ -44,18 +44,18 @@ def main():
             webbrowser.open(url)
         elif choice == "3":
             url = f"http://127.0.0.1:{EMBER_PORT}/"
-            print(f"Opening Ember Workflow Automation: {url}")
+            print(f"Opening configured workflow service: {url}")
             webbrowser.open(url)
         elif choice == "4":
             print("\n--- Systemd User Services Status ---")
             subprocess.run(["systemctl", "--user", "status", "goose-model", "goose-roms", "omarchy-broker", "--no-pager"])
             input("\nPress Enter to return to menu...")
         elif choice == "5":
-            print("\n--- Running Omarchy Self-Check ---")
+            print("\n--- Running ROMS Self-Check ---")
             subprocess.run(["python3", "-m", "pytest", "tests/test_harness_repos_integrations.py", "-v"])
             input("\nPress Enter to return to menu...")
         elif choice == "0" or choice.lower() in ("q", "quit", "exit"):
-            print("Exiting Omarchy Menu.")
+            print("Exiting ROMS Menu.")
             break
         else:
             print("Invalid choice, please select 1-5 or 0.")

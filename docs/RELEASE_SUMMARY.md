@@ -1,49 +1,46 @@
-# ROMS: your documents, your machine, one fast search
+# ROMS 1.4 — Give your AI the context it is missing
 
-Your useful information rarely arrives neatly organized. It lives in notes,
-spreadsheets, source files, PDFs and screenshots. ROMS brings those materials
-into a local knowledge base that you—and your AI tools—can search in one place.
+Stop rebuilding the same context in every chat. ROMS turns your local documents
+into searchable evidence, portable task briefs and reusable skill candidates.
 
-Ask in everyday language, search an exact identifier, or make a typo. ROMS
-combines keyword and semantic retrieval, ranks the results with compiled Mojo
-kernels, and keeps source references attached. Local OCR makes printed text in
-scans and images searchable. Batch indexing and cached results reduce repeated
-work after the first import.
+**Try this:** import a project guide and troubleshooting notes, search for the
+problem you're solving, and select the useful passages. Add your task and constraints,
+preview the brief, and paste it into your preferred assistant. Your next conversation
+starts with relevant sources already attached.
 
-The same knowledge is available through MCP, alongside project memory, reusable
-skills and tools for preparing source-backed next steps. Start with the no-install
-demo, then build the full Linux/WSL search server when you are ready to index your
-own files.
+## New in 1.4
 
-## In this update
+- **Portable task briefs:** collect up to eight search passages across queries,
+  add your task and constraints, and copy or download a cited Markdown snapshot.
+  No generation model is required to assemble the export.
+- **Task-specific skill authoring:** an optional local agent can assess evidence,
+  draft, review and retain a procedure for the task at hand.
+- **Reuse that respects changing knowledge:** matching current evidence can reuse
+  a saved candidate without generation; changed sources withhold stale bodies.
+  Revise by name or ID while keeping original constraints and parent links.
+- **Questions before another draft:** detected contradictions and missing essential
+  inputs stop authoring without saving a candidate. Source references help you
+  locate the requirements that need clarification.
+- **Separate drafting and retention:** choose a read-only companion or opt into
+  local candidate saving. Revision-specific feedback records observations without
+  declaring a task verified.
+- **Consistent ROMS/Buzburg branding:** refreshed README, launcher, HUD, chat and
+  voice labels. Required dependency names and license notices remain intact.
 
-- One local knowledge-search API with exact document, type and topic filters.
-- Required Mojo kernels for typo selection, rank fusion, text cleanup and passage
-  splitting, alongside native local indexes.
-- Mixed-encoding and malformed-data recovery, PDF/Office extraction and English OCR.
-- Nested-folder intake, visible extraction failures and atomic index replacement.
-- A clearer README, practical setup guide and tests that exercise real extraction.
+## Start with your own knowledge
 
-In the recorded small-fixture tests, all 12 messy-document queries placed the
-intended document first. Loaded-model median searches measured about 6–8 ms;
-results depend on the corpus and machine. [See the evidence and limits](verification/single-search-messy.md).
+[Set up the local workspace](../README.md#add-knowledge-in-your-browser),
+[build your first task brief](task-briefs.md), or
+[connect the optional local skill agent](../examples/docker-agent/README.md).
 
-ROMS is an active developer project. Python adapters still handle file formats,
-model inference and MCP. The source download does not include model weights or a
-prebuilt native module. OCR is approximate, and optional system integrations have
-separate prerequisites.
+ROMS runs search, embeddings and OCR locally after setup. You decide what to share
+with another assistant. Source downloads require setup and do not bundle models
+or compiled native artifacts.
 
-[Download the source](https://github.com/Buzburg/ROMS/archive/refs/heads/main.zip)
-or follow the [README quick start](../README.md#try-one-useful-thing-first).
+Generated skills remain candidates for human review. Model review can miss errors;
+source citations are not proof of correctness. Briefs are selected excerpts, not
+complete documents, and exported snapshots do not automatically update. Neither
+feature executes the procedures it prepares.
 
-## Local knowledge workspace
-
-`python roms.py knowledge` opens one local interface for file/folder uploads,
-pasted text, progress, retries and search. SQLite preserves import jobs across
-restarts. Originals are retained, and section headings plus explicit definitions
-become source-linked navigation alongside the existing Mojo search index.
-No new runtime dependency or external queue service is needed.
-
-Verified locally with 125 native search/intake tests and a real-model Chromium
-flow from pasted text through search and glossary source display. See
-[the intake guide](knowledge-intake.md) for format, storage and extraction limits.
+See [1.4 verification](verification/release-1.4.md) and
+[real-model skill workflow evidence](verification/bounded-task-skill-agent.md).

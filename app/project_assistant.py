@@ -17,7 +17,7 @@ from app.project_contract import validate_payload
 async def generate(instruction: str, snapshots: dict[str, str | None]) -> dict:
     key = os.getenv('ROMS_GATEWAY_API_KEY')
     if not key:
-        raise RuntimeError('Use the installed Goose launcher to access the local model')
+        raise RuntimeError('Use the installed ROMS launcher to access the local model')
     body = {'instruction': instruction, 'files': snapshots}
     validate_payload(body)
     port = int(os.getenv('ROMS_GATEWAY_PORT', '8844'))

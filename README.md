@@ -1,42 +1,52 @@
 # ROMS
 
-[![Offline release checks](https://github.com/Buzburg/ROMS/actions/workflows/checks.yml/badge.svg)](https://github.com/Buzburg/ROMS/actions/workflows/checks.yml)
+By **Buzburg**.
 
-**Your documents. Searchable locally. Ready for your AI agents.**
+**Stop re-explaining your project to every AI.**
 
-ROMS turns scattered documents, source code and scanned pages into a searchable
-local knowledge base for you and your AI tools. Find an exact identifier, recover
-a misspelled term, or ask a question in your own words—all through one search.
-Results keep their source references so you can inspect the evidence.
+Your useful knowledge is scattered across notes, manuals, code, PDFs and past work.
+ROMS brings it into one local library—then helps you find the right evidence, carry
+it into another AI conversation, and turn repeatable work into reusable skill drafts.
 
+**Give your local AI something worth knowing.** Search your documents, select the
+passages that matter, and build a task brief you can paste into any assistant.
+When you want more, connect an agent to draft and retain task-specific procedures
+from your indexed knowledge.
+
+[Try ROMS](#choose-your-starting-point) ·
 [Download source](https://github.com/Buzburg/ROMS/archive/refs/heads/main.zip) ·
-[Quick start](#choose-your-starting-point) ·
-[Search setup](docs/search-upgrades.md) ·
-[What we tested](docs/verification/single-search-messy.md)
+[Portable task briefs](docs/task-briefs.md) ·
+[Local skill agent](examples/docker-agent/README.md)
 
-## Why ROMS?
+## What you can do with ROMS
 
-- **Bring the messy files.** Import Markdown, logs, JSON, uneven CSV, PDFs, modern
-  Office documents and images. Recover text from scanned pages with local OCR.
-- **Search once.** Keyword matching, typo handling and semantic retrieval work
-  together. There is no backend menu to configure or extra search server to run.
-- **Put Mojo to work.** Compiled kernels handle typo selection, ranking, text
-  cleanup and passage splitting. Stored embeddings and a bounded cache keep
-  repeat work out of the query path.
-- **Keep knowledge close.** Search, embeddings and OCR run locally after setup.
-  Connect an MCP-compatible client to make the same knowledge available to your
-  agent; that client's own data-sharing settings still apply.
-- **Turn knowledge into reusable skills.** Imported guides and checklists become
-  source-backed procedural drafts automatically. New evidence updates the drafts;
-  revisions, source links and feedback help you decide what to reuse.
-  [Explore knowledge-derived skills](docs/knowledge-skills.md).
-- **Build on what you learn.** Retain project lessons, reuse skills and prepare
-  bounded, source-backed next steps for review.
+- **Bring the files you already have.** Import notes, source code, logs, uneven CSV,
+  PDFs, modern Office documents and images. Local OCR recovers text from scans.
+- **Find it even when you barely remember it.** Keyword matching, typo handling and
+  semantic retrieval share one search. Results retain source references.
+- **Carry context between assistants.** Select up to eight search passages, add your
+  task and constraints, then preview, copy or download a cited Markdown brief.
+  Assembling the brief needs no generation model or client integration.
+- **Turn recurring work into reusable skills.** Imported guides become procedural
+  drafts. The optional local agent can also create and save a tailored candidate
+  from an ordinary task request, reuse it, and revise it when sources change.
+- **Keep the evidence attached.** Saved candidates retain original constraints,
+  source identity and revision-specific feedback. Changed sources withhold stale
+  drafts; detected conflicts produce questions before another candidate is saved.
+- **Keep your library local.** Search, embeddings and OCR run locally after setup.
+  You choose what to copy into another client; that client's data settings apply.
 
-In earlier MiniLM fixture tests, ROMS found the intended document first for all 12
-messy-document queries, with roughly 6–8 ms median uncached searches after model
-loading. Those timings do not describe the current EmbeddingGemma Q8 backend
-and are not a production speed or accuracy promise. See the [results and limits](docs/verification/single-search-messy.md).
+Try it with a deployment guide, a project README and a few troubleshooting notes.
+Search for the task you're working on, build a brief, and start your next AI
+conversation with relevant evidence already in hand.
+
+[How task briefs work](docs/task-briefs.md) ·
+[Knowledge-derived skills](docs/knowledge-skills.md) ·
+[Task-specific skills and their limits](docs/task-skills.md)
+
+Search benchmarks cover specific fixtures and machines. Historical timings do not
+describe the current search backend or promise production speed or accuracy.
+See the [results and limits](docs/verification/single-search-messy.md).
 
 The lightweight Python demos and preparation tools are tested on Windows and Linux
 with Python 3.11 and 3.12. The full Mojo search environment targets x86-64
@@ -49,6 +59,7 @@ Optional operating-system integrations are separate from the core search setup.
 | --- | --- | --- |
 | Try a controlled recovery demo | [No-install demo](#try-one-useful-thing-first) | Python only; no model or network |
 | Import and search your own files | [Local knowledge workspace](#add-knowledge-in-your-browser) | Linux/WSL2, Pixi, compiled Mojo kernels and local embeddings |
+| Carry selected evidence into any assistant | [Portable task brief](docs/task-briefs.md) | The knowledge workspace; no generation model needed for export |
 | Give an AI client access to knowledge | [MCP connection](#connect-an-mcp-client) | The search environment plus an MCP-compatible client |
 | Prepare a task for human review | [Portable harness](#prepare-a-task-for-review) | Python and the lightweight CI dependencies |
 
@@ -189,7 +200,7 @@ Windows; a Windows process cannot directly execute this Linux Python binary.
 
 See the [search setup guide](docs/search-upgrades.md) for supported formats and extraction limits.
 
-Startup initializes the database, indexes supported files in `knowledge/`, starts the watcher and loads only explicitly enabled local plugins. ROMS uses only pinned EmbeddingGemma Q8 on CPU; first use may download model files. The 768-dimensional index defaults to `data/embeddinggemma-q8.db`. Re-ingest your knowledge into this new index when upgrading from MiniLM; old databases are preserved. Review [security and data handling](SECURITY.md) before connecting an agent.
+Startup initializes the database, indexes supported files in `knowledge/`, starts the watcher and loads only explicitly enabled local plugins. ROMS uses only pinned local Q8 embeddings on CPU; first use may download model files. The 768-dimensional index defaults to `data/embeddinggemma-q8.db`. Re-ingest your knowledge into this new index when upgrading from the legacy embedding backend; old databases are preserved. Review [security and data handling](SECURITY.md) before connecting an agent.
 
 Reference repositories used for design inspiration are not required installations.
 See the [dependency guide](docs/dependencies.md) for what the runtime actually uses.
@@ -200,6 +211,8 @@ suite, or use `pixi run -e dev test-search` for native search checks.
 
 | Task | Interface |
 | --- | --- |
+| Export selected evidence for another assistant | `prepare_knowledge_brief` with task, selected chunk IDs and constraints |
+| Create or revise a task-skill candidate | `create_task_skill`, `revise_saved_task_skill` with a configured local generation endpoint |
 | Prepare a reviewable request | `roms_prepare_harness` with `request_json` |
 | Search knowledge | `search_knowledge_base` — one local adaptive engine, shared by chat, grounded context and the Mojo entry point |
 | Import status | `get_knowledge_ingestion_status` — unreadable files, recovered-data notes and OCR diagnostics; [search and intake guide](docs/search-upgrades.md) |
@@ -290,4 +303,4 @@ The Linux/Omarchy workshop adds staged changes, registered validation and operat
 
 [Apache-2.0](LICENSE). Copyright 2026 Buzburg LLC. Third-party licenses and acknowledgements remain in [NOTICE](NOTICE) and the relevant source directories.
 
-For local 8-bit EmbeddingGemma embeddings, see [setup and verification](docs/search-upgrades.md#quantized-embeddinggemma).
+For local 8-bit embeddings, see [setup and verification](docs/search-upgrades.md#quantized-embeddinggemma).

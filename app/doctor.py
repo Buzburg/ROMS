@@ -78,7 +78,7 @@ def explain(status: dict[str, Any]) -> tuple[str, int]:
     workshop_available = core_ready and worker == 'reachable' and workshop == 'available'
     attention = not workshop_available or native == 'cleanup_required'
     lines = [
-        'Goose doctor - read-only readiness',
+        'ROMS doctor - read-only readiness',
         'Result: attention needed' if attention else 'Result: chat ready; workshop prerequisites available',
         'Broker: reachable (status request completed)',
         'Local model: ' + _label(model, {'ready': 'ready (reported by live model health)',
@@ -126,22 +126,22 @@ def run() -> int:
     try:
         report, code = explain(read_status())
     except UnsupportedTransportError:
-        report, code = ('Goose doctor: this environment cannot access the Linux broker socket.\n'
+        report, code = ('ROMS doctor: this environment cannot access the Linux broker socket.\n'
                         'Run goose --doctor inside the configured Linux/Omarchy environment. On Windows, open Omarchy in WSL first. No connection or service change was attempted.'), 1
     except PermissionError:
-        report, code = ('Goose doctor: broker access denied.\n'
+        report, code = ('ROMS doctor: broker access denied.\n'
                         'Run this as the configured Omarchy user. Inspect the broker service ownership; do not broaden socket permissions.'), 1
     except (TimeoutError, socket.timeout):
-        report, code = ('Goose doctor: broker status timed out.\n'
+        report, code = ('ROMS doctor: broker status timed out.\n'
                         'Allow cold startup to finish, then retry. If it persists, inspect systemctl status omarchy-broker --no-pager.'), 1
     except (ConnectionError, FileNotFoundError):
-        report, code = ('Goose doctor: broker is unavailable.\n'
+        report, code = ('ROMS doctor: broker is unavailable.\n'
                         'Use the Omarchy environment and inspect systemctl status omarchy-broker --no-pager. No service was started.'), 1
     except OSError:
-        report, code = ('Goose doctor: broker status could not be read.\n'
+        report, code = ('ROMS doctor: broker status could not be read.\n'
                         'Inspect systemctl status omarchy-broker --no-pager. No repair was attempted.'), 1
     except (ValueError, RecursionError):
-        report, code = ('Goose doctor: broker returned an invalid or incomplete status.\n'
+        report, code = ('ROMS doctor: broker returned an invalid or incomplete status.\n'
                         'Check that the installed broker and client versions match. No response details were displayed.'), 1
     print(report)
     return code

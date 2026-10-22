@@ -25,7 +25,7 @@ jobs:
       - run: python -m pytest tests/test_first_run_demo.py tests/test_prefrontal_integration.py tests/test_decisions_jev_laya.py tests/test_decision_boundaries.py tests/test_harness.py tests/test_harness_cli.py tests/test_retrieval_quality.py tests/test_experiment_claims.py -q
         env:
           HF_HUB_OFFLINE: '1'
-      - run: python -m pytest tests/test_mcp_security.py tests/test_snapshot_safety.py tests/test_model_inputs.py tests/test_roms.py::test_mcp_registration tests/test_roms.py::test_gateway_health_and_models tests/test_release_safety.py tests/test_memory.py tests/test_context.py tests/test_gateway_privacy.py tests/test_doctor.py tests/test_workbench_package.py tests/test_os_model.py tests/test_os_workshop.py tests/test_voice_audio.py tests/test_voice_chat.py tests/test_voice_stt.py tests/test_voice_tts.py tests/test_voice_workshop.py -q
+      - run: python -m pytest tests/test_mcp_security.py tests/test_snapshot_safety.py tests/test_model_inputs.py tests/test_roms.py::test_mcp_registration tests/test_roms.py::test_gateway_health_and_models tests/test_release_safety.py tests/test_memory.py tests/test_context.py tests/test_knowledge_brief.py tests/test_gateway_privacy.py tests/test_doctor.py tests/test_workbench_package.py tests/test_os_model.py tests/test_os_workshop.py tests/test_voice_audio.py tests/test_voice_chat.py tests/test_voice_stt.py tests/test_voice_tts.py tests/test_voice_workshop.py -q
         env:
           HF_HUB_OFFLINE: '1'
   native-search:

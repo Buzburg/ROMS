@@ -75,6 +75,23 @@ def create_app(intake, token, port=8845, start_worker=True):
         return JSONResponse(await run_in_threadpool(list_drafts, intake.db_path,
                             request.query_params.get('q', ''), request.query_params.get('offset', 0)))
 
+    async def brief(request):
+        import json
+        from app.knowledge_brief import prepare
+        body = bytearray()
+        async for block in request.stream():
+            body.extend(block)
+            if len(body) > 32768:
+                return JSONResponse({'error': 'Brief request exceeds 32 KiB'}, status_code=413)
+        try:
+            data = json.loads(body)
+        except (ValueError, UnicodeError):
+            raise ValueError('Brief request must be valid JSON')
+        if type(data) is not dict or set(data) != {'task', 'constraints', 'chunk_ids'}:
+            raise ValueError('Supply task, constraints and chunk_ids')
+        return JSONResponse(await run_in_threadpool(prepare, data['task'], data['chunk_ids'],
+                                                   data['constraints'], intake.db_path))
+
     async def skill_detail(request):
         from app.knowledge_skills import get_draft, render_markdown
         draft = await run_in_threadpool(get_draft, request.path_params['skill_id'], intake.db_path)
@@ -109,7 +126,7 @@ def create_app(intake, token, port=8845, start_worker=True):
                             data['revision'], data['outcome'], data['note'], data['event_id'], intake.db_path))
 
     app = Starlette(routes=[Route('/', home), Route('/api/upload', upload, methods=['POST']),
-                            Route('/api/jobs', jobs),
+                            Route('/api/jobs', jobs), Route('/api/brief', brief, methods=['POST']),
                             Route('/api/skills', skills), Route('/api/skills/refresh', skill_refresh, methods=['POST']),
                             Route('/api/skills/{skill_id}', skill_detail),
                             Route('/api/skills/{skill_id}/feedback', skill_feedback, methods=['POST']), Route('/api/catalog', navigation),

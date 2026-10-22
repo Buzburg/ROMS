@@ -34,7 +34,7 @@ def audio_environment() -> dict[str, str]:
         return {'PATH': '/usr/bin:/bin', 'HOME': str(Path.home()),
                 'LANG': 'C.UTF-8', 'XDG_RUNTIME_DIR': str(runtime),
                 'PULSE_SERVER': server}
-    raise VoiceAudioError('No local audio connection. Open Goose in your desktop audio session.')
+    raise VoiceAudioError('No local audio connection. Open ROMS in your desktop audio session.')
 
 
 def check_audio() -> str:
@@ -70,7 +70,7 @@ def record(stop_requested: Callable[[], bool], cancel: threading.Event,
     maximum = int(duration * 16000) * 2
     process = subprocess.Popen([
         '/usr/bin/parec', '--raw', '--format=s16le', '--rate=16000', '--channels=1',
-        '--latency-msec=50', '--client-name=Goose voice', '--stream-name=Push to talk'],
+        '--latency-msec=50', '--client-name=ROMS voice', '--stream-name=Push to talk'],
         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, env=audio_environment(),
         start_new_session=True)
     data = bytearray()
@@ -114,7 +114,7 @@ def play(chunks: Iterable[object], sample_rate: int, cancel: threading.Event) ->
     process = subprocess.Popen([
         '/usr/bin/pacat', '--playback', '--raw', '--format=s16le',
         f'--rate={sample_rate}', '--channels=1', '--latency-msec=80',
-        '--client-name=Goose voice', '--stream-name=Spoken reply'],
+        '--client-name=ROMS voice', '--stream-name=Spoken reply'],
         stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         env=audio_environment(), start_new_session=True)
     samples = 0

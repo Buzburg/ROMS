@@ -56,12 +56,12 @@ def main() -> None:
               f'EnvironmentFile={envfile}\nRestart=on-failure\nRestartSec=5\n'
               'NoNewPrivileges=true\nUMask=0077\nTimeoutStopSec=30\n')
     units = {
-        'goose-model': '[Unit]\nDescription=Goose RWKV-7 2.9B local inference\nAfter=local-fs.target\n' + common +
+        'goose-model': '[Unit]\nDescription=ROMS local inference\nAfter=local-fs.target\n' + common +
             'Environment=LD_LIBRARY_PATH=/opt/goose-runtime/bin\n'
             f'ExecStart=/opt/goose-runtime/bin/llama-server -m "{model}" --host 127.0.0.1 --port 18080 '
             '-c 4096 -np 1 -b 64 -ub 64 -t 4 -ngl 0 --no-warmup --jinja --reasoning auto --reasoning-format deepseek '
             '--chat-template-file /opt/omarchy-harness/config/rwkv-user-assistant.jinja --alias goose-2.9b\n',
-        'goose-roms': '[Unit]\nDescription=Goose ROMS local memory gateway\nAfter=goose-model.service\n' + common +
+        'goose-roms': '[Unit]\nDescription=ROMS local memory gateway\nAfter=goose-model.service\n' + common +
             'ExecStart=/usr/bin/python /opt/omarchy-harness/scripts/run_linux_env.py python -m app.gateway\n',
         'omarchy-broker': '[Unit]\nDescription=Omarchy Mojo local broker\nAfter=goose-roms.service\n' + common +
             'RuntimeDirectory=omarchy-broker\nRuntimeDirectoryMode=0700\n'

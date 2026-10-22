@@ -54,7 +54,7 @@ async def generate_draft(payload: dict) -> JSONResponse:
             raise ValueError('Project drafting requires the configured local native runtime')
         origin = f'{upstream.scheme}://{upstream.netloc}'
         headers = {'Authorization': 'Bearer ' + os.getenv('ROMS_UPSTREAM_API_KEY', '')}
-        messages = [{'role': 'system', 'content': 'You are Goose, a local code drafting assistant. Return only the requested draft JSON.'},
+        messages = [{'role': 'system', 'content': 'You are ROMS, a local code drafting assistant. Return only the requested draft JSON.'},
                     {'role': 'user', 'content': draft_prompt(payload)}]
         async with httpx.AsyncClient(timeout=120, trust_env=False) as client:
             template = await native_json(client, origin + '/apply-template', {'messages': messages}, headers)

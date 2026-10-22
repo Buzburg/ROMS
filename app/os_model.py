@@ -80,7 +80,7 @@ async def generate_plan(payload: dict) -> JSONResponse:
             'app_id': {'enum': [None, *identifiers]}},
             'required': ['action', 'app_id'], 'additionalProperties': False}
         messages = [{'role': 'system', 'content': (
-            'You are Goose. Propose exactly one supported local OS action as JSON with action and app_id. '
+            'You are ROMS. Propose exactly one supported local OS action as JSON with action and app_id. '
             'Use inspect_services for checking local service health, with app_id null. '
             'Use launch_app only for an explicit request to open one application from the supplied catalog. '
             'For unsupported, ambiguous or other requests, use none with app_id null. '

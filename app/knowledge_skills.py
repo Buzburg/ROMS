@@ -45,12 +45,21 @@ def replace_sources(conn, doc_id, title, checksum, chunks):
     schema(conn)
     conn.execute('DELETE FROM knowledge_skill_sources WHERE doc_id=?', (doc_id,))
     heading, lines, section, first_chunk, fenced = title, [], 0, None, False
+    level, ancestors = 0, []
     rows = []
     section_chunks = []
     def finish():
         nonlocal section
         section += 1
-        text = '\n'.join(lines).strip()
+        # Parent conditions remain part of a child procedure. Do not inherit sibling
+        # sections or silently truncate a prerequisite to fit the section budget.
+        context = []
+        for parent_level, parent_heading, parent_lines, _ in ancestors:
+            if parent_level:
+                context.append('#' * parent_level + ' ' + parent_heading)
+            context.extend(parent_lines)
+        text = '\n'.join(context + lines).strip()
+        context_chunks = [cid for _, _, _, parent_chunks in ancestors for cid in parent_chunks]
         steps = [m[1] for line in lines if (m := ITEM.match(line))]
         # Require procedural evidence; retain surrounding caveats and checks verbatim.
         if (len(rows) >= 32 or not 2 <= len(steps) <= 64 or
@@ -62,7 +71,7 @@ def replace_sources(conn, doc_id, title, checksum, chunks):
             return
         skill_id = 'knowledge-' + _digest(_key(label))[:24]
         rows.append((skill_id, doc_id, section, label, checksum, first_chunk,
-                     text, _digest(text), len(steps), json.dumps(list(dict.fromkeys(section_chunks)))))
+                     text, _digest(text), len(steps), json.dumps(list(dict.fromkeys(context_chunks + section_chunks)))))
     previous = None
     for chunk_id, content in chunks:
         # Exact repeated chunks do not inflate procedural evidence.
@@ -75,6 +84,12 @@ def replace_sources(conn, doc_id, title, checksum, chunks):
             match = HEADING.match(line) if not fenced else None
             if match:
                 finish()
+                stripped = line.lstrip()
+                new_level = len(stripped) - len(stripped.lstrip('#'))
+                if level < new_level and (level or lines):
+                    ancestors.append((level, heading, lines, section_chunks))
+                ancestors = [parent for parent in ancestors if parent[0] < new_level]
+                level = new_level
                 heading, lines, first_chunk = match[1], [], chunk_id
                 section_chunks = [chunk_id]
             else:

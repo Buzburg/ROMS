@@ -15,7 +15,7 @@ _TOTAL_TIMEOUT = 60.0
 _MAX_TEXT_BYTES = 16 * 1024
 _MAX_WIRE_BYTES = 128 * 1024
 _SYSTEM = (
-    "You are Goose. Reply in 1-3 short spoken sentences. No reasoning, code, markup, "
+    "You are ROMS. Reply in 1-3 short spoken sentences. No reasoning, code, markup, "
     "or tool calls. You cannot perform actions. Never claim you ran commands, "
     "controlled apps, or changed files; explain what the user can do."
 )

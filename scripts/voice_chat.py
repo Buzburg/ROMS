@@ -51,7 +51,7 @@ def reply(prompt: str, history: list[dict[str, str]], speaker: PocketSpeaker,
     api_key = os.environ.get('ROMS_GATEWAY_API_KEY', '')
     if not api_key:
         raise RuntimeError('Start voice through goose --voice so local chat credentials are available.')
-    print('Goose is thinking. Ctrl+C stops this reply.', flush=True)
+    print('ROMS is thinking. Ctrl+C stops this reply.', flush=True)
     answer: list[str] = []
     started = time.monotonic()
     parts = stream_answer(messages, api_key, cancel)
@@ -60,7 +60,7 @@ def reply(prompt: str, history: list[dict[str, str]], speaker: PocketSpeaker,
             answer.append(sentence)
             print(sentence, end=' ', flush=True)
             yield from speaker.iter_audio(sentence, cancel)
-    print('\nGoose: ', end='', flush=True)
+    print('\nROMS: ', end='', flush=True)
     try:
         with closing(audio()) as output:
             seconds = play(output, speaker.sample_rate, cancel)
@@ -86,7 +86,7 @@ def _enter_pressed() -> bool:
 
 def interactive(recognizer: TinyRecognizer, speaker: PocketSpeaker) -> None:
     history: list[dict[str, str]] = []
-    print('\nGoose voice is ready. Press Enter to talk, then Enter to send (30s maximum).')
+    print('\nROMS voice is ready. Press Enter to talk, then Enter to send (30s maximum).')
     print('/type MESSAGE · /reset · /system · /project · /exit. Ctrl+C stops the current turn.')
     print('The microphone is off between recordings. System changes use the reviewed workshops.')
     while True:
@@ -138,17 +138,17 @@ def interactive(recognizer: TinyRecognizer, speaker: PocketSpeaker) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Local Goose push-to-talk voice')
+    parser = argparse.ArgumentParser(description='Local ROMS push-to-talk voice')
     mode = parser.add_mutually_exclusive_group()
-    mode.add_argument('--say', help='Speak supplied text without recording or calling Goose')
-    mode.add_argument('--text', help='Ask Goose once with typed input and hear the reply')
-    mode.add_argument('--input-wav', type=Path, help='Transcribe one WAV and ask Goose')
+    mode.add_argument('--say', help='Speak supplied text without recording or calling ROMS')
+    mode.add_argument('--text', help='Ask ROMS once with typed input and hear the reply')
+    mode.add_argument('--input-wav', type=Path, help='Transcribe one WAV and ask ROMS')
     mode.add_argument('--check', action='store_true', help='Check audio and load both local speech models')
     args = parser.parse_args()
     if not sys.platform.startswith('linux'):
-        raise SystemExit('Run Goose voice inside Omarchy/Linux.')
+        raise SystemExit('Run ROMS voice inside Omarchy/Linux.')
     if os.geteuid() == 0:
-        raise SystemExit('Run Goose voice as your regular desktop user.')
+        raise SystemExit('Run ROMS voice as your regular desktop user.')
     if not any((args.say, args.text, args.input_wav, args.check)) and not sys.stdin.isatty():
         raise SystemExit('Push-to-talk needs an interactive terminal.')
     os.environ.update(HF_HUB_OFFLINE='1', TRANSFORMERS_OFFLINE='1', HF_HUB_DISABLE_TELEMETRY='1')

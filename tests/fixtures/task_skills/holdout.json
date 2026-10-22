@@ -1,0 +1,23 @@
+[
+  {
+    "id": "csv_validation",
+    "task": "Explain how to validate the supplied test sensor CSV and produce a validation report.",
+    "constraints": "The test CSV is provided. Explain the procedure only, without executing it or changing any input. The data owner handles rejected datasets.",
+    "documents": {
+      "validation.md": "# Test sensor CSV validation\nApplies only to test datasets. Required columns are timestamp and value. Reject a dataset with a missing required column. If the row count is less than 10, stop and ask the data owner for a replacement dataset. Otherwise count blank values; if the blank-value count is greater than 0, report the problem and stop. Produce a validation report containing row count and blank-value count. Never modify the input CSV or publish the dataset.\n"
+    },
+    "expected_status": "candidate",
+    "signals": ["timestamp", "value", "\\b10\\b", "\\b0\\b", "owner", "row count", "blank", "modif", "publish"]
+  },
+  {
+    "id": "archive_conflict",
+    "task": "Explain the retention procedure for the supplied test audit log using the two policies.",
+    "constraints": "Both policies cover this same log and have equal authority; no precedence has been supplied. The log is a test fixture. Explain only.",
+    "documents": {
+      "retain.md": "# Test audit log retention\nKeep this test audit log for exactly 14 days. Do not delete it before 14 days.\n",
+      "delete.md": "# Test audit log removal\nDelete this same test audit log immediately on creation. Do not retain it for any period.\n"
+    },
+    "expected_status": "needs_information",
+    "signals": ["conflict|contradict|oppos", "log|retai"]
+  }
+]

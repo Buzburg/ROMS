@@ -37,7 +37,9 @@ def test_owned_child_disappears_on_cancel_timeout_or_output_overflow(tmp_path, m
     marker = tmp_path / 'pid'
     source = ('import os,time,sys,signal\nfrom pathlib import Path\n' +
               ('signal.signal(signal.SIGTERM, signal.SIG_IGN)\n' if mode == 'stubborn' else '') +
-              f'Path({str(marker)!r}).write_text(str(os.getpid()))\n' +
+              f'pending = Path({str(marker.with_suffix(".pending"))!r})\n' +
+              'pending.write_text(str(os.getpid()))\n' +
+              f'pending.replace({str(marker)!r})\n' +
               ('sys.stdout.write("x" * 100000);sys.stdout.flush()\n' if mode == 'output' else '') +
               'time.sleep(60)\n')
     worker = executable(tmp_path, source)

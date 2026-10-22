@@ -28,6 +28,6 @@
     </g>
     <text x="40" y="285" font-size="17" fill="#63d5bd">One preparation API through Python, CLI and MCP</text>
     <text x="40" y="322" font-size="16" fill="#b9c9dc">Approval and execution stay with the operator or configured workshop.</text>
-    <text x="40" y="350" font-size="14" fill="#b9c9dc">Portable Python preparation. Optional Linux / Omarchy integration.</text>
+    <text x="40" y="350" font-size="14" fill="#b9c9dc">Portable Python preparation. Optional desktop integration.</text>
   </g>
 </svg>

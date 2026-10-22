@@ -161,5 +161,6 @@ def test_omarchy_packaging_files():
     assert install_script.exists()
 
     desktop_content = desktop_file.read_text(encoding="utf-8")
-    assert "Name=Omarchy OS Studio" in desktop_content
+    assert "Name=ROMS\n" in desktop_content
+    assert "by Buzburg" in desktop_content
     assert "Exec=omarchy-menu" in desktop_content

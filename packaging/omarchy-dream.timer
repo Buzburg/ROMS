@@ -1,5 +1,5 @@
 [Unit]
-Description=Nightly 3:00 AM Timer for Omarchy Dream Cycle State-Tuning
+Description=ROMS Nightly Knowledge Consolidation Timer
 
 [Timer]
 OnCalendar=*-*-* 03:00:00

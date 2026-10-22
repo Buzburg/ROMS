@@ -76,7 +76,7 @@ async def main() -> None:
     import sys
     if not sys.stdin.isatty():
         raise ValueError('The project workshop requires an interactive terminal')
-    print('Goose project workshop — choose files, describe a change, and review the checked draft.')
+    print('ROMS project workshop — choose files, describe a change, and review the checked draft.')
     print('This test build supports Python syntax and unittest checks. Selected files may total up to 4 KiB.')
     project = await select_project()
     files, checks = select_files(project)
@@ -104,10 +104,10 @@ async def main() -> None:
                 _, _, parent_patch = patch_tasks.load_task(parent_id)
                 if parent_patch['project_id'] != project['id']:
                     raise ValueError('Select the project belonging to this failed task before repairing it')
-                print('Goose is drafting one repair from the recorded failed check...', flush=True)
+                print('ROMS is drafting one repair from the recorded failed check...', flush=True)
                 draft = await project_repair.draft_repair(parent_id)
             else:
-                print('Goose is drafting the change...', flush=True)
+                print('ROMS is drafting the change...', flush=True)
                 draft = await project_assistant.draft_change(project['id'], files, instruction, checks)
             task = draft['task']
             print('Draft saved. Running the selected checks. Task: ' + task['id'], flush=True)

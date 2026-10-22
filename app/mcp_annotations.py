@@ -5,7 +5,9 @@ import re
 
 # Read operations can initialize application caches/indexes, but do not author user content.
 READ_TOOLS = frozenset("""
-search_knowledge_skills get_knowledge_skill
+draft_task_skill prepare_knowledge_brief
+search_knowledge_skills get_knowledge_skill prepare_task_skill finalize_task_skill
+search_saved_task_skills get_saved_task_skill
 roms_prepare_harness search_knowledge_base search_grounded_context
 knowledge_table_of_contents get_knowledge_ingestion_status list_knowledge_documents
 get_file_watcher_status get_ticket list_tickets get_system_metrics list_skills
@@ -16,6 +18,8 @@ search_codebase find_symbol_definition calculate_refund_amount
 """.split())
 WRITE_TOOLS = frozenset("""
 refresh_knowledge_skills record_knowledge_skill_feedback
+create_task_skill revise_saved_task_skill
+save_task_skill record_task_skill_feedback forget_task_skill
 add_knowledge_document queue_knowledge_text queue_knowledge_path knowledge_import_progress
 retry_knowledge_import reload_knowledge create_support_ticket update_ticket_status
 run_sandboxed_command add_skill distill_trajectory_to_skill autokarpathy_generate_dataset
@@ -25,11 +29,12 @@ roms_decide roms_noul roms_score roms_bertopic_discover memory_retain
 memory_record_verification memory_correct memory_retract memory_forget
 """.split())
 NETWORK_TOOLS = frozenset("""
+draft_task_skill create_task_skill revise_saved_task_skill prepare_task_skill
 search_knowledge_base search_grounded_context add_knowledge_document queue_knowledge_text
 queue_knowledge_path knowledge_import_progress retry_knowledge_import reload_knowledge
  autokarpathy_optimize_prompt autokarpathy_eval_cartridge autoresearch run_sandboxed_command
 """.split())
-DESTRUCTIVE_TOOLS = frozenset({'roms_snapshot_rewind', 'roms_titans_erase', 'memory_forget'})
+DESTRUCTIVE_TOOLS = frozenset({'roms_snapshot_rewind', 'roms_titans_erase', 'memory_forget', 'forget_task_skill'})
 
 
 def tool_annotations(name):

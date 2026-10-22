@@ -1,5 +1,5 @@
 [Unit]
-Description=Omarchy Local Model Inference Service (%i)
+Description=ROMS Local Model Inference Service (%i)
 After=network.target
 
 [Service]

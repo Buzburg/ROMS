@@ -106,7 +106,7 @@ class TinyRecognizer:
             try:
                 installed = metadata.version('moonshine-voice')
             except metadata.PackageNotFoundError as exc:
-                raise RuntimeError('Install the pinned Goose voice runtime first') from exc
+                raise RuntimeError('Install the pinned ROMS voice runtime first') from exc
             if installed != MOONSHINE_VERSION:
                 raise RuntimeError(f'Moonshine Voice {MOONSHINE_VERSION} is required')
             from moonshine_voice.moonshine_api import ModelArch
