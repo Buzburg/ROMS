@@ -11,7 +11,7 @@ The remaining packages have concrete runtime uses:
 |---|---|---|
 | Compiled search and text kernels | Mojo compiler at build time; compiled extension at runtime | `app_mojo/search_kernels.mojo`, `app_mojo/document_text.mojo`, `app/search_native.py` |
 | MCP tools and client protocol | FastMCP; the base MCP SDK | `app/server.py`, `app/broker_memory.py` |
-| Local semantic embeddings | SentenceTransformers and its model/tokenizer runtime, including PyTorch | `app/config.py`, `app/okf_loader.py` |
+| Local semantic embeddings | ONNX Runtime Q8 inference, Hugging Face Hub and Transformers tokenizer (EmbeddingGemma 2) | `app/config.py`, `app/okf_loader.py` |
 | Vector storage and numeric conversion | sqlite-vec, NumPy; Python's SQLite module for FTS5 | `app/db.py`, `app/rag_engine.py` |
 | Markdown metadata and recovery | python-frontmatter and its YAML parser dependency | `app/document_parse.py`, `app/tools.py` |
 | PDF/Office/image text extraction | pypdf, Pillow, python-docx, python-pptx, openpyxl | `app/document_extract.py` |

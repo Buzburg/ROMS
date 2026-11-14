@@ -18,7 +18,10 @@ def main():
     from app.document_parse import fit_model_window
     from app.okf_loader import ingest_document_file
     from app.rag_engine import vector_search, local_search
+    from app.embeddinggemma import MODEL_ID, REVISION
+    from app.embedding_space import require_compatible
     model = get_embedding_model()
+    print(f"Model: {MODEL_ID}@{REVISION}; providers={model.session.get_providers()}")
     documents = [
         'Mars is known as the Red Planet because of its rusty surface.',
         'Banana bread uses ripe fruit, flour and eggs baked in an oven.',
@@ -40,6 +43,7 @@ def main():
         root = Path(temp)
         database = root / 'test.db'
         init_database(database)
+        require_compatible(get_connection(database))
         for index, text in enumerate(documents):
             path = root / f'{index}.txt'
             path.write_text(text)

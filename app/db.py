@@ -70,6 +70,9 @@ def init_database(db_path: Path | str | None = None) -> None:
                 "to a new database and re-ingest your documents"
             )
 
+    from app.embedding_space import initialize
+    initialize(conn)
+
     # 1. OKF Registry: Tracks ingested documents, metadata, and SHA-256 checksums
     cur.execute("""
     CREATE TABLE IF NOT EXISTS okf_registry (

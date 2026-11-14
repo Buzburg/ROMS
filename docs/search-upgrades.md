@@ -28,7 +28,7 @@ Mojo implements Unicode typo scoring, alternative selection, rank fusion, top-k
 selection, text cleanup and passage splitting. The compiled module is required;
 there is no Python search-kernel fallback. SQLite and sqlite-vec are native
 libraries. Python remains the adapter for document formats, SQL, MCP and the
-SentenceTransformers/PyTorch embedding model. This is not a pure-Mojo model port.
+ONNX Runtime EmbeddingGemma 2 model. This is not a pure-Mojo model port.
 
 ```sh
 pixi install
@@ -125,8 +125,17 @@ script requires the local model and frozen evaluation assets described there.
 
 ## Quantized EmbeddingGemma
 
-ROMS supports the public [ONNX-community EmbeddingGemma 300M conversion](https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX)
-with 8-bit weights, pinned to revision `5090578d9565bb06545b4552f76e6bc2c93e4a66`.
+The default backend is **EmbeddingGemma 2 Q8**, independent of the assistant or
+generation model connected to ROMS. No DeepSeek installation, GPU, paid embedding
+endpoint, or machine-specific model directory is required.
+
+Install the updated requirements even if ROMS is already installed: the new
+export requires ONNX Runtime 1.31.1 or later, Transformers 5.18 or later, and
+Hugging Face Hub 1.31 or later (within the major-version bounds in requirements).
+The earlier runtime floor cannot load this model's quantized graph/tokenizer.
+
+ROMS supports the public [ONNX-community EmbeddingGemma 2 conversion](https://huggingface.co/onnx-community/embeddinggemma-2-ONNX)
+with 8-bit weights, pinned to revision `daa72c51243991dfcaf9f9137d2c573d8f7790c0`.
 Inference runs locally with ONNX Runtime's CPU provider and two compute threads.
 This is the only supported embedding backend. Install the core requirements:
 
@@ -143,17 +152,18 @@ expired, public provisioning can use `HF_HUB_DISABLE_IMPLICIT_TOKEN=1`.
 
 Start ROMS and ingest your knowledge files; no model selector is required.
 This backend uses normalized 768-dimensional embeddings and the model's distinct
-search-query and document prefixes. It defaults to `data/embeddinggemma-q8.db`
-(or that filename under `ROMS_DATA_DIR`), keeping the existing MiniLM index intact.
+search-query and document prefixes. It defaults to `data/embeddinggemma2-q8.db`
+(or that filename under `ROMS_DATA_DIR`), keeping the existing EmbeddingGemma 300M and MiniLM indexes intact.
 If you override `ROMS_DB_PATH`, choose a fresh database and re-ingest everything;
-an incompatible vector dimension is rejected before schema changes. Never reuse
+an incompatible model identity or vector dimension is rejected before schema changes. Never reuse
 an index built by a different model, even when dimensions happen to match.
-Remove old model/provider environment overrides. Unsupported model names and
-remote providers are rejected at startup. Re-ingest source files into the new
-Gemma index; existing MiniLM indexes are not automatically converted.
+The canonical model setting is `embeddinggemma2-q8`; the old
+`embeddinggemma-q8` setting is accepted as an alias for EmbeddingGemma 2.
+Unsupported model names and remote providers are rejected at startup. Re-ingest source files into the new
+Gemma index; existing EmbeddingGemma 300M and MiniLM indexes are not automatically converted.
 
 Document passages are split using the actual tokenizer with room for prefixes.
-Inputs still exceeding the 2048-token model window raise an error rather than
+Inputs still exceeding ROMS's 2048-token passage limit raise an error rather than
 silently truncating. Long queries must be shortened. Inference batches are capped
 at four passages to bound attention memory.
 
@@ -165,3 +175,31 @@ python scripts/verify_embeddinggemma.py
 
 It checks embeddings, semantic ranking, long Unicode passages, document ingestion,
 and vector/hybrid search in a disposable database. It does not modify your index.
+
+The pinned text ONNX graph requires empty float32 `(0, 512)` image, video,
+and audio feature arrays; ROMS supplies those explicitly. This integration
+continues to index extracted text and retains its 2,048-token passage limit.
+It does not load the optional media encoders. Each new database records the
+model ID, revision, dimension and prefixes. Unmarked old 768-dimensional
+indexes are rejected too: matching dimensions do not identify an embedding space.
+
+### Upgrading from EmbeddingGemma 300M
+
+1. Install the updated ROMS requirements and rebuild the Mojo search module as
+   shown above. Provision the new model with `python scripts/fetch_embedding.py`.
+2. Stop ROMS before changing its settings. If `ROMS_DB_PATH` points to an old
+   index, change it to a new filename (or unset it to use
+   `data/embeddinggemma2-q8.db`). The former model name `embeddinggemma-q8`
+   remains a configuration alias; it now resolves to EmbeddingGemma 2.
+3. Start ROMS and re-ingest the original files from `knowledge/` or re-import
+   them through the source library. Source-library imports stored outside
+   `knowledge/` must also be imported into the new index.
+4. Run `python scripts/verify_embeddinggemma.py` to check real CPU inference,
+   ingestion and retrieval using a temporary database. Set `HF_HUB_OFFLINE=1`
+   after provisioning to verify offline use.
+
+The old database is preserved, including its operational records and saved
+skills. Those records are not automatically transferred into the new database.
+To roll back, use the previous ROMS release with its original database and model
+cache. Never rename an old database to the new default filename or relabel its
+identity: the document vectors must be recomputed by the new model.

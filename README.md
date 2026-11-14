@@ -2,6 +2,10 @@
 
 By **Buzburg**.
 
+ROMS 1.5 uses **EmbeddingGemma 2 Q8** for local semantic search. It downloads
+the pinned public model during setup and works with any assistant through ROMS's
+existing MCP tools or portable task briefs. [Upgrade an existing index](docs/search-upgrades.md#upgrading-from-embeddinggemma-300m).
+
 **Stop re-explaining your project to every AI.**
 
 Your useful knowledge is scattered across notes, manuals, code, PDFs and past work.
@@ -200,7 +204,7 @@ Windows; a Windows process cannot directly execute this Linux Python binary.
 
 See the [search setup guide](docs/search-upgrades.md) for supported formats and extraction limits.
 
-Startup initializes the database, indexes supported files in `knowledge/`, starts the watcher and loads only explicitly enabled local plugins. ROMS uses only pinned local Q8 embeddings on CPU; first use may download model files. The 768-dimensional index defaults to `data/embeddinggemma-q8.db`. Re-ingest your knowledge into this new index when upgrading from the legacy embedding backend; old databases are preserved. Review [security and data handling](SECURITY.md) before connecting an agent.
+Startup initializes the database, indexes supported files in `knowledge/`, starts the watcher and loads only explicitly enabled local plugins. ROMS uses only pinned local EmbeddingGemma 2 Q8 embeddings on CPU; first use may download model files. The 768-dimensional index defaults to `data/embeddinggemma2-q8.db`. Re-ingest your knowledge into this new index when upgrading from EmbeddingGemma 300M or MiniLM; old databases are preserved. Review [security and data handling](SECURITY.md) before connecting an agent.
 
 Reference repositories used for design inspiration are not required installations.
 See the [dependency guide](docs/dependencies.md) for what the runtime actually uses.

@@ -64,14 +64,16 @@ def ingest_document_file(filepath: Path | str, db_path: Path | str | None = None
         raw = source.read(MAX_FILE_BYTES + 1)
     if len(raw) > MAX_FILE_BYTES:
         raise ValueError("Document exceeds the 32 MiB ingestion limit")
-    identity = json.dumps([PARSER_VERSION, config.EMBEDDING_PROVIDER, config.EMBEDDING_MODEL_NAME,
-                           config.EMBEDDING_DIM], ensure_ascii=False).encode('utf-8')
+    from app.embedding_space import identity as embedding_identity, require_compatible
+    identity = json.dumps([PARSER_VERSION, config.EMBEDDING_PROVIDER, embedding_identity()],
+                          ensure_ascii=False).encode('utf-8')
     checksum = hashlib.sha256(identity + b'\0' + raw).hexdigest()
 
     from app.config import EMBEDDING_DIM
     from app.topic import tag_chunks_with_topics
 
     conn = get_connection(db_path)
+    require_compatible(conn)
     cur = conn.cursor()
     cur.execute("SELECT checksum FROM okf_registry WHERE doc_id = ?", (filename,))
     existing = cur.fetchone()
@@ -109,6 +111,7 @@ def ingest_document_file(filepath: Path | str, db_path: Path | str | None = None
     # while embeddings were being calculated. Replacement stays atomic.
     try:
         cur.execute("SAVEPOINT roms_ingest_document")
+        require_compatible(conn)
         cur.execute("SELECT checksum FROM okf_registry WHERE doc_id = ?", (filename,))
         existing = cur.fetchone()
         if existing and existing[0] == checksum:

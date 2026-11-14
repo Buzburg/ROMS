@@ -7,12 +7,12 @@ import sys
 import numpy as np
 import pytest
 
-from app.embeddinggemma import EmbeddingGemma, QUERY_PREFIX, DOCUMENT_PREFIX
+from app.embeddinggemma import EmbeddingGemma, QUERY_PREFIX, DOCUMENT_PREFIX, MODALITY_INPUTS
 
 
 def adapter():
     model = EmbeddingGemma.__new__(EmbeddingGemma)
-    model.input_names = {'input_ids', 'attention_mask'}
+    model.input_names = {'input_ids', 'attention_mask'} | MODALITY_INPUTS
     model.seen = []
 
     def tokenize(texts, **kwargs):
@@ -25,6 +25,10 @@ def adapter():
         def run(self, names, inputs):
             assert names == ['sentence_embedding']
             assert len(inputs['input_ids']) <= 4
+            assert set(inputs) == model.input_names
+            for name in MODALITY_INPUTS:
+                assert inputs[name].shape == (0, 512)
+                assert inputs[name].dtype == np.float32
             return [np.ones((len(inputs['input_ids']), 768))]
     model.session = Session()
     return model
@@ -60,7 +64,7 @@ def test_gemma_config_and_existing_index_protection(tmp_path):
 from app import config
 from app.db import get_connection, init_database
 assert config.EMBEDDING_DIM == 768
-assert config.DB_PATH.name == 'embeddinggemma-q8.db'
+assert config.DB_PATH.name == 'embeddinggemma2-q8.db'
 conn = get_connection()
 conn.execute('CREATE VIRTUAL TABLE vec_chunks USING vec0(embedding float[384])')
 try:
@@ -71,7 +75,7 @@ else:
     raise AssertionError('Accepted incompatible index')
 assert conn.execute("SELECT sql FROM sqlite_master WHERE name='vec_chunks'").fetchone()[0].endswith('float[384])')
 '''
-    env = {**os.environ, 'ROMS_EMBEDDING_MODEL': 'embeddinggemma-q8', 'ROMS_DATA_DIR': str(tmp_path)}
+    env = {**os.environ, 'ROMS_EMBEDDING_MODEL': 'embeddinggemma2-q8', 'ROMS_DATA_DIR': str(tmp_path)}
     env.pop('ROMS_DB_PATH', None)
     result = subprocess.run([sys.executable, '-c', code], env=env,
                             cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True)
@@ -96,9 +100,28 @@ def test_default_is_gemma_without_model_selector(tmp_path):
         env.pop(name, None)
     result = subprocess.run([sys.executable, '-c', '''
 from app import config
-assert config.EMBEDDING_MODEL_NAME == 'embeddinggemma-q8'
+assert config.EMBEDDING_MODEL_NAME == 'embeddinggemma2-q8'
 assert config.EMBEDDING_DIM == 768
 assert config.EMBEDDING_PROVIDER == 'local'
-assert config.DB_PATH.name == 'embeddinggemma-q8.db'
+assert config.DB_PATH.name == 'embeddinggemma2-q8.db'
 '''], env=env, cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
+
+
+def test_old_model_alias_resolves_to_new_model_and_new_database(tmp_path):
+    env = {**os.environ, 'ROMS_DATA_DIR': str(tmp_path),
+           'ROMS_EMBEDDING_MODEL': 'embeddinggemma-q8'}
+    env.pop('ROMS_DB_PATH', None)
+    result = subprocess.run([sys.executable, '-c', '''
+from app import config
+assert config.EMBEDDING_MODEL_NAME == 'embeddinggemma2-q8'
+assert config.DB_PATH.name == 'embeddinggemma2-q8.db'
+'''], env=env, cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+
+
+def test_unknown_onnx_input_is_not_silently_filled():
+    model = adapter()
+    model.input_names.add('unknown_input')
+    with pytest.raises(KeyError, match='unknown_input'):
+        model.encode('planet')

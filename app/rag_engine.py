@@ -90,7 +90,7 @@ def _get_query_embedding(
                 _MEM_CACHE.popitem(last=False)
         return emb_bytes
 
-    # Tier 3: Compute via CPU-isolated SentenceTransformer or pluggable provider
+    # Tier 3: Compute via pinned CPU EmbeddingGemma 2 Q8
     vec_list = compute_embedding_vector(norm_query)
     vector = np.asarray(vec_list, dtype=np.float32)
     if vector.shape != (config.EMBEDDING_DIM,) or not np.isfinite(vector).all():
@@ -133,6 +133,8 @@ def vector_search(
     if chunk_ids is not None and not chunk_ids:
         return []
     active_conn = conn or get_connection(db_path)
+    from app.embedding_space import require_compatible
+    require_compatible(active_conn)
     query_bytes = _get_query_embedding(query, db_path=db_path, conn=active_conn)
 
     cur = active_conn.cursor()

@@ -1,4 +1,4 @@
-"""Provision the pinned EmbeddingGemma Q8 model for subsequent offline use."""
+"""Provision the pinned EmbeddingGemma 2 Q8 model for subsequent offline use."""
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))

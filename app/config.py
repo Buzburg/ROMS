@@ -9,21 +9,21 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = Path(os.getenv("ROMS_DATA_DIR", str(BASE_DIR / "data")))
-DB_PATH = Path(os.getenv("ROMS_DB_PATH", str(DATA_DIR / "roms.db")))
 KNOWLEDGE_DIR = Path(os.getenv("ROMS_KNOWLEDGE_DIR", str(BASE_DIR / "knowledge")))
 SKILLS_DIR = Path(os.getenv("ROMS_SKILLS_DIR", str(BASE_DIR / "skills")))
 WORKSPACES_DIR = Path(os.getenv("ROMS_WORKSPACES_DIR", str(BASE_DIR / "workspaces")))
 BASE_REPOS_DIR = Path(os.getenv("ROMS_REPOS_DIR", str(BASE_DIR / "repos")))
 
 # One pinned local embedding space; legacy indexes are never reused by default.
-EMBEDDING_MODEL_NAME = "embeddinggemma-q8"
+EMBEDDING_MODEL_NAME = "embeddinggemma2-q8"
 EMBEDDING_DIM = 768
 EMBEDDING_PROVIDER = "local"
-DB_PATH = Path(os.getenv("ROMS_DB_PATH", str(DATA_DIR / "embeddinggemma-q8.db")))
-if os.getenv("ROMS_EMBEDDING_MODEL", EMBEDDING_MODEL_NAME) != EMBEDDING_MODEL_NAME:
-    raise ValueError("ROMS supports only embeddinggemma-q8; remove the old ROMS_EMBEDDING_MODEL setting")
+DB_PATH = Path(os.getenv("ROMS_DB_PATH", str(DATA_DIR / "embeddinggemma2-q8.db")))
+# Accept the previous configuration name, always resolving it to the new model.
+if os.getenv("ROMS_EMBEDDING_MODEL", EMBEDDING_MODEL_NAME) not in {EMBEDDING_MODEL_NAME, "embeddinggemma-q8"}:
+    raise ValueError("ROMS supports only EmbeddingGemma 2 (embeddinggemma2-q8); remove the old ROMS_EMBEDDING_MODEL setting")
 if os.getenv("ROMS_EMBEDDING_PROVIDER", "local").lower() != "local":
-    raise ValueError("ROMS supports only local EmbeddingGemma Q8 embeddings")
+    raise ValueError("ROMS supports only local EmbeddingGemma 2 Q8 embeddings")
 
 # Local LLM Context & Hardware Controls
 MAX_CONCURRENT_TASKS = int(os.getenv("ROMS_MAX_CONCURRENT", "2"))

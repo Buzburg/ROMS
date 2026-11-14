@@ -18,7 +18,7 @@ struct ROMSConfig:
     var max_rag_chars: Int
 
     def __init__(out self):
-        self.embedding_model = "embeddinggemma-q8"
+        self.embedding_model = "embeddinggemma2-q8"
         self.embedding_dim = 768
         self.max_concurrent = 2
         self.max_cpu_percent = 85.0

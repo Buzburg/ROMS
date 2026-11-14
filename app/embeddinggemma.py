@@ -1,12 +1,13 @@
-"""Pinned, quantized EmbeddingGemma inference on the local CPU."""
+"""Pinned, quantized EmbeddingGemma 2 text inference on the local CPU."""
 from pathlib import Path
 
 import numpy as np
 
-MODEL_ID = "onnx-community/embeddinggemma-300m-ONNX"
-REVISION = "5090578d9565bb06545b4552f76e6bc2c93e4a66"
+MODEL_ID = "onnx-community/embeddinggemma-2-ONNX"
+REVISION = "daa72c51243991dfcaf9f9137d2c573d8f7790c0"
 QUERY_PREFIX = "task: search result | query: "
 DOCUMENT_PREFIX = "title: none | text: "
+MODALITY_INPUTS = frozenset({"image_features", "video_features", "audio_features"})
 
 
 class EmbeddingGemma:
@@ -27,6 +28,7 @@ class EmbeddingGemma:
             # ONNX external tensors must be real sibling files, not Hub blob symlinks.
             local_dir=Path(constants.HF_HOME) / "roms-embeddinggemma" / REVISION,
             allow_patterns=["onnx/model_quantized.onnx*", "*token*", "config.json"],
+            token=False,
         ))
         self.tokenizer = AutoTokenizer.from_pretrained(root, local_files_only=True)
         # Leave ample room for either prefix and boundary tokenization changes.
@@ -39,6 +41,9 @@ class EmbeddingGemma:
             providers=["CPUExecutionProvider"],
         )
         self.input_names = {item.name for item in self.session.get_inputs()}
+        expected = {"input_ids", "attention_mask"} | MODALITY_INPUTS
+        if self.input_names != expected:
+            raise ValueError(f"Unexpected EmbeddingGemma 2 ONNX inputs: {sorted(self.input_names)}")
 
     def encode(self, sentences, output_value="sentence_embedding", batch_size=32,
                *, query=False):
@@ -50,6 +55,8 @@ class EmbeddingGemma:
         texts = [sentences] if single else list(sentences)
         prefix = QUERY_PREFIX if query else DOCUMENT_PREFIX
         vectors = []
+        # The unified text model requires these inputs even without media.
+        empty_features = np.empty((0, 512), dtype=np.float32)
         # Bound quadratic attention memory even for long document passages.
         for start in range(0, len(texts), min(batch_size, 4)):
             batch = texts[start:start + min(batch_size, 4)]
@@ -59,7 +66,8 @@ class EmbeddingGemma:
                 raise ValueError("EmbeddingGemma input exceeds 2048 tokens; split the text first")
             result = np.asarray(self.session.run(
                 ["sentence_embedding"],
-                {name: inputs[name] for name in self.input_names},
+                {name: empty_features if name in MODALITY_INPUTS else inputs[name]
+                 for name in self.input_names},
             )[0], dtype=np.float32)
             if result.shape != (len(batch), 768) or not np.isfinite(result).all():
                 raise ValueError("Expected finite 768-dimensional EmbeddingGemma vectors")
