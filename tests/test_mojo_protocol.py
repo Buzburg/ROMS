@@ -31,7 +31,7 @@ async def verify(binary: str, root: str) -> None:
                 assert initialized.model_dump(by_alias=True)["serverInfo"]["name"] == 'ROMS-Mojo-Engine'
                 listing = await session.list_tools()
                 names = {tool.name for tool in listing.tools}
-                assert {'search_knowledge_base', 'create_support_ticket', 'get_ticket', 'update_ticket_status', 'list_tickets', 'search_tools', 'distill_trajectory_to_skill'} <= names
+                assert {'search_knowledge_base', 'create_support_ticket', 'get_ticket', 'update_ticket_status', 'list_tickets', 'search_tools', 'distill_trajectory_to_skill', 'get_source_context'} <= names
                 assert {'memory_retain', 'memory_record_verification', 'memory_recall',
                         'memory_get', 'memory_correct', 'memory_retract', 'memory_forget'} <= names
 

@@ -1,6 +1,6 @@
 """Recover searchable text without executing files or silently discarding broken records."""
 import csv
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from html.parser import HTMLParser
 import io
 import json
@@ -9,8 +9,9 @@ from pathlib import Path
 import frontmatter
 import yaml
 from app.search_native import kernels
+from app.document_structure import Block, text_blocks, split_blocks, embedding_header, slice_source
 
-PARSER_VERSION = 'messy-v1'
+PARSER_VERSION = 'structured-v2'
 MAX_FILE_BYTES = 32 * 1024 * 1024
 MAX_CHUNKS = 20000
 
@@ -24,6 +25,7 @@ class ParsedDocument:
     chunks: list[str]
     encoding: str
     notes: list[str]
+    chunk_metadata: list[dict] = field(default_factory=list)
 
 
 def read_text(path):
@@ -122,8 +124,10 @@ def _csv(path, text, notes):
         for j, row in enumerate(rows[i:i+5], i+1):
             values = [f'{key}: {row[k] if k < len(row) else "[missing cell]"}' for k, key in enumerate(unique)]
             records.append(f'Row {j}: ' + '; '.join(values))
-        chunks.append(heading + '\n' + '\n'.join(records))
-    return f'Dataset: {path.name}', 'tabular', text, chunks or [heading]
+        chunks.append(Block(heading + '\n' + '\n'.join(records),
+                            {'parent_id': 'table:0', 'columns': unique, 'row_start': i+1,
+                             'row_end': min(i+5, len(rows))}))
+    return f'Dataset: {path.name}', 'tabular', text, chunks or [Block(heading, {'parent_id': 'table:0', 'columns': unique})]
 
 
 def _json(path, text, notes):
@@ -191,12 +195,9 @@ def parse_document(path):
         if len(raw) > MAX_FILE_BYTES:
             raise ValueError('Document exceeds the 32 MiB ingestion limit')
         title, kind, chunks, notes = extract_document(path, raw)
-        bounded = []
-        for chunk in chunks:
-            bounded.extend(kernels().passages(kernels().clean(chunk)))
-            if len(bounded) > MAX_CHUNKS:
-                raise ValueError('Document exceeds the passage limit')
-        return ParsedDocument(title, kind, raw, '\n\n'.join(bounded), bounded, 'binary/extracted', notes)
+        blocks = [Block(kernels().clean(block.text), block.source) for block in chunks]
+        bounded, metadata = split_blocks(blocks, kernels().passages)
+        return ParsedDocument(title, kind, raw, '\n\n'.join(bounded), bounded, 'binary/extracted', notes, metadata)
     raw, text, encoding, notes = read_text(path)
     if suffix in {'.md', '.markdown'}:
         title, kind, text, chunks = _markdown(path, text, notes)
@@ -212,12 +213,51 @@ def parse_document(path):
         title = f'Source: {path.name}'
         kind = 'code' if suffix in {'.py', '.mojo', '.sql', '.sh', '.ps1', '.ts', '.js', '.rs', '.go', '.c', '.cpp', '.tsx', '.jsx'} else 'text'
         chunks = [text]
-    bounded = []
-    for chunk in chunks:
-        bounded.extend(kernels().passages(chunk))
-        if len(bounded) > MAX_CHUNKS:
-            raise ValueError('Document exceeds the 20,000 passage limit')
-    return ParsedDocument(title, kind, raw, text, bounded, encoding, notes)
+    if suffix in {'.md', '.markdown', '.py'}:
+        blocks = text_blocks(text, suffix, notes)
+    else:
+        blocks = []
+        for index, chunk in enumerate(chunks):
+            if isinstance(chunk, Block):
+                blocks.append(chunk)
+                continue
+            meta = {'parent_id': f'block:{index}'}
+            if len(chunks) == 1 and chunk == text:
+                meta.update(offset_basis='normalized_text', start_char=0, line_start=1)
+            blocks.append(Block(chunk, meta))
+    bounded, metadata = split_blocks(blocks, kernels().passages)
+    return ParsedDocument(title, kind, raw, text, bounded, encoding, notes, metadata)
+
+
+def fit_document(parsed, model):
+    """Fit contextual embedding input while keeping original evidence separate."""
+    from types import SimpleNamespace
+    tokenizer = getattr(model, 'tokenizer', None)
+    if len(parsed.chunks) != len(parsed.chunk_metadata):
+        raise ValueError('Parsed source metadata does not match passages')
+    chunks, metadata, inputs = [], [], []
+    for text, source in zip(parsed.chunks, parsed.chunk_metadata):
+        header = embedding_header(parsed.title, source)
+        fitting_model = model
+        if tokenizer is not None:
+            reserve = len(tokenizer(header, add_special_tokens=False)['input_ids']) + 8
+            fitting_model = SimpleNamespace(tokenizer=tokenizer, max_seq_length=model.max_seq_length - reserve)
+        position = 0
+        for piece in fit_model_window([text], fitting_model):
+            start = text.find(piece, position)
+            if start < 0:
+                raise ValueError('Tokenizer split changed source evidence')
+            meta = slice_source(source, text, start, start + len(piece))
+            embedding_input = header + piece
+            if tokenizer is not None and len(tokenizer(embedding_input)['input_ids']) > model.max_seq_length:
+                raise ValueError('Contextual passage exceeds the embedding token window')
+            chunks.append(piece)
+            metadata.append(meta)
+            inputs.append(embedding_input)
+            position = start + 1  # token-window splits may overlap
+            if len(chunks) > MAX_CHUNKS:
+                raise ValueError('Document exceeds the model passage limit')
+    return chunks, metadata, inputs
 
 
 def fit_model_window(chunks, model):

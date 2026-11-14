@@ -21,6 +21,8 @@ def prepare(task, chunk_ids, constraints='', db_path=None):
     conn = get_connection(db_path, reuse=False)
     try:
         conn.execute('BEGIN')
+        from app.source_context import locations
+        source_metadata = locations(conn, chunk_ids)
         for chunk_id in chunk_ids:
             row = conn.execute('SELECT f.doc_id,f.content,COALESCE(r.title,f.doc_id) FROM fts_chunks f '
                                'LEFT JOIN okf_registry r ON r.doc_id=f.doc_id WHERE f.chunk_id=?', (chunk_id,)).fetchone()
@@ -29,6 +31,7 @@ def prepare(task, chunk_ids, constraints='', db_path=None):
             doc_id, content, title = row
             sources.append({'id': f'S{len(sources) + 1}', 'doc_id': doc_id,
                             'title': title, 'chunk_id': chunk_id, 'content': content,
+                            'source': source_metadata.get(chunk_id, {}),
                             'content_sha256': hashlib.sha256(content.encode()).hexdigest()})
     finally:
         conn.close()

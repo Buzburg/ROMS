@@ -77,7 +77,7 @@ def test_tool_search_keeps_catalog_order_for_tied_scores(monkeypatch):
     monkeypatch.setattr(tool_rag, "_CATALOG_CACHE", {"fixture": catalog})
     monkeypatch.setattr(tool_rag, "_TOOL_SEARCH_CACHE", {})
 
-    results = tool_rag.search_tools("ticket", limit=2, db_path="fixture")
+    results = tool_rag.search_tools("ticket", limit=2, db_path="fixture", semantic=False)
 
     assert [item["tool_name"] for item in results] == ["first", "second"]
     assert all(item["score"] == 12.0 for item in results)
@@ -101,7 +101,7 @@ def test_tool_search_cache_has_a_bounded_size(monkeypatch):
     monkeypatch.setattr(tool_rag, "_TOOL_SEARCH_CACHE_MAX", 2)
 
     for query in ("ticket", "lookup", "missing", "other"):
-        tool_rag.search_tools(query, db_path="fixture")
+        tool_rag.search_tools(query, db_path="fixture", semantic=False)
 
     assert len(tool_rag._TOOL_SEARCH_CACHE) == 2
     assert "fixture::ticket::::3" not in tool_rag._TOOL_SEARCH_CACHE
@@ -156,7 +156,7 @@ def run_tool_search_benchmark():
     tool_rag._CATALOG_CACHE["benchmark"] = catalog
     timings = {"legacy_median_ms": [], "optimized_median_ms": []}
     with patch.object(tool_rag, "_CATALOG_CACHE", {"benchmark": catalog}):
-        assert tool_rag.search_tools("ticket processing", limit=3, db_path="benchmark") == _legacy_tool_search(
+        assert tool_rag.search_tools("ticket processing", limit=3, db_path="benchmark", semantic=False) == _legacy_tool_search(
             catalog, "ticket processing", limit=3
         )
         for _ in range(7):
@@ -169,7 +169,7 @@ def run_tool_search_benchmark():
             start = time.perf_counter_ns()
             for _ in range(20):
                 tool_rag._TOOL_SEARCH_CACHE.clear()
-                results = tool_rag.search_tools("ticket processing", limit=3, db_path="benchmark")
+                results = tool_rag.search_tools("ticket processing", limit=3, db_path="benchmark", semantic=False)
                 assert len(results) == 3
             timings["optimized_median_ms"].append((time.perf_counter_ns() - start) / 20 / 1_000_000)
 

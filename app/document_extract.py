@@ -1,5 +1,8 @@
 """Local PDF, Office and image extraction. Originals are never modified or executed."""
 import io
+import os
+import re
+from app.document_structure import Block
 from pathlib import Path
 import shutil
 import subprocess
@@ -28,6 +31,13 @@ def _run(command, deadline, **kwargs):
     return result.stdout
 
 
+def ocr_language():
+    value = os.environ.get('ROMS_OCR_LANGUAGES', 'eng')
+    if len(value) > 128 or not re.fullmatch(r'[A-Za-z0-9_]+(?:\+[A-Za-z0-9_]+)*', value):
+        raise ValueError('ROMS_OCR_LANGUAGES must contain Tesseract language names joined by +')
+    return value
+
+
 def _ocr(image, deadline):
     from PIL import Image, ImageOps
     executable = shutil.which('tesseract')
@@ -42,7 +52,7 @@ def _ocr(image, deadline):
     image = ImageOps.autocontrast(image.convert('L'))
     image.thumbnail((3200, 3200))
     data = io.BytesIO(); image.save(data, format='PNG')
-    output = _run([executable, 'stdin', 'stdout', '-l', 'eng'], deadline, input=data.getvalue())
+    output = _run([executable, 'stdin', 'stdout', '-l', ocr_language()], deadline, input=data.getvalue())
     return output.decode('utf-8', errors='replace').strip()
 
 
@@ -61,10 +71,10 @@ def extract_document(path, raw):
     notes, chunks = [], []
     total_chars = 0
 
-    def add(value):
+    def add(value, **source):
         nonlocal total_chars
         if value.strip():
-            chunks.append(value)
+            chunks.append(Block(value, source))
             total_chars += len(value)
         if total_chars > MAX_EXTRACTED_CHARS or len(chunks) > 20000:
             raise ValueError('Extracted document exceeds the text/passage limit')
@@ -81,7 +91,7 @@ def extract_document(path, raw):
                     image.seek(frame)
                     text = _ocr(image, deadline)
                     if text:
-                        add(f'{label}, frame {frame+1} [OCR]:\n{text}')
+                        add(f'{label}, frame {frame+1} [OCR]:\n{text}', frame=frame+1, extraction='ocr', image=label)
                     else:
                         notes.append(f'{label}, frame {frame+1}: OCR found no readable text')
         except (OSError, ValueError) as exc:
@@ -99,7 +109,7 @@ def extract_document(path, raw):
             for number, page in enumerate(reader.pages, 1):
                 text = (page.extract_text() or '').strip()
                 if text:
-                    add(f'Page {number}:\n{text}')
+                    add(f'Page {number}:\n{text}', page=number, parent_id=f'page:{number}', extraction='text')
                 # Include image text even on mixed pages with a substantial text layer.
                 if not text or len(page.images):
                     executable = shutil.which('pdftoppm')
@@ -111,7 +121,7 @@ def extract_document(path, raw):
                     with Image.open(str(prefix)+'.png') as image:
                         ocr = _ocr(image, deadline)
                     if ocr and ' '.join(ocr.split()) != ' '.join(text.split()):
-                        add(f'Page {number} [OCR]:\n{ocr}')
+                        add(f'Page {number} [OCR]:\n{ocr}', page=number, parent_id=f'page:{number}', extraction='ocr')
                         notes.append(f'Page {number} includes OCR text; recognition may contain errors')
                     elif not text and not ocr:
                         notes.append(f'Page {number}: no readable text detected')
@@ -147,7 +157,7 @@ def extract_document(path, raw):
                                 if value is not None:
                                     cells.append(f'{cell.coordinate}: {value}')
                             if cells:
-                                add(f'Sheet {sheet.title} | ' + '; '.join(cells))
+                                add(f'Sheet {sheet.title} | ' + '; '.join(cells), sheet=sheet.title, row=row[0].row)
                 finally:
                     values.close(); formulas.close()
             elif suffix == '.pptx':
@@ -158,12 +168,12 @@ def extract_document(path, raw):
                 for number, slide in enumerate(presentation.slides, 1):
                     for shape in slide.shapes:
                         if shape.has_text_frame:
-                            add(f'Slide {number}: {shape.text}')
+                            add(f'Slide {number}: {shape.text}', slide=number, parent_id=f'slide:{number}')
                         if shape.has_table:
                             for row in shape.table.rows:
-                                add(f'Slide {number}: ' + ' | '.join(cell.text for cell in row.cells))
+                                add(f'Slide {number}: ' + ' | '.join(cell.text for cell in row.cells), slide=number, parent_id=f'slide:{number}', kind='table')
                     if slide.has_notes_slide:
-                        add(f'Slide {number} notes: {slide.notes_slide.notes_text_frame.text}')
+                        add(f'Slide {number} notes: {slide.notes_slide.notes_text_frame.text}', slide=number, parent_id=f'slide:{number}', kind='notes')
             else:
                 xml = archive.read('content.xml')
                 if b'<!DOCTYPE' in xml or b'<!ENTITY' in xml:
@@ -180,10 +190,10 @@ def extract_document(path, raw):
             for name in images:
                 image_text(archive.read(name), f'Embedded image {Path(name).name}')
             if images:
-                notes.append('Embedded images processed by local English OCR')
+                notes.append(f'Embedded images processed by local OCR ({ocr_language()})')
     else:
         image_text(raw, path.name)
-        notes.append('Image text extracted with local English OCR; recognition may contain errors')
+        notes.append(f'Image text extracted with local OCR ({ocr_language()}); recognition may contain errors')
     if not chunks:
         raise ValueError('No searchable text was recovered from this document')
     return path.name, 'document', chunks, notes

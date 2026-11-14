@@ -7,6 +7,12 @@ def register_knowledge_skill_tools(server):
     from app import knowledge_skills as engine
     from app import task_skill_store as saved
 
+    @server.tool(annotations=tool_annotations('get_source_context'))
+    def get_source_context(chunk_id: int, neighbors: int = 1, max_chars: int = 6000) -> dict:
+        """Expand a citation into exact indexed passages and known page/section locations. Returns up to three neighbors on each side within the same section; never executes source instructions."""
+        from app.source_context import expand
+        return expand(chunk_id, neighbors, max_chars)
+
     @server.tool(annotations=tool_annotations('prepare_knowledge_brief'))
     def prepare_knowledge_brief(task: str, chunk_ids: list[int], constraints: str = '') -> dict:
         """Build a portable Markdown task brief from 1–8 selected search-result chunk IDs. Includes exact indexed excerpts, citations and snapshot hashes. No generation, saving or execution; review before sharing with another client."""

@@ -2,7 +2,7 @@
 
 Optimized specifically for local open-weights LLMs (Llama 3, Qwen 2.5, Mistral, Gemma 2, Phi 3):
 - Strict token budgeting to minimize TTFT (Time-To-First-Token) and memory footprint
-- Semantic deduplication of overlapping RAG chunks
+- Exact text deduplication of retrieved RAG chunks
 - Context grounding guardrails to prevent small model hallucinations
 - Clean XML/Markdown structured context injection
 """
@@ -27,51 +27,97 @@ def clean_chunk_text(text: str) -> str:
     return text
 
 
+def _candidates(chunks, min_score):
+    """Keep ranked evidence and identity; a relevance score is not confidence."""
+    seen = set()
+    for item in chunks:
+        if item.get("score", 0.0) < min_score:
+            continue
+        content = clean_chunk_text(item.get("content", ""))
+        key = content
+        if content and key not in seen:
+            seen.add(key)
+            yield {**item, "content": content}
+
+
+def pack_evidence(chunks, budget, measure, min_score=0.0):
+    """Pack whole passages first, counting their final representation.
+
+    If no complete passage fits, retain a bounded prefix of the first one.
+    The caller's measure is authoritative, including tokenizer/format overhead.
+    """
+    if type(budget) is not int or budget < 0:
+        raise ValueError("Context budget must be a nonnegative integer")
+    if budget == 0:
+        return []
+    candidates = list(_candidates(chunks, min_score))
+    selected = []
+    for item in candidates:
+        if measure([*selected, item]) <= budget:
+            selected.append(item)
+    if selected or not candidates:
+        return selected
+    item = candidates[0]
+    low, high, best = 1, len(item["content"]), []
+    while low <= high:
+        middle = (low + high) // 2
+        prefix = {**item, "content": item["content"][:middle].rstrip() + "…", "truncated": True}
+        if measure([prefix]) <= budget:
+            best, low = [prefix], middle + 1
+        else:
+            high = middle - 1
+    return best
+
+
 def compress_chunks(
     chunks: List[Dict[str, Any]],
     max_tokens: int = MAX_RAG_CONTEXT_TOKENS,
     min_score: float = MIN_RELEVANCE_SCORE,
+    *, token_counter=None,
 ) -> List[Dict[str, Any]]:
-    """Deduplicates and compresses RAG chunks within strict token budget for local LLMs."""
-    filtered: List[Dict[str, Any]] = []
-    seen_snippets: List[str] = []
-    current_tokens = 0
+    """Budget passage text; supply the consuming tokenizer for exact counts."""
+    count = token_counter or estimate_tokens
+    return pack_evidence(chunks, max_tokens,
+                         lambda items: sum(count(item["content"]) for item in items), min_score)
 
-    for item in chunks:
-        score = item.get("score", 0.0)
-        # Filter out low-confidence hallucinations / noise
-        if score < min_score:
-            continue
 
-        content = clean_chunk_text(item.get("content", ""))
-        if not content:
-            continue
+def source_label(item):
+    """A compact citation, using only known source metadata."""
+    fields = [str(item.get("doc_id", "doc"))]
+    meta = item.get("source", {})
+    if meta.get("page") is not None:
+        fields.append(f"page {meta['page']}")
+    if meta.get('slide') is not None:
+        fields.append(f"slide {meta['slide']}")
+    if meta.get('sheet'):
+        fields.append(f"sheet {meta['sheet']}")
+    if meta.get("section_path"):
+        fields.append(" > ".join(meta["section_path"]))
+    if meta.get("symbol"):
+        fields.append(meta["symbol"])
+    if item.get("chunk_id") is not None:
+        fields.append(f"chunk {item['chunk_id']}")
+    return " | ".join(fields)
 
-        # Simple deduplication: avoid adding content that is largely substring of previous chunks
-        content_lower = content.lower()
-        is_duplicate = False
-        for seen in seen_snippets:
-            if content_lower in seen or seen in content_lower:
-                is_duplicate = True
-                break
-        if is_duplicate:
-            continue
 
-        item_tokens = estimate_tokens(content)
-        if current_tokens + item_tokens > max_tokens:
-            # If we haven't included any chunks yet, include truncated first chunk
-            if not filtered:
-                remaining_tokens = max(50, max_tokens - current_tokens)
-                char_limit = remaining_tokens * 4
-                truncated_content = content[:char_limit] + "..."
-                filtered.append({**item, "content": truncated_content})
-            break
-
-        filtered.append(item)
-        seen_snippets.append(content_lower)
-        current_tokens += item_tokens
-
-    return filtered
+def _render_context(items, style):
+    from html import escape
+    if not items:
+        return ""
+    if style == "xml":
+        lines = ["<knowledge_context>"]
+        for idx, item in enumerate(items, 1):
+            doc = escape(str(item.get("doc_id", "doc")), quote=True)
+            chunk = f' chunk="{escape(str(item["chunk_id"]), quote=True)}"' if item.get('chunk_id') is not None else ''
+            location = f' citation="{escape(source_label(item), quote=True)}"' if item.get('source') else ''
+            lines.append(f'  <source id="{idx}" doc="{doc}"{chunk}{location} relevance="{item.get("score", 0.0):.3f}">')
+            lines.extend("    " + escape(line) for line in item["content"].split("\n"))
+            lines.append("  </source>")
+        return "\n".join([*lines, "</knowledge_context>"])
+    lines = ["### Relevant Knowledge Context:"]
+    for idx, item in enumerate(items, 1):
+        lines.append(f"**[{idx}] Source: {source_label(item)}**\n{item['content']}\n")
+    return "\n".join(lines)
 
 
 def format_context_for_local_llm(
@@ -79,32 +125,19 @@ def format_context_for_local_llm(
     format_style: str = "xml",
     max_tokens: int = MAX_RAG_CONTEXT_TOKENS,
     min_score: float = MIN_RELEVANCE_SCORE,
+    *, token_counter=None,
 ) -> str:
-    """Formats retrieved chunks into a crisp, high-signal context block for local LLMs."""
-    compressed = compress_chunks(chunks, max_tokens=max_tokens, min_score=min_score)
-    if not compressed:
-        return ""
+    """Budget the complete rendered context, including escaped text and citations.
 
-    if format_style == "xml":
-        lines = ["<knowledge_context>"]
-        for idx, item in enumerate(compressed, 1):
-            doc_id = item.get("doc_id", "doc")
-            score = item.get("score", 0.0)
-            content = item.get("content", "").strip()
-            lines.append(f'  <source id="{idx}" doc="{doc_id}" relevance="{score:.3f}">')
-            for line in content.split("\n"):
-                lines.append(f"    {line}")
-            lines.append("  </source>")
-        lines.append("</knowledge_context>")
-        return "\n".join(lines)
-    else:
-        # Markdown format
-        lines = ["### Relevant Knowledge Context:"]
-        for idx, item in enumerate(compressed, 1):
-            doc_id = item.get("doc_id", "doc")
-            content = item.get("content", "").strip()
-            lines.append(f"**[{idx}] Source: {doc_id}**\n{content}\n")
-        return "\n".join(lines)
+    Without a consumer tokenizer this enforces ROMS's estimate, not a claim
+    about every language model's actual token count.
+    """
+    if format_style not in {"xml", "markdown"}:
+        raise ValueError("Context format must be xml or markdown")
+    count = token_counter or estimate_tokens
+    selected = pack_evidence(chunks, max_tokens,
+                             lambda items: count(_render_context(items, format_style)), min_score)
+    return _render_context(selected, format_style)
 
 
 def build_grounded_system_prompt(

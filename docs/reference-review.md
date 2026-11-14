@@ -156,3 +156,28 @@ The implementation deliberately reuses ROMS SQLite ingestion, existing source ch
 | harness/octop/octop-memory-main.zip | 325 | LICENSE | Reference triage; not integrated |
 | harness/polyharness-master.zip | 24 | LICENSE | Reference triage; not integrated |
 | harness/prime-agent-main.zip | 1860 | LICENSE | Reference triage; not integrated |
+
+
+## RAGStuff review for 1.6
+
+The initial pass inventoried 42 archives and inspected selected implementations
+from 13 projects. The second pass rechecked the folder: 41 original archives
+were unchanged, PageIndex's archive was no longer present, and two holographic
+archives had been added (43 current ZIPs). Previously inspected PageIndex source
+was retained as review evidence. Extracted AnyTool, holographic and Hindsight
+folders were also inspected. This is selective source review, not a complete
+security or performance audit. External scripts were not run or installed.
+
+| References | Applied or deferred |
+|---|---|
+| PageIndex, RAGFlow, agent-forge | Preserve structured source boundaries, locations and Python symbols; bounded citation expansion |
+| Headroom, OpenViking | Enforce the final context budget; preserve references back to exact evidence |
+| AnyTool | Embed tool descriptors with ROMS's existing EmbeddingGemma 2, cache by model/content, retrieve actual schemas |
+| Ragas, RAG_Techniques | Self-contained fixed-label retrieval checks with deterministic document-ID metrics |
+| PaddleOCR, RAG-Anything | Preserve extraction locations and expose existing Tesseract language selection; heavier layout/media models deferred |
+| Adaptive-RAG, Hindsight | Keep bounded candidate retrieval and rank provenance; extra cross-encoder models, LLM rewrite loops and graph/temporal service stacks deferred pending a measured need |
+| WritersLogic holographic-memory, standalone holographic-memory, Hermes holographic provider | Text encoders inspected use seeded/hash vectors. They are separate vector spaces and do not replace EmbeddingGemma 2. Supersession/expiry overlap ROMS's existing explicit memory lifecycle. Heuristic contradiction/trust scores are not treated as verified facts. |
+
+No general accuracy or speed improvement is inferred from upstream claims.
+Optional rerankers, graph backends and heavier extraction models remain future
+experiments, not unverified default dependencies.

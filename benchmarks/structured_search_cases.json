@@ -1,0 +1,26 @@
+{
+  "scope": "Synthetic labels fixed before scoring. Tests source structure and conflicting documents; not a representative or sealed evaluation.",
+  "documents": {
+    "pump.md": "# Zephyr pump\n\n## Calibration\nThe calibration interval is 183 hours.\n\n## Emergency stop\nTurn the amber lever clockwise to stop the pump.\n",
+    "motor.md": "# Zephyr motor\n\n## Calibration\nThe calibration interval is 72 hours.\n\n## Emergency stop\nPress the violet button to stop the motor.\n",
+    "stock.csv": "Component,Warehouse,Quantity\nCopper valve,North,37\nSilver bearing,South,94\n",
+    "recovery.py": "def restore_snapshot(path):\n    \"\"\"Restore a saved snapshot after checking its checksum.\"\"\"\n    return load_verified(path)\n\ndef erase_cache(path):\n    \"\"\"Remove temporary cached results, preserving snapshots.\"\"\"\n    return remove_temporary(path)\n",
+    "policy-2024.md": "# Archived 2024 return policy\nReturns were allowed within 14 days. This policy has been superseded by the 2026 policy.\n",
+    "policy-2026.md": "# Current 2026 return policy\nReturns are allowed within 45 days with a receipt.\n",
+    "maintenance.txt": "北極設備の点検間隔は二十日です。冷却液の交換は毎年行います。\n",
+    "accounts.md": "# Account recovery\nUse your recovery email to regain access when you forget your password. Never send your password in a support ticket.\n"
+  },
+  "queries": [
+    {"id":"pump-calibration","query":"Zephyr pump calibration interval","relevant":["pump.md"],"answer":"183 hours"},
+    {"id":"motor-calibration","query":"Zephyr motor calibration interval","relevant":["motor.md"],"answer":"72 hours"},
+    {"id":"pump-stop","query":"How do I stop the Zephyr pump in an emergency?","relevant":["pump.md"],"answer":"amber lever"},
+    {"id":"motor-stop","query":"How do I stop the Zephyr motor in an emergency?","relevant":["motor.md"],"answer":"violet button"},
+    {"id":"table-stock","query":"Copper valve warehouse quantity","relevant":["stock.csv"],"answer":"37"},
+    {"id":"code-symbol","query":"restore_snapshot","relevant":["recovery.py"],"answer":"load_verified"},
+    {"id":"code-meaning","query":"Recover a saved snapshot and verify its integrity","relevant":["recovery.py"],"answer":"load_verified"},
+    {"id":"current-policy","query":"2026 current return policy deadline","relevant":["policy-2026.md"],"answer":"45 days"},
+    {"id":"old-policy","query":"Archived 2024 return deadline","relevant":["policy-2024.md"],"answer":"14 days"},
+    {"id":"japanese","query":"北極設備の点検間隔は？","relevant":["maintenance.txt"],"answer":"二十日"},
+    {"id":"account-paraphrase","query":"I forgot my credentials; how can I regain account access?","relevant":["accounts.md"],"answer":"recovery email"}
+  ]
+}

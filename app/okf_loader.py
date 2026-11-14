@@ -17,7 +17,7 @@ import numpy as np
 from app.config import get_embedding_model, KNOWLEDGE_DIR
 from app.db import get_connection
 from app.document_extract import BINARY_EXTENSIONS
-from app.document_parse import parse_document, fit_model_window, PARSER_VERSION
+from app.document_parse import parse_document, fit_document, PARSER_VERSION
 
 SUPPORTED_EXTENSIONS = {
     ".md",
@@ -65,7 +65,8 @@ def ingest_document_file(filepath: Path | str, db_path: Path | str | None = None
     if len(raw) > MAX_FILE_BYTES:
         raise ValueError("Document exceeds the 32 MiB ingestion limit")
     from app.embedding_space import identity as embedding_identity, require_compatible
-    identity = json.dumps([PARSER_VERSION, config.EMBEDDING_PROVIDER, embedding_identity()],
+    from app.document_extract import ocr_language
+    identity = json.dumps([PARSER_VERSION, config.EMBEDDING_PROVIDER, embedding_identity(), ocr_language()],
                           ensure_ascii=False).encode('utf-8')
     checksum = hashlib.sha256(identity + b'\0' + raw).hexdigest()
 
@@ -92,10 +93,11 @@ def ingest_document_file(filepath: Path | str, db_path: Path | str | None = None
     # Finish all model work and validate every vector before touching the old index.
     import torch
     model = get_embedding_model()
-    chunks = fit_model_window(chunks, model)
+    parsed.title = title  # Use the original display name for managed upload snapshots.
+    chunks, chunk_metadata, embedding_inputs = fit_document(parsed, model)
     with torch.inference_mode():
         batch_embeddings = np.asarray(
-            model.encode(chunks, output_value="sentence_embedding", batch_size=32),
+            model.encode(embedding_inputs, output_value="sentence_embedding", batch_size=32),
             dtype=np.float32,
         )
 
@@ -160,6 +162,8 @@ def ingest_document_file(filepath: Path | str, db_path: Path | str | None = None
             [(chunk_id, filename, chunk_text)
              for chunk_id, chunk_text in zip(chunk_ids, chunks)],
         )
+        from app.source_context import replace as replace_locations
+        replace_locations(conn, filename, chunk_ids, chunk_metadata)
         from app.knowledge_catalog import replace_navigation
         replace_navigation(conn, filename, list(zip(chunk_ids, chunks)))
         from app.knowledge_skills import replace_sources
@@ -263,7 +267,7 @@ def prune_missing_knowledge(root, files, identity, db_path=None):
                     pass
                 check_root()
                 conn.execute('DELETE FROM chunk_topics WHERE chunk_id IN (SELECT chunk_id FROM fts_chunks WHERE doc_id=?)', (doc_id,))
-                for table in ('vec_chunks', 'fts_chunks', 'okf_registry', 'ingestion_details', 'knowledge_navigation', 'knowledge_skill_sources'):
+                for table in ('vec_chunks', 'fts_chunks', 'okf_registry', 'ingestion_details', 'knowledge_navigation', 'knowledge_skill_sources', 'chunk_sources'):
                     if table in tables:
                         conn.execute(f'DELETE FROM {table} WHERE doc_id=?', (doc_id,))
                 if 'ingestion_failures' in tables:

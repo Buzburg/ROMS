@@ -2,9 +2,10 @@
 
 By **Buzburg**.
 
-ROMS 1.5 uses **EmbeddingGemma 2 Q8** for local semantic search. It downloads
+ROMS 1.6 uses **EmbeddingGemma 2 Q8** for local semantic search. It downloads
 the pinned public model during setup and works with any assistant through ROMS's
-existing MCP tools or portable task briefs. [Upgrade an existing index](docs/search-upgrades.md#upgrading-from-embeddinggemma-300m).
+existing MCP tools or portable task briefs. Document passages now retain page and
+section locations, and tool discovery uses the same embedding model. [Upgrade an existing index](docs/search-upgrades.md#upgrading-from-embeddinggemma-300m).
 
 **Stop re-explaining your project to every AI.**
 

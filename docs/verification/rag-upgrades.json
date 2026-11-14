@@ -1,0 +1,555 @@
+{
+  "scope": "Local CPU synthetic/manual regression evidence. No general accuracy or speed claim.",
+  "baseline_revision": "2d92be8172b92e228d43a282b58b846e0b90d6c1",
+  "model": {
+    "dimension": 768,
+    "document_prefix": "title: none | text: ",
+    "model": "onnx-community/embeddinggemma-2-ONNX",
+    "query_prefix": "task: search result | query: ",
+    "revision": "daa72c51243991dfcaf9f9137d2c573d8f7790c0"
+  },
+  "python": "3.12.14 (main, Sep  1 2026, 14:16:52) [Clang 22.1.3 ]",
+  "app_source_sha256": {
+    "app/__init__.py": "228fb237b3518d5b887a2c72d2f10e36f6af716a5330d19643d4c426e2caa7da",
+    "app/ast_validator.py": "b309fe140f1de85a5fad655e91a0d034da669cbbac40fdc9d92b2ef1460379da",
+    "app/auto_evolver.py": "b587cc97640c9aef5f803353f035dd6aacf489836de7ead1d7feeea0e34f2e08",
+    "app/autokarpathy.py": "2beac31fdca45588d162c44fbd387c1a5dff247aefb59fa022b13966ab47f8b2",
+    "app/autoresearch.py": "7161214e3e556847fd21c7d426a1f9107f3565b7c1c57a53dc6a80e9299d6217",
+    "app/broker_actions.py": "840f06c702be9371149b789e4bdd1509e006b8087bc73810579dcf4d4ab2002f",
+    "app/broker_chat.py": "71351af3945c5f5d9bd918f335ec1f8468a1f1a1b06a930528e7d8342e9b4bc6",
+    "app/broker_memory.py": "20714c2a1d378071c004e2ed512a71e429df9f163b8581d8479fd21b0ed8c99b",
+    "app/broker_protocol.py": "e4071ba5ce6f1b33f2be9316397e90796568db8c1f5abe7a8cf7601bef46f934",
+    "app/broker_requests.py": "5dcfedd765ed1feafe7f90ad2c8a9d8a2f2f2075dcf39f00f99681ab66955443",
+    "app/broker_scheduler.py": "e54997746abbcce20ff96c6fe39751fa8df2dbe72c498042cc3dcd7c8c9e25f6",
+    "app/compact_scaffold.py": "9a295d0c42ac4a112467ea0a44bd96a823f7617a2c41fb946a86aed9a6046369",
+    "app/config.py": "657134d085a39d9b22d52dc83f00655adb16087f861b7cbf549ac91405151559",
+    "app/container_runner.py": "1e92c5816030cab804a6287fc2082dd3bd841766eb55bee81409caf20559560b",
+    "app/context_select.py": "0f9d754516fa5fc97f7a19c5662ff1b6855e4abea27362dd2335f2cac976f577",
+    "app/dark_reasoner.py": "fd275acec8de6e280d5dd8efaf3bd3de7b7061789b85e9817343b1d439e8ae44",
+    "app/db.py": "e1a53801beac475b9bfa3d164bd392f82d681a640fa8e4feaa3b35939b70c057",
+    "app/decisions.py": "390a74108bae9fd262cf8fa1ebf58a8b6dba529616d990046d829422653bbe65",
+    "app/doctor.py": "df77664a83609de898642c17b47b6aae025e32b26d943cd8ac8b5858c1fab2c7",
+    "app/document_extract.py": "e4924c578ce832cebd97f3b6ef7d96e15d68264937f5dc7d827f28fad7caf98f",
+    "app/document_parse.py": "00c7a6e2454e4cdaed7defea4b329b469a1f6ef5932822e3d508279b0dbed87a",
+    "app/document_structure.py": "df29bd465973641857b842ae20aefcc12586febe60baea43fcfe5bf7878fafa3",
+    "app/dream_cycle.py": "f7dc1400a7ddcdf6ac8960287836aef2cdf82d903f6bbce8c9f1b1be145ca2ad",
+    "app/dual_brain_router.py": "b83747c6bd9ac59a3ab483b18a5fc4e1614eba78e5d8a766002a96f6153187cc",
+    "app/ecc_codec.py": "0c66c15fd66c972b2058101c9b1f0030f92f416818c952461ba6f893232f69bb",
+    "app/embedding_space.py": "b40fa6274975437cc9fee5ea9c4f2bcdb63485ec5e1eab74830e82800f107214",
+    "app/embeddinggemma.py": "f43656ab67049ca50a5630753a751880e8a5d99cb4c8263f32379776de5cc0fe",
+    "app/gateway.py": "13555257195cd5224ed77fe198ce7a19f0fd8eb22a8961a75d138a7ae304d7db",
+    "app/git_workspace.py": "42f9ad010578448366f4188e90116d0cf27bb22bac45c9f5530c019c8cbb7c73",
+    "app/goose_response.py": "e4035447f253ddebced14868803f335b02d7b32c597148e949ab5fe8df4bda2d",
+    "app/harness.py": "84ddaa5c56e39631e804387281b0820f4f4900fbee3d59d899618312280ba3f1",
+    "app/harness_cli.py": "176a72ddb17dd62ea8fd392bc6521d0896257165b21a4eee62a557dd5ccb2e13",
+    "app/holographic_indexer.py": "3d50fb11b9d4ca4fd955169e7c325111c709aa82a59ad0af222c6392b48d19a9",
+    "app/holographic_phase.py": "c84291009c8e5cd77c033a428c90834481905027587f1cc00e71030fbfcda8ca",
+    "app/json_protocol.py": "dc135a7f5a2764b6c11e9ae93e9a926998a4a733880f0548eaccfa5730eeaf63",
+    "app/knowledge_brief.py": "11cc4a291fa365f382843766cf673a1da9966d9947cbe25af2ab4ac88924a1a1",
+    "app/knowledge_catalog.py": "af9da0b5b6372ab049b090c676a060b9eb1abdc9ab0962f15879e8d40c54175a",
+    "app/knowledge_intake.py": "b986534100147a2b314abbd729ecb7d37153a6c6baa884dad56de97927aa4978",
+    "app/knowledge_skill_cli.py": "3f73a98f4b3b5378e20a4d5cd98f66f2bdd81b2018e104f4aa557a2eda3528de",
+    "app/knowledge_skill_tools.py": "813a4693e3cf7802cbab6251884003604d3dff9f2a473c113aeb0b9fbef24496",
+    "app/knowledge_skills.py": "ec8188af404be1e32c05d9ada0c23ab4f197592c112fe424385a37db929f60e8",
+    "app/knowledge_web.py": "a9e7c4cabc9236ee63a766f188156d8d02e6ad4d6f954504b2a39b0298b01330",
+    "app/mcp_annotations.py": "b815499db4e97baeeeb372463d85883386961318a21fcb997a6cd414db0e075c",
+    "app/mcp_policy.py": "be5f3be1044d18bc8ba2d44f396c40e34859865457894393e1436eb01acbc70a",
+    "app/memory.py": "ec49cff786f68b03cb90dd11e581737572f7b23cb49809276beee073907379ff",
+    "app/memory_context.py": "a9bbff74c9b19a208d7856e460552bc4131229ae222725e73a5735b0344a76f1",
+    "app/memory_service.py": "e31ee5a0edc31a44fa11dd2684c27a27ade33585fdf9a554f0874d14b8bddbda",
+    "app/memory_tools.py": "b3be8784cd2d0b3030fbf3055122ff4e96db8658496edc49ae1b0d2005791238",
+    "app/mojo_bridge.py": "8918ac9bdcca9cb27250e45213433351a25dd1177835bde972fa091fe31c1963",
+    "app/native_chat.py": "d04080ec21c8576e8e2507d74ca1c5f5c6920dde03520f99ffbd060d78f9bc33",
+    "app/native_model_worker.py": "d3b42078cde6f0320dcd736173aa4dd939d32d028266b472ab77a3f58139a31a",
+    "app/nest_soul.py": "19f44f681194499db8d5941928669fdd8889e0c1e168f6eea1fc7afb0f94efda",
+    "app/okf_loader.py": "7fa4faab2a84dc1df5e2ad01d7e17e999426d84d362fbc2163071cfeec954974",
+    "app/omarchy_hud.py": "0317bde6085c0aed20222e8819a73cd74865a6bcdf673adc97a1764a1d964043",
+    "app/os_model.py": "1f5874ef5cb6f27fcb12774ebd1d7073782f39cf0907fb680655792f6da12bb2",
+    "app/os_operator.py": "ede9c672b81692316fe20d49f09e1ae9071e691163efe3bebc1806fbc6b0ccc3",
+    "app/patch_promotion.py": "a5155208cd51f990d3f0d1570259332e2ee962df1204cfbf534721e2ba26079b",
+    "app/patch_tasks.py": "af2f7002b8db818d15299b2e70aaae8d313ea172629c7d5b9a945a3a5e5d52e9",
+    "app/prefrontal_cortex.py": "cf58a09665dd32743df7bbe5a722bd186bc12168817e4651155a7840edca7466",
+    "app/process_sandbox.py": "b9f8e18d2985a62dc5760bd37f60e1386e25e6405bc168edef93c492ecdcbd96",
+    "app/project_assistant.py": "d5aa6a5d69790ba7f43bfa3d99a47682aef1e5f2a3e7af02eba11d07724aa574",
+    "app/project_contract.py": "f124054837657bed376ab97ddc0354bb1badbf3c577dbc800693075406c730e6",
+    "app/project_model.py": "518be1fa9a6e038eb3e6579c4ce9aba1516833839ad881af6e7a4fd483154d8e",
+    "app/project_repair.py": "4bc02673c60dabbdd1378de2e3132254fee2ee44fa6bb41d09839a9d1c0b32f7",
+    "app/prompt_builder.py": "71ec1347251d22c682639afaf892deb023e1f75a464ff1f7a9db6436f324f15d",
+    "app/rag_engine.py": "5a4cbf82bd7becd441856519a8e405772a5101afb95ab8688c91a587d77f75e5",
+    "app/reflection.py": "d53da45e74c0d86eb886edb9e4783b1cb85408bd92ef82b2bfc2a7cf6326eea5",
+    "app/request_lifecycle.py": "4b232fb05bc7d66abf8e3f303651d2178362f753718e94728e04ac033e3ada20",
+    "app/role_registry.py": "a3ae8355082d2cf4914f4e08c13c11ae57da86aaca9057f08673139ee834d780",
+    "app/runtime_clock.py": "ac1e40a78b7f0ea4cff174688e592a81053f28aebf74e0d3fbad976c405d9a5e",
+    "app/safe_paths.py": "bf1cd6db370527c61d3e9a37640759f47955f1d8cb4129fcd813c931c4b6e880",
+    "app/sandbox_worker.py": "d2f6f7b9a7e76acb8eb364e3d2ca2d1dbc81e42bedf7942a798166f424f1984f",
+    "app/search_native.py": "a88002397d86889c4927e2e25240f68a5c994cd3f964a822f208589f9adb63e4",
+    "app/server.py": "ca56ceeb0391dcc822a014488f2b4961534ff997649e322c2d4b2a6e3de59dc2",
+    "app/snapshot_restore.py": "7eceeaf5a7e6e1a334d84d31246f9e0a16f713a78c3151c5a3bd525f7c83b944",
+    "app/source_context.py": "403559adfeece6d0ebfb28d3bad701148101a87152a1026b3b4ec2088cfc4745",
+    "app/source_library.py": "a39dd7ed10b3a2b2fad69252f5952acc230fc298b97da2a125e82a91017c7ed9",
+    "app/task_skill_agent.py": "569c4c17ee9340ba8f8fc0ca2079e083462d5a8b7ff78fdd52b8340688dfb765",
+    "app/task_skill_contracts.py": "1628037716acfcefb173c1058270278aa04536dfa1ebfe0c9fc336a57075bf69",
+    "app/task_skill_store.py": "bb849ad692961e2254ad7454ee8946462a564a27f2c7bdce6dac29da10daaf9a",
+    "app/task_skills.py": "88dea46c0d30fa2c2580f5227756b9d0bd8ce580bfaa767317c7a1d806f0ee8f",
+    "app/task_worker.py": "b903a237cef2d28bfc3e793294e3c21ed9480b9de7ed796b25856a3812ae0daa",
+    "app/task_worker_client.py": "2f9edb373ae854cbcfb0ecafee61f3a283655919b7cf5c24eb2f74cbbba348b3",
+    "app/throttle.py": "4c1276d6b17a77269ae586bf8d8e8e4071296460561b0434cef4d70a297c3335",
+    "app/tool_embeddings.py": "0ec333e5aaf69dc16468863add6920eba347fbf46eaa4c4f1af9452f1558ecd0",
+    "app/tool_rag.py": "eda9775804ceb180d53045cedbafca6b42d439eab328c4a573bc7b2c248abcd9",
+    "app/tools.py": "3caf024196a665cabfb9738696f550525bc1b5b66f9e1e8c52b5ec5b7609ff49",
+    "app/topic.py": "e973dc89a12604f7ef3c293c6ebfa4debc24543b72b57f46d5769e2f12618beb",
+    "app/trajectory_recorder.py": "be48d165c0b9807d785a891cc257a434dd3c4806c3a9d10dfff8de52e8995ffd",
+    "app/validation_policy.py": "eb42d8b4d58f87ea30f71e273a0679cc1714404ecf2d585939554511c3d56b4c",
+    "app/voice_audio.py": "a3b8c5ca67539c01d8c3d6a9b638f9fb9008c19e28525fed809727b7f964d0a6",
+    "app/voice_chat.py": "b4e417898780e2147926b8b53db3cb48eee4f6b9b9464c5d96e69f064878837f",
+    "app/voice_stt.py": "93e100f16e522d8c2a21a7ddae07678d59e02a29f991509b0af36ad2936c41ef",
+    "app/voice_tts.py": "9398e64951a422ba079b0b31d526258a602d988cc4259d0a0d8449ba7095e1ae",
+    "app/vsa_tsl_engine.py": "cf5d438f2e90437d200983fd2d364f3869483e35688b2f2daa20112ff260ef09",
+    "app/watcher.py": "890d4e0963ec4f8ae9f0d63ca382710c458b7d3ebfefde010d3a6050087a1721",
+    "app/worker_recovery.py": "46007285b1084b692a4eadaf70a5857a23a983a977c5280374d6241b353473f3",
+    "app/worker_tools.py": "3841d8ee76b45c24d6d6ac2db7bad9fc3d7cc39ddd6e2cc4982a70f6c0895585",
+    "app/zgsearch.py": "57cdf3b990b0df8cd560adf86b331c8c5eacd331bba5f0f1af7f878ec7473e69"
+  },
+  "evaluator_sha256": "bd1fb80b921a972f705e415053ee16d8139dc358531dfa18cbcaf72d955019f5",
+  "local_suite": {
+    "passed": 1270,
+    "skipped": 79,
+    "subtests_passed": 49
+  },
+  "skips": "Optional live model, voice, desktop, native worker/container and adapter checks; see raw pytest output.",
+  "checks": [
+    {
+      "check": "release-final",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "tests",
+        "scripts",
+        "-q",
+        "-ra",
+        "--tb=short"
+      ],
+      "exit_code": 0,
+      "stable_tree_during_execution": true
+    },
+    {
+      "check": "native-mcp-final",
+      "command": [
+        ".venv/bin/python",
+        "tests/test_mojo_protocol.py",
+        "<repo>/build/roms-mcp",
+        "<repo>"
+      ],
+      "exit_code": 0,
+      "stable_tree_during_execution": true
+    },
+    {
+      "check": "real-model-integrations",
+      "command": [
+        ".venv/bin/python",
+        "-c",
+        "import subprocess,sys; [subprocess.run([sys.executable, p], check=True) for p in ['scripts/verify_embeddinggemma.py','scripts/verify_knowledge_skills.py','scripts/verify_rag_upgrades.py']]"
+      ],
+      "exit_code": 0,
+      "stable_tree_during_execution": true
+    },
+    {
+      "check": "evaluator-frozen",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/test_retrieval_evaluator.py",
+        "-q"
+      ],
+      "exit_code": 0,
+      "stable_tree_during_execution": true
+    },
+    {
+      "check": "concurrent-tools",
+      "command": [
+        ".venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/test_tool_embeddings.py",
+        "tests/test_tools_quality.py",
+        "-q"
+      ],
+      "exit_code": 0,
+      "stable_tree_during_execution": true
+    },
+    {
+      "check": "tool-model-final",
+      "command": [
+        ".venv/bin/python",
+        "scripts/verify_rag_upgrades.py"
+      ],
+      "exit_code": 0,
+      "stable_tree_during_execution": true
+    },
+    {
+      "check": "compare-frozen",
+      "command": [
+        ".venv/bin/python",
+        "-c",
+        "import subprocess,sys; common=['--fixtures','scratch/rag-upgrade/frozen-fixtures']; subprocess.run([sys.executable,'scripts/evaluate_single_search.py',*common,'--implementation-root','<baseline-checkout>','--output','scratch/rag-upgrade/baseline-frozen-results.json'],check=True); subprocess.run([sys.executable,'scripts/evaluate_single_search.py',*common,'--output','scratch/rag-upgrade/upgrade-frozen-results.json'],check=True)"
+      ],
+      "exit_code": 0,
+      "stable_tree_during_execution": true
+    },
+    {
+      "check": "retrieval-release",
+      "command": [
+        ".venv/bin/python",
+        "scripts/evaluate_single_search.py",
+        "--fixtures",
+        "scratch/rag-upgrade/frozen-fixtures",
+        "--output",
+        "scratch/rag-upgrade/upgrade-release-results.json"
+      ],
+      "exit_code": 0,
+      "stable_tree_during_execution": true
+    }
+  ],
+  "retrieval_comparison": {
+    "repository": {
+      "baseline": {
+        "queries": 20,
+        "top1": 17,
+        "hit5": 20,
+        "mrr5": 0.925,
+        "recall5": 0.975,
+        "ndcg5": 0.9155558562099753,
+        "median_ms": 70.61975600663573,
+        "p95_ms": 73.43223900534213
+      },
+      "upgrade": {
+        "queries": 20,
+        "top1": 18,
+        "hit5": 20,
+        "mrr5": 0.9291666666666667,
+        "recall5": 0.975,
+        "ndcg5": 0.9205223484756506,
+        "median_ms": 67.82957350515062,
+        "p95_ms": 73.54866999958176
+      },
+      "labels_sha256": "563b667213c6d5eda18feeed564615e6b098d9ee47c9e23c47c027f4221b15b1",
+      "source_sha256": {
+        "README.md": "6b8e84877eecbaa55f14b33225339f499f071dcd6133db1badf37e56734fab36",
+        "app/memory.py": "ec49cff786f68b03cb90dd11e581737572f7b23cb49809276beee073907379ff",
+        "app/okf_loader.py": "7fa4faab2a84dc1df5e2ad01d7e17e999426d84d362fbc2163071cfeec954974",
+        "app/project_repair.py": "4bc02673c60dabbdd1378de2e3132254fee2ee44fa6bb41d09839a9d1c0b32f7",
+        "app/prompt_builder.py": "71ec1347251d22c682639afaf892deb023e1f75a464ff1f7a9db6436f324f15d",
+        "app/rag_engine.py": "5a4cbf82bd7becd441856519a8e405772a5101afb95ab8688c91a587d77f75e5",
+        "app/source_library.py": "a39dd7ed10b3a2b2fad69252f5952acc230fc298b97da2a125e82a91017c7ed9",
+        "app/task_worker.py": "b903a237cef2d28bfc3e793294e3c21ed9480b9de7ed796b25856a3812ae0daa",
+        "app/validation_policy.py": "eb42d8b4d58f87ea30f71e273a0679cc1714404ecf2d585939554511c3d56b4c",
+        "app/voice_stt.py": "93e100f16e522d8c2a21a7ddae07678d59e02a29f991509b0af36ad2936c41ef",
+        "app/voice_tts.py": "9398e64951a422ba079b0b31d526258a602d988cc4259d0a0d8449ba7095e1ae",
+        "app/worker_recovery.py": "46007285b1084b692a4eadaf70a5857a23a983a977c5280374d6241b353473f3",
+        "docs/HARNESS.md": "29a4bd0defebb80e908cc0a1e9a982e536bc938f31439bf0d6fc059cf33d7f8b",
+        "docs/chat-privacy.md": "f394fbd232a75d046ecb8c74eaab9b4694b946b14e94d357a8bb9d9fe6b9ab52",
+        "docs/components.md": "6b22910f4a2625f724db46c22c19e06315c96f7e600a72028c8d10958bc0176b",
+        "docs/local-memory.md": "348049cd581386f3f4a192b4dcd010f0712721f8bd8d6f5760ad6019df0fb2db",
+        "docs/model-input-verification.md": "01e623aa2634950862b3cd4c0df21e7d76ada269e5519ea5e0d9d09c00600c74",
+        "docs/native-sandbox-verification.md": "b5f51703c78e4c660bb22ea1d300c6f47150fef5d53c2a56d0ff4a2a817a69fb",
+        "docs/patch-promotion-verification.md": "de8c868f9a0e0949ba56c88808a250d2cf4ed9044daec6a952b4ee6b24028358",
+        "docs/project-repair.md": "898489ccff1d1104adf426498ddc90d0bbd709301b05c083d6de55f23de29b44",
+        "docs/voice-performance.md": "4be0396fb775d4f6ba5b8418575867f50e01fec367bccfb4dd43d28666e27470",
+        "docs/voice.md": "1a17f63f1b596389be70ab8bce7379f1270a4a54f14c72ff3cb507c3e8934f20",
+        "docs/worker-recovery-verification.md": "a4c54a8d305887637ec2323c51e2bf34b764a2c718dbcf62680b0510ac210d61",
+        "knowledge/refund_policy.md": "394ed4e38c473553c9d10c0d212d7a625f03dae142aed6c40da33aade15edf64"
+      },
+      "queries": [
+        {
+          "id": "refund_exact",
+          "rank": 1
+        },
+        {
+          "id": "refund_typo",
+          "rank": 4
+        },
+        {
+          "id": "refund_meaning",
+          "rank": 1
+        },
+        {
+          "id": "privacy_exact",
+          "rank": 1
+        },
+        {
+          "id": "privacy_meaning",
+          "rank": 1
+        },
+        {
+          "id": "sandbox_exact",
+          "rank": 3
+        },
+        {
+          "id": "sandbox_typo",
+          "rank": 1
+        },
+        {
+          "id": "sandbox_meaning",
+          "rank": 1
+        },
+        {
+          "id": "repair_meaning",
+          "rank": 1
+        },
+        {
+          "id": "memory_meaning",
+          "rank": 1
+        },
+        {
+          "id": "voice_meaning",
+          "rank": 1
+        },
+        {
+          "id": "voice_latency",
+          "rank": 1
+        },
+        {
+          "id": "ingest_symbol",
+          "rank": 1
+        },
+        {
+          "id": "ingest_meaning",
+          "rank": 1
+        },
+        {
+          "id": "query_cache",
+          "rank": 1
+        },
+        {
+          "id": "source_symbol",
+          "rank": 1
+        },
+        {
+          "id": "tts_symbol",
+          "rank": 1
+        },
+        {
+          "id": "stt_symbol",
+          "rank": 1
+        },
+        {
+          "id": "harness_meaning",
+          "rank": 1
+        },
+        {
+          "id": "repair_typo",
+          "rank": 1
+        }
+      ]
+    },
+    "messy": {
+      "baseline": {
+        "queries": 12,
+        "top1": 12,
+        "hit5": 12,
+        "mrr5": 1.0,
+        "recall5": 1.0,
+        "ndcg5": 0.9985743401630574,
+        "median_ms": 66.85956649744185,
+        "p95_ms": 70.16939400637057
+      },
+      "upgrade": {
+        "queries": 12,
+        "top1": 12,
+        "hit5": 12,
+        "mrr5": 1.0,
+        "recall5": 1.0,
+        "ndcg5": 0.9920597691239229,
+        "median_ms": 66.81463649874786,
+        "p95_ms": 70.19085000501946
+      },
+      "labels_sha256": "76c0499731fbb2189e9d1e93cfac5528e5e0303830a62a567fdefcb57f2c745a",
+      "source_sha256": {
+        "events.ndjson": "8de569c0ed10622559069e61c2828998d25e937c37e819f1775c2880621431ff",
+        "frames.tiff": "2b9ba88091790234c5c2c8b102d6f605b011e33714ce889d4a85a7f4aa8e6914",
+        "help.html": "70b8175c4c0819b08e075ed1c5d244d7a1fff84c04aab761c3f818304171645c",
+        "inspection.pdf": "3fe32ecbd6f91b38fd3729481666e7074f3511770467056ab0de7c3ed87c57fd",
+        "inventory.csv": "02fb5be0e1aad067dc240d685dd42050e8c0b006b50120d9cafa78b0ec147f2d",
+        "meeting.odt": "c783982cf4cfd78a10239aab54819893baef3f202f785071e9a3a3fbf6fa6738",
+        "notes.txt": "87df28fd4bd58626fa1e9de5c8a3e9263705970361825048facb4266de2d9071",
+        "orders.xlsx": "d794b3c9aa4e501081a257218b2017ac7fd5a4c15547539f2ef0773f8bd8cd6a",
+        "repair.md": "8e7116a798507078524b0cdc90b608f35354f0aaac5f1635c1beb4abcb86db0b",
+        "safety.pptx": "03851e975885c6add6ad86d7957fdb31066d5f8a6c07128ac3ecee7d784291e1",
+        "scan.pdf": "a92e79de71108e178fe16d1a154577c459053736cc712a5c0a345757869d9a78",
+        "scan.png": "b389d0a8d1215a108bb1199251dc788f2839c886811416a4d997776cc64c214b",
+        "unicode.log": "286bc52042c7a4ccebe9deb4a5f300f3c42557d2fcf511b3de7a40fd9b2b7b31",
+        "warranty.docx": "32e74071221ac0dd835b975bbc7269a073426c3df4515b5c124faede40286432"
+      },
+      "queries": [
+        {
+          "id": "messy-1",
+          "rank": 1
+        },
+        {
+          "id": "messy-2",
+          "rank": 1
+        },
+        {
+          "id": "messy-3",
+          "rank": 1
+        },
+        {
+          "id": "messy-4",
+          "rank": 1
+        },
+        {
+          "id": "messy-5",
+          "rank": 1
+        },
+        {
+          "id": "messy-6",
+          "rank": 1
+        },
+        {
+          "id": "messy-7",
+          "rank": 1
+        },
+        {
+          "id": "messy-8",
+          "rank": 1
+        },
+        {
+          "id": "messy-9",
+          "rank": 1
+        },
+        {
+          "id": "messy-10",
+          "rank": 1
+        },
+        {
+          "id": "messy-11",
+          "rank": 1
+        },
+        {
+          "id": "messy-12",
+          "rank": 1
+        }
+      ]
+    },
+    "structured": {
+      "baseline": {
+        "queries": 11,
+        "top1": 11,
+        "hit5": 11,
+        "mrr5": 1.0,
+        "recall5": 1.0,
+        "ndcg5": 1.0,
+        "median_ms": 69.10712699755095,
+        "p95_ms": 71.68719000765122
+      },
+      "upgrade": {
+        "queries": 11,
+        "top1": 11,
+        "hit5": 11,
+        "mrr5": 1.0,
+        "recall5": 1.0,
+        "ndcg5": 1.0,
+        "median_ms": 67.42317500174977,
+        "p95_ms": 70.63040899811313
+      },
+      "labels_sha256": "844ceded09b5ee464910a29ca1b541da91dcdabc8bd44162b45f9df85e887281",
+      "source_sha256": {
+        "accounts.md": "5d12b0e619c11b3fbf73525af31eec943fb409e517bb452f58e24e1a99abdbc7",
+        "maintenance.txt": "ee38ddc752dec370d2e4cd8a7ba5514af00f4c91ac83501fd80f40d0af90edef",
+        "motor.md": "b94771443429c59942102315c7d0357e44bf6dc4c8344d8eac73ef00d8dbd517",
+        "policy-2024.md": "eef86336a3f9775876a440a00f45fff4bdfc7cea25def986faf403e7399dee2a",
+        "policy-2026.md": "2a4831c39f4593533f4e5232924d8fef6589e24d365bb030f96ce7e412e4ae2e",
+        "pump.md": "bf9c31adad1a0b9d7b0b72423aa4057a79591425f86037e8837664571fb800a7",
+        "recovery.py": "754e3d23cfc569b4575dec7e9ebe8275cb7f7232cd4ff86dd748c4f89cf413ac",
+        "stock.csv": "0414f4d153a6f3efa0941a0b4dc6b05eb23cc555008ca17623656ee467534775"
+      },
+      "queries": [
+        {
+          "id": "pump-calibration",
+          "rank": 1,
+          "answer_in_relevant_evidence": true
+        },
+        {
+          "id": "motor-calibration",
+          "rank": 1,
+          "answer_in_relevant_evidence": true
+        },
+        {
+          "id": "pump-stop",
+          "rank": 1,
+          "answer_in_relevant_evidence": true
+        },
+        {
+          "id": "motor-stop",
+          "rank": 1,
+          "answer_in_relevant_evidence": true
+        },
+        {
+          "id": "table-stock",
+          "rank": 1,
+          "answer_in_relevant_evidence": true
+        },
+        {
+          "id": "code-symbol",
+          "rank": 1,
+          "answer_in_relevant_evidence": true
+        },
+        {
+          "id": "code-meaning",
+          "rank": 1,
+          "answer_in_relevant_evidence": true
+        },
+        {
+          "id": "current-policy",
+          "rank": 1,
+          "answer_in_relevant_evidence": true
+        },
+        {
+          "id": "old-policy",
+          "rank": 1,
+          "answer_in_relevant_evidence": true
+        },
+        {
+          "id": "japanese",
+          "rank": 1,
+          "answer_in_relevant_evidence": true
+        },
+        {
+          "id": "account-paraphrase",
+          "rank": 1,
+          "answer_in_relevant_evidence": true
+        }
+      ]
+    }
+  },
+  "interpretation": "Hit@5 unchanged at 43/43. Repository top-1 17 to 18 of 20. Messy nDCG5 0.9985743401630574 to 0.9920597691239229; no blanket accuracy improvement. All 11 structured answers appeared in relevant evidence.",
+  "tool_probe": {
+    "model_identity": {
+      "dimension": 768,
+      "document_prefix": "title: none | text: ",
+      "model": "onnx-community/embeddinggemma-2-ONNX",
+      "query_prefix": "task: search result | query: ",
+      "revision": "daa72c51243991dfcaf9f9137d2c573d8f7790c0"
+    },
+    "lexical_tool_matches": 0,
+    "semantic_top_tool": "reset_password",
+    "semantic_similarity": 0.7160362005233765,
+    "source_location": {
+      "block_id": "block:1",
+      "parent_id": "section:1",
+      "offset_basis": "normalized_text",
+      "section_path": [
+        "Zephyr pump",
+        "Emergency stop"
+      ],
+      "start_char": 15,
+      "end_char": 64,
+      "line_start": 3,
+      "line_end": 4
+    },
+    "context_estimated_tokens": 91,
+    "result": "PASS"
+  }
+}

@@ -303,30 +303,16 @@ def hybrid_search(
 def format_search_results(
     results: List[Dict[str, Any]], max_chars: int = MAX_RAG_CONTEXT_CHARS
 ) -> str:
-    """Formats retrieved chunks with token budget compression for local LLMs."""
+    """Bound the entire result string, including citation headers/separators."""
+    from app.prompt_builder import pack_evidence, source_label
     if not results:
-        return "No relevant documentation found."
-
-    formatted = []
-    total_chars = 0
-
-    for r in results:
-        doc_id = r["doc_id"]
-        content = r["content"].strip()
-        score = r.get("score", 0.0)
-
-        # Budget check to prevent freezing local LLM prompt prefill
-        if total_chars + len(content) > max_chars:
-            remaining = max_chars - total_chars
-            if remaining > 80:
-                truncated = content[:remaining] + "... [TRUNCATED FOR TOKEN BUDGET]"
-                formatted.append(f"[Source: {doc_id} | Score: {score:.3f}]\n{truncated}")
-            break
-
-        formatted.append(f"[Source: {doc_id} | Score: {score:.3f}]\n{content}")
-        total_chars += len(content)
-
-    return "\n\n---\n\n".join(formatted)
+        return "No relevant documentation found."[:max(0, max_chars)]
+    def render(items):
+        return "\n\n---\n\n".join(
+            f"[Source: {source_label(item)} | Score: {item.get('score', 0.0):.3f}]\n{item['content']}"
+            for item in items)
+    selected = pack_evidence(results, max_chars, lambda items: len(render(items)))
+    return render(selected)
 
 
 def local_search(query: str, limit: int = 3, db_path: Path | str | None = None,

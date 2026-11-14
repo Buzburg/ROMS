@@ -24,6 +24,8 @@ def clear_tool_cache() -> None:
     """Invalidates in-memory tool catalog and search cache upon tool updates."""
     _CATALOG_CACHE.clear()
     _TOOL_SEARCH_CACHE.clear()
+    from app.tool_embeddings import clear_results
+    clear_results()
 
 
 def register_tool(
@@ -106,8 +108,12 @@ def search_tools(
     category: str = "",
     limit: int = 3,
     db_path: Path | str | None = None,
+    *, semantic: bool = True,
 ) -> List[Dict[str, Any]]:
-    """Hybrid lexical and semantic matching across registered tools, prioritized by reliability."""
+    """Discover tools with local EmbeddingGemma 2; semantic=False is explicit lexical-only lookup."""
+    if semantic:
+        from app.tool_embeddings import search
+        return search(query, category, limit, db_path)
     db_key = str(db_path) if db_path is not None else "default"
     clean_q = query.strip().lower()
     clean_cat = category.strip().lower()
@@ -205,7 +211,8 @@ def format_tool_search_results(
     for t in matches:
         lines.append(f"### Tool: `{t['tool_name']}` ({t['category']})")
         lines.append(f"**Description**: {t['description']}")
-        lines.append(f"**Reliability**: {t['reliability_pct']}% ({t['call_count']} calls)")
+        reliability = f"{t['reliability_pct']}%" if t['reliability_pct'] is not None else 'Not measured'
+        lines.append(f"**Reliability**: {reliability} ({t['call_count']} calls)")
         if t["parameters"]:
             lines.append("**Parameters**:")
             for p_name, p_info in t["parameters"].items():

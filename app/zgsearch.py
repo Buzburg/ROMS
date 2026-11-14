@@ -1,5 +1,6 @@
 """One local Mojo search engine over SQLite BM25 and passage vectors."""
 from collections import OrderedDict
+from copy import deepcopy
 import threading
 import heapq
 import sqlite3
@@ -191,7 +192,7 @@ def zg_search(query: str, filters=None, limit: int = 5,
             cached = _SEARCH_CACHE.get(cache_key)
             if cached is not None:
                 _SEARCH_CACHE.move_to_end(cache_key)
-                return [dict(item) for item in cached]
+                return deepcopy(cached)
     where, params = _filter_sql(filters)
     expression = _fts_query(conn, query, True, adaptive=True)
     if not expression:
@@ -227,12 +228,15 @@ def zg_search(query: str, filters=None, limit: int = 5,
     results = [dict(items[key], score=score, fuzzy_rank=lex_rank or None,
                     vector_rank=vec_rank or None)
                for key, score, lex_rank, vec_rank in ranked]
+    from app.source_context import locations
+    sources = locations(conn, [item['chunk_id'] for item in results])
+    results = [dict(item, source=sources.get(item['chunk_id'], {})) for item in results]
     if (cache_key is not None and not conn.in_transaction
             and _database_change_token(conn) == change_token
             and sum(len(value) for item in results for value in item.values()
                     if isinstance(value, str)) <= 65536):
         with _CACHE_LOCK:
-            _SEARCH_CACHE[cache_key] = [dict(item) for item in results]
+            _SEARCH_CACHE[cache_key] = deepcopy(results)
             _SEARCH_CACHE.move_to_end(cache_key)
             while len(_SEARCH_CACHE) > 64:
                 _SEARCH_CACHE.popitem(last=False)

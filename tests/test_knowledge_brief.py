@@ -89,4 +89,7 @@ def test_mcp_brief_available_read_only(library, monkeypatch):
             result = await client.call_tool('prepare_knowledge_brief', {'task': 'Plan deployment', 'chunk_ids': [1]})
             data = json.loads(result.content[0].text)
             assert 'Operator approval' in data['markdown'] and not data['persisted']
+            expanded = await client.call_tool('get_source_context', {'chunk_id': 1})
+            source = json.loads(expanded.content[0].text)['sources'][0]
+            assert source['doc_id'] == 'policy.md' and 'Operator approval' in source['content']
     asyncio.run(run())

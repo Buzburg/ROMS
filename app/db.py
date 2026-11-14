@@ -105,6 +105,9 @@ def init_database(db_path: Path | str | None = None) -> None:
     )
     """)
 
+    from app.source_context import schema as source_schema
+    source_schema(conn)
+
     # 4. Query Embedding Cache: Sub-millisecond vector lookup for repeated or common queries
     cur.execute("""
     CREATE TABLE IF NOT EXISTS embedding_cache (

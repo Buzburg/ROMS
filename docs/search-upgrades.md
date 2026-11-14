@@ -11,7 +11,7 @@ hits = local_search("damagd replacment", limit=5,
                     filters={"doc_type": "policy"})
 ```
 
-The engine combines SQLite FTS5 keyword ranking with precomputed local EmbeddingGemma Q8
+The engine combines SQLite FTS5 keyword ranking with precomputed local EmbeddingGemma 2 Q8
 passage vectors, then fuses ranks in compiled Mojo. Known terms skip typo work;
 unknown terms use bounded prefix and typo expansion. Exact document/type/topic
 filters apply before candidate selection. Results include source paths and chunk
@@ -40,7 +40,7 @@ In an existing environment containing Mojo 1.1.0 and the dependencies in
 `pixi.toml`, use `python scripts/build_search_native.py`. Restart ROMS after
 rebuilding. The former `ROMS_SEARCH_KERNEL` selector is no longer used. The
 embedding provider must be `local`; external provider settings are rejected by
-search and ingestion. Provision EmbeddingGemma Q8 with
+search and ingestion. Provision EmbeddingGemma 2 Q8 with
 `python scripts/fetch_embedding.py` before offline use. Initial provisioning may
 require a download; queries and document inference then run on this machine.
 
@@ -203,3 +203,70 @@ skills. Those records are not automatically transferred into the new database.
 To roll back, use the previous ROMS release with its original database and model
 cache. Never rename an old database to the new default filename or relabel its
 identity: the document vectors must be recomputed by the new model.
+
+
+## Structured sources in 1.6
+
+Newly ingested passages retain known PDF page numbers, slide/sheet locations,
+Markdown section paths, CSV column names and top-level Python symbols. Search
+results and exported task briefs carry this information in a `source` object.
+Character offsets refer to normalized text or an identified extracted block,
+not raw file bytes. OCR remains an imperfect transcription.
+
+Embedding inputs include a bounded document/section header. Stored evidence
+remains the original extracted passage, separate from that added context.
+`get_source_context(chunk_id, neighbors=1, max_chars=6000)` is available through
+both MCP entry points. It expands a citation into exact indexed passages from
+the same section, within a character budget. Old indexes lacking location data
+return only the selected passage; ROMS does not guess missing locations.
+
+The existing EmbeddingGemma 2 database is compatible. Run `reload_knowledge` or
+re-import retained originals to populate the new metadata and contextual
+embeddings. The parser version changes the ingestion checksum, so unchanged
+files are reprocessed once. Re-ingestion replaces chunk IDs; search again before
+selecting citations. Existing saved evidence is checked for freshness as before.
+Older EmbeddingGemma-300m indexes still require the separate migration above.
+
+## Context and tool retrieval
+
+Formatted context budgets include citation headers, XML escaping and separators.
+Small budgets return an empty result if even a cited excerpt cannot fit. Oversized
+passages do not prevent later shorter passages from being selected. Python callers
+can pass `token_counter=lambda text: len(consumer_tokenizer.encode(text))` to
+`format_context_for_local_llm` for their consuming model. The default enforces
+ROMS's estimate; it is not an exact token count for every model.
+
+`search_tools` embeds names, descriptions and examples using the pinned local
+EmbeddingGemma 2 model and combines semantic and lexical ranks. Tool schemas
+come from the active registry. Category filters apply before ranking. Persistent
+vectors are invalidated by descriptor or model-identity changes; returned results
+follow registry updates from other connections. A discovery result is not
+permission to execute a tool. Unmeasured reliability/latency are reported as unknown.
+Python callers can explicitly request `semantic=False` for lexical-only lookup.
+Model failures are surfaced rather than replaced with hash-generated vectors.
+
+Local OCR defaults to English. Set `ROMS_OCR_LANGUAGES=eng+deu`, for example, after
+installing those Tesseract language packs. Missing packs produce an extraction
+error and preserve any previously indexed document. Changing this setting changes
+the ingestion checksum. No cloud OCR or additional model service is introduced.
+
+## Reproduce the checks
+
+After installing the documented runtime, building the Mojo search module and
+fetching the embedding model:
+
+```sh
+python scripts/verify_rag_upgrades.py
+python scripts/evaluate_single_search.py --output scratch/retrieval-results.json
+python -m pytest tests scripts -q -ra
+```
+
+The evaluator creates temporary indexes and generates its fixtures; it no longer
+requires a pre-existing scratch database. `--corpus repository` avoids the OCR
+fixture dependencies. `--implementation-root /path/to/baseline` compares another
+checkout using the same evaluator and labels; that checkout also needs its Mojo
+search module. Pass the same `--fixtures scratch/frozen-evaluation` directory to
+both runs to reuse byte-identical generated Office/PDF inputs. Changed fixtures
+or recipes are rejected; use a new directory for a new experiment. Reports include input/code hashes, model identity, per-query ranks,
+recall, nDCG and fresh/cached timings. These small fixtures are regression evidence,
+not a general retrieval-quality or speed guarantee.
